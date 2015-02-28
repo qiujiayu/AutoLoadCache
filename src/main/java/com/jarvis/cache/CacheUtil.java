@@ -65,7 +65,7 @@ public class CacheUtil {
      * @param className 类名称
      * @param method 方法名称
      * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式
+     * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return
      */
     public static String getCahcaheKey(String className, String method, Object[] arguments, String subKeySpEL) {
@@ -86,7 +86,7 @@ public class CacheUtil {
      * @param className 类名称
      * @param method 方法名称
      * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为args[0],第二个为参数为args[1]，依此类推。
+     * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return
      */
     public static String getCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL){
