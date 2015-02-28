@@ -40,13 +40,32 @@ public class CacheUtil {
         }
         return hash;
     }
-
+    
     /**
      * 生成缓存Key
-     * @param className
-     * @param method
-     * @param arguments
-     * @param subKeySpEL
+     * @param className 类名称
+     * @param method  方法名称
+     * @param arguments 参数
+     * @return
+     */
+    public static String getCahcaheKey(String className, String method, Object[] arguments) {
+        StringBuilder sb=new StringBuilder();
+        sb.append(getCacheKeyPrefix(className, method, arguments, null));
+        if(null != arguments && arguments.length > 0) {
+            StringBuilder arg=new StringBuilder();
+            for(Object obj: arguments) {
+                arg.append(BeanUtil.toString(obj));
+            }
+            sb.append(getMiscHashCode(arg.toString()));
+        }
+        return sb.toString();
+    }
+    /**
+     * 生成缓存Key
+     * @param className 类名称
+     * @param method 方法名称
+     * @param arguments 参数
+     * @param subKeySpEL SpringEL表达式
      * @return
      */
     public static String getCahcaheKey(String className, String method, Object[] arguments, String subKeySpEL) {
@@ -62,10 +81,18 @@ public class CacheUtil {
         return sb.toString();
     }
     
-    private static String getCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL){
+    /**
+     * 生成缓存Key的前缀
+     * @param className 类名称
+     * @param method 方法名称
+     * @param arguments 参数
+     * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为args[0],第二个为参数为args[1]，依此类推。
+     * @return
+     */
+    public static String getCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL){
         StringBuilder sb=new StringBuilder();
         sb.append(className).append(".").append(method);
-        if(null != arguments && null != subKeySpEL && subKeySpEL.trim().length() > 0) {
+        if(null != arguments && arguments.length>0 && null != subKeySpEL && subKeySpEL.trim().length() > 0) {
             ExpressionParser parser=new SpelExpressionParser();
             EvaluationContext context=new StandardEvaluationContext();
             context.setVariable("args", arguments);
@@ -77,7 +104,12 @@ public class CacheUtil {
         sb.append(":");
         return sb.toString();
     }
-
+    
+    /**
+     * 通过Hash算法，将长字符串转为短字符串
+     * @param str
+     * @return
+     */
     public static String getMiscHashCode(String str) {
         if(null == str || str.length() == 0) {
             return "";
@@ -93,7 +125,16 @@ public class CacheUtil {
         }
         return tmp.toString();
     }
-
+    
+    /**
+     * 通过ProceedingJoinPoint，去缓存中获取数据，或从ProceedingJoinPoint中获取数据
+     * @param pjp
+     * @param cahce
+     * @param autoLoadHandler
+     * @param cacheGeterSeter
+     * @return
+     * @throws Exception
+     */
     public static <T> T proceed(ProceedingJoinPoint pjp, Cache cahce, AutoLoadHandler<T> autoLoadHandler, CacheGeterSeter<T> cacheGeterSeter)
         throws Exception {
         Object[] arguments=pjp.getArgs();
@@ -161,7 +202,17 @@ public class CacheUtil {
         }
         return cacheWrapper.getCacheObject();
     }
-
+    
+    /**
+     * 通过ProceedingJoinPoint加载数据
+     * @param pjp
+     * @param autoLoadTO
+     * @param cacheKey
+     * @param cacheGeterSeter
+     * @param expire
+     * @return
+     * @throws Exception
+     */
     private static <T> T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, CacheGeterSeter<T> cacheGeterSeter,
         int expire) throws Exception {
         try {
