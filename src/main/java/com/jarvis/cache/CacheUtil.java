@@ -126,6 +126,16 @@ public class CacheUtil {
         return tmp.toString();
     }
     
+    private static boolean isCacheable(Cache cahce, Object[] arguments){
+        boolean rv=true;
+        if(null != arguments && arguments.length>0 && null != cahce.condition() && cahce.condition().length() > 0) {
+            ExpressionParser parser=new SpelExpressionParser();
+            EvaluationContext context=new StandardEvaluationContext();
+            context.setVariable("args", arguments);
+            rv=parser.parseExpression(cahce.condition()).getValue(context, Boolean.class);
+        }
+        return rv;
+    }
     /**
      * 通过ProceedingJoinPoint，去缓存中获取数据，或从ProceedingJoinPoint中获取数据
      * @param pjp
@@ -138,6 +148,17 @@ public class CacheUtil {
     public static <T> T proceed(ProceedingJoinPoint pjp, Cache cahce, AutoLoadHandler<T> autoLoadHandler, CacheGeterSeter<T> cacheGeterSeter)
         throws Exception {
         Object[] arguments=pjp.getArgs();
+        if(!isCacheable(cahce, arguments)) {// 如果不进行缓存，则直接返回数据
+            try {
+                @SuppressWarnings("unchecked")
+                T result=(T)pjp.proceed();
+                return result;
+            } catch(Exception e) {
+                throw e;
+            } catch(Throwable e) {
+                throw new Exception(e);
+            }
+        }
         int expire=cahce.expire();
         if(expire <= 0) {
             expire=300;
@@ -248,6 +269,5 @@ public class CacheUtil {
             }
             processing.remove(cacheKey);
         }
-        
     }
 }

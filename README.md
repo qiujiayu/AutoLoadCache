@@ -25,7 +25,6 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 如果将应用部署在多台服务器上，理论上可以认为自动加载队列是由这几台服务器共同完成自动加载任务。比如应用部署在A,B两台服务器上，A服务器自动加载了数据D，（因为两台服务器的自动加载队列是独立的，所以加载的顺序也是一样的），接着有用户从B服务器请求数据D，这时会把数据D的最后加载时间更新给B服务器，这样B服务器就不会重复加载数据D。
 
 
-
 ##使用方法
 ###1. 实现com.jarvis.cache.CacheGeterSeter 
 下面举个使用Redis做缓存服务器的例子：
@@ -50,7 +49,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
         @Pointcut(value="execution(public !void com.jarvis.example.dao..*.*(..)) && @annotation(cahce)", argNames="cahce")
         public void daoCachePointcut(Cache cahce) {
-            logger.error("----------------------init daoCachePointcut()--------------------");
+            logger.info("----------------------init daoCachePointcut()--------------------");
         }
 
         @Around(value="daoCachePointcut(cahce)", argNames="pjp, cahce")
@@ -291,6 +290,11 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
          * @return
          */
         String subKeySpEL() default "";
+        /**
+         * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存，例如:"#args[0]==1",当第一个参数值为1时，才进缓存。
+         * @return
+         */
+        String condition() default "";
     }
 
 
@@ -364,6 +368,11 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 ###7. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
 比如，根据用户输入的关键字进行搜索数据的方法，不建议使用自动加载。
 
+##在事务环境中，如何减少“脏读”
+
+1：不要从缓存中取数据，然后应用到修改数据的SQL语句中
+
+2：在事务完成后，再删除相关的缓存
 
 
 ##使用规范
