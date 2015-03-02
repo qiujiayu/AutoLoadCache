@@ -202,19 +202,17 @@ public class CacheUtil {
         if(null == lastProcTime) {
             return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire);
         }
-        int tryCnt=0;
-        while(tryCnt < 3) {
+        long startWait=System.currentTimeMillis();
+        while(System.currentTimeMillis() - startWait < 300) {
             synchronized(lock) {
                 try {
-                    lock.wait(100);
+                    lock.wait();
                 } catch(InterruptedException ex) {
                     logger.error(ex.getMessage(), ex);
                 }
             }
             cacheWrapper=cacheGeterSeter.get(cacheKey);
-            if(cacheWrapper == null) {
-                tryCnt++;
-            } else {
+            if(cacheWrapper != null) {
                 break;
             }
         }
