@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.to.CacheWrapper;
+
 /**
  * 用于处理自动加载缓存
  * @author jiayu.qiu
