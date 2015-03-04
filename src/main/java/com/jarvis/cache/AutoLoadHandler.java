@@ -16,18 +16,19 @@ import com.jarvis.cache.to.CacheWrapper;
 public class AutoLoadHandler<T> {
 
     private static final Logger logger=Logger.getLogger(AutoLoadHandler.class);
+
     /**
      * 自动加载队列
      */
     private Map<String, AutoLoadTO> autoLoadMap;
-    
+
     /**
      * 自动加载队列中允许存放的最大容量
      */
     private long maxElement=10000;
 
     private CacheGeterSeter<T> cacheGeterSeter;
-    
+
     /**
      * 缓存池
      */
@@ -36,7 +37,6 @@ public class AutoLoadHandler<T> {
     private boolean running=false;
 
     /**
-     * 
      * @param threadCnt 线程数量
      * @param cacheGeterSeter 缓存的set,get方法实现类
      * @param maxElement 自动加载队列的容量
@@ -131,7 +131,8 @@ public class AutoLoadHandler<T> {
             if(autoLoadTO.getLastRequestTime() <= 0 || autoLoadTO.getLastLoadTime() <= 0) {
                 return;
             }
-            if(autoLoadTO.getRequestTimeout() > 0 && (System.currentTimeMillis() - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
+            if(autoLoadTO.getRequestTimeout() > 0
+                && (System.currentTimeMillis() - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -141,7 +142,8 @@ public class AutoLoadHandler<T> {
             } else {
                 diff=60;
             }
-            if(!autoLoadTO.isLoading() && (System.currentTimeMillis() - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
+            if(!autoLoadTO.isLoading()
+                && (System.currentTimeMillis() - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
                 try {
                     autoLoadTO.setLoading(true);
                     ProceedingJoinPoint pjp=autoLoadTO.getJoinPoint();

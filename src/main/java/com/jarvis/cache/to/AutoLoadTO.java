@@ -21,7 +21,7 @@ public class AutoLoadTO implements Serializable {
     private long lastLoadTime=0;
 
     private long lastRequestTime=0;
-    
+
     private int expire;
 
     private long requestTimeout=7200L;// 缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据

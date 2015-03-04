@@ -9,10 +9,12 @@ import java.io.Serializable;
 public class CacheWrapper<T> implements Serializable {
 
     private static final long serialVersionUID=1L;
+
     /**
      * 缓存数据
      */
     private T cacheObject;
+
     /**
      * 最后加载时间
      */

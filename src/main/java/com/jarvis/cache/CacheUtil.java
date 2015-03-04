@@ -29,6 +29,8 @@ public class CacheUtil {
 
     private static final ReentrantLock lock=new ReentrantLock();
 
+    private static final ExpressionParser parser=new SpelExpressionParser();
+
     /**
      * 生成字符串的HashCode
      * @param buf
@@ -43,17 +45,29 @@ public class CacheUtil {
         }
         return hash;
     }
-    
+
+    /**
+     * 生成自定义缓存Key
+     * @param keySpEL
+     * @param arguments
+     * @return
+     */
+    public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
+        EvaluationContext context=new StandardEvaluationContext();
+        context.setVariable("args", arguments);
+        return parser.parseExpression(keySpEL).getValue(context, String.class);
+    }
+
     /**
      * 生成缓存Key
      * @param className 类名称
-     * @param method  方法名称
+     * @param method 方法名称
      * @param arguments 参数
      * @return
      */
-    public static String getCahcaheKey(String className, String method, Object[] arguments) {
+    public static String getDefaultCacheKey(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
-        sb.append(getCacheKeyPrefix(className, method, arguments, null));
+        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, null));
         if(null != arguments && arguments.length > 0) {
             StringBuilder arg=new StringBuilder();
             for(Object obj: arguments) {
@@ -63,6 +77,7 @@ public class CacheUtil {
         }
         return sb.toString();
     }
+
     /**
      * 生成缓存Key
      * @param className 类名称
@@ -71,9 +86,9 @@ public class CacheUtil {
      * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return
      */
-    public static String getCahcaheKey(String className, String method, Object[] arguments, String subKeySpEL) {
+    public static String getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
-        sb.append(getCacheKeyPrefix(className, method, arguments, subKeySpEL));
+        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL));
         if(null != arguments && arguments.length > 0) {
             StringBuilder arg=new StringBuilder();
             for(Object obj: arguments) {
@@ -83,7 +98,7 @@ public class CacheUtil {
         }
         return sb.toString();
     }
-    
+
     /**
      * 生成缓存Key的前缀
      * @param className 类名称
@@ -92,11 +107,10 @@ public class CacheUtil {
      * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return
      */
-    public static String getCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL){
+    public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
         sb.append(className).append(".").append(method);
-        if(null != arguments && arguments.length>0 && null != subKeySpEL && subKeySpEL.trim().length() > 0) {
-            ExpressionParser parser=new SpelExpressionParser();
+        if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.trim().length() > 0) {
             EvaluationContext context=new StandardEvaluationContext();
             context.setVariable("args", arguments);
             String subKey=parser.parseExpression(subKeySpEL).getValue(context, String.class);
@@ -107,7 +121,7 @@ public class CacheUtil {
         sb.append(":");
         return sb.toString();
     }
-    
+
     /**
      * 通过Hash算法，将长字符串转为短字符串
      * @param str
@@ -128,30 +142,30 @@ public class CacheUtil {
         }
         return tmp.toString();
     }
-    
-    private static boolean isCacheable(Cache cahce, Object[] arguments){
+
+    private static boolean isCacheable(Cache cache, Object[] arguments) {
         boolean rv=true;
-        if(null != arguments && arguments.length>0 && null != cahce.condition() && cahce.condition().length() > 0) {
-            ExpressionParser parser=new SpelExpressionParser();
+        if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
             EvaluationContext context=new StandardEvaluationContext();
             context.setVariable("args", arguments);
-            rv=parser.parseExpression(cahce.condition()).getValue(context, Boolean.class);
+            rv=parser.parseExpression(cache.condition()).getValue(context, Boolean.class);
         }
         return rv;
     }
+
     /**
      * 通过ProceedingJoinPoint，去缓存中获取数据，或从ProceedingJoinPoint中获取数据
      * @param pjp
-     * @param cahce
+     * @param cache
      * @param autoLoadHandler
      * @param cacheGeterSeter
      * @return
      * @throws Exception
      */
-    public static <T> T proceed(ProceedingJoinPoint pjp, Cache cahce, AutoLoadHandler<T> autoLoadHandler, CacheGeterSeter<T> cacheGeterSeter)
-        throws Exception {
+    public static <T> T proceed(ProceedingJoinPoint pjp, Cache cache, AutoLoadHandler<T> autoLoadHandler,
+        CacheGeterSeter<T> cacheGeterSeter) throws Exception {
         Object[] arguments=pjp.getArgs();
-        if(!isCacheable(cahce, arguments)) {// 如果不进行缓存，则直接返回数据
+        if(!isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             try {
                 @SuppressWarnings("unchecked")
                 T result=(T)pjp.proceed();
@@ -162,21 +176,27 @@ public class CacheUtil {
                 throw new Exception(e);
             }
         }
-        int expire=cahce.expire();
+        int expire=cache.expire();
         if(expire <= 0) {
             expire=300;
         }
 
         String className=pjp.getTarget().getClass().getName();
         String methodName=pjp.getSignature().getName();
-        String cacheKey=getCahcaheKey(className, methodName, arguments, cahce.subKeySpEL());
+        String cacheKey=null;
+        if(null != cache.key() && cache.key().trim().length() > 0) {
+            cacheKey=getDefinedCacheKey(cache.key(), arguments);
+        } else {
+            cacheKey=getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
+        }
+
         AutoLoadTO autoLoadTO=null;
-        if(cahce.autoload()) {
+        if(cache.autoload()) {
             try {
                 autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
                 if(null == autoLoadTO) {
                     arguments=(Object[])BeanUtil.deepClone(arguments);
-                    autoLoadTO=new AutoLoadTO(cacheKey, pjp, arguments, expire, cahce.requestTimeout());
+                    autoLoadTO=new AutoLoadTO(cacheKey, pjp, arguments, expire, cache.requestTimeout());
                     autoLoadHandler.setAutoLoadTO(autoLoadTO);
                 }
                 autoLoadTO.setLastRequestTime(System.currentTimeMillis());
@@ -224,7 +244,7 @@ public class CacheUtil {
         }
         return cacheWrapper.getCacheObject();
     }
-    
+
     /**
      * 通过ProceedingJoinPoint加载数据
      * @param pjp
@@ -235,8 +255,8 @@ public class CacheUtil {
      * @return
      * @throws Exception
      */
-    private static <T> T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, CacheGeterSeter<T> cacheGeterSeter,
-        int expire) throws Exception {
+    private static <T> T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey,
+        CacheGeterSeter<T> cacheGeterSeter, int expire) throws Exception {
         try {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(true);

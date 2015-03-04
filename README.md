@@ -127,7 +127,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
             boolean deleteByPrefixKey) {
             try {
                 if(deleteByPrefixKey) {
-                    final String cacheKey=CacheUtil.getCacheKeyPrefix(cs.getName(), method, arguments, subKeySpEL) + "*";
+                    final String cacheKey=CacheUtil.getDefaultCacheKeyPrefix(cs.getName(), method, arguments, subKeySpEL) + "*";
                     for(final RedisTemplate<String, Serializable> redisTemplate : redisTemplateList){
                         redisTemplate.execute(new RedisCallback<Object>() {
                             @Override
@@ -145,7 +145,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
                     }
 
                 } else {
-                    final String cacheKey=CacheUtil.getCahcaheKey(cs.getName(), method, arguments, subKeySpEL);
+                    final String cacheKey=CacheUtil.getDefaultCacheKey(cs.getName(), method, arguments, subKeySpEL);
                     final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);
                     redisTemplate.execute(new RedisCallback<Object>() {
 
@@ -211,16 +211,24 @@ java代码实现后，接下来要在spring中进行相关的配置：
 
 ##缓存Key的生成
 
-生成缓存Key的生成方法：CacheUtil.getCahcaheKey(String className, String method, Object[] arguments, String subKeySpEL)
+1. 使用Spring EL 表达式自定义缓存Key:CacheUtil.getDefinedCacheKey(String keySpEL, Object[] arguments)
 
-* **className** 类名称
-* **method** 方法名称
-* **arguments** 参数
-* **subKeySpEL** SpringEL表达式
+    例如： @Cache(expire=600, key="'goods'+#args[0]")
 
-生成的Key格式为：{类名称}.{方法名称}{.SpringEL表达式运算结果}:{参数值的Hash字符串}
+2. 默认生成缓存Key的方法：CacheUtil.getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL)
 
-###SpringEL表达式的作用
+ * **className** 类名称
+ * **method** 方法名称
+ * **arguments** 参数
+ * **subKeySpEL** SpringEL表达式
+
+    生成的Key格式为：{类名称}.{方法名称}{.SpringEL表达式运算结果}:{参数值的Hash字符串}。
+
+    当@Cache中不设置key值时，使用默认方式生成缓存Key
+
+建议使用默认生成缓存Key的方法，能减少一些维护工作。
+
+###subKeySpEL 使用说明
 
 根据业务的需要，将缓存Key进行分组。举个例子，商品的评论列表：
 
@@ -237,7 +245,7 @@ java代码实现后，接下来要在spring中进行相关的配置：
 在Redis中，能精确删除商品Id为100的评论列表，执行命令即可：
 del com.jarvis.example.dao.GoodsCommentDAO.getCommentListByGoodsId.100:*
 
-SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的expire，requestTimeout以及autoload参数都可以用SpringEL表达式来动态设置。但使用起来就变得复杂，所以我们没有这样做。
+SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的expire，requestTimeout以及autoload参数都可以用SpringEL表达式来动态设置，但使用起来就变得复杂，所以我们没有这样做。
 
 ###数据实时性
 
@@ -273,6 +281,12 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
          */
         int expire();
 
+        /**
+         * 自定义缓存Key,如果不设置使用系统默认生成缓存Key的方法
+         * @return
+         */
+        String key() default "";
+        
         /**
          * 是否启用自动加载缓存
          * @return

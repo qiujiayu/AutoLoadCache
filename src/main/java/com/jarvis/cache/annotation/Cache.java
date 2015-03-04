@@ -15,6 +15,12 @@ public @interface Cache {
     int expire();
 
     /**
+     * 自定义缓存Key,如果不设置使用系统默认生成缓存Key的方法
+     * @return
+     */
+    String key() default "";
+
+    /**
      * 是否启用自动加载缓存
      * @return
      */
@@ -25,12 +31,13 @@ public @interface Cache {
      * @return
      */
     long requestTimeout() default 36000L;
-    
+
     /**
-     * 使用SpEL，将缓存key，根据业务需要进行二次分组
+     * 使用SpEL，将缓存key，根据业务需要进行二次分组（使用默认缓存Key的时候才有效）
      * @return
      */
     String subKeySpEL() default "";
+
     /**
      * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
      * @return

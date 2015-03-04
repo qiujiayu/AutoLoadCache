@@ -18,7 +18,7 @@ import java.util.Map.Entry;
  * @author jiayu.qiu
  */
 public class BeanUtil {
-    
+
     /**
      * 是否为基础数据类型
      * @param obj
@@ -26,8 +26,8 @@ public class BeanUtil {
      */
     private static boolean isPrimitive(Object obj) {
         return obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
-            || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short || obj instanceof Float
-            || obj instanceof Double || obj instanceof Date;
+            || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
+            || obj instanceof Float || obj instanceof Double || obj instanceof Date;
     }
 
     /**
@@ -119,7 +119,7 @@ public class BeanUtil {
             // get the names and values of all fields
             for(Field f: fields) {
                 if(!Modifier.isStatic(f.getModifiers())) {
-                    if(f.isSynthetic() || f.getName().indexOf("this$")!=-1){
+                    if(f.isSynthetic() || f.getName().indexOf("this$") != -1) {
                         continue;
                     }
                     r+=f.getName() + "=";
