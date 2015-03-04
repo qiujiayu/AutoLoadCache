@@ -28,6 +28,13 @@ public class AutoLoadTO implements Serializable {
 
     private boolean loading=false;
 
+    /**
+     * 加载次数
+     */
+    private long loadCnt=0L;
+
+    private long useTotalTime=0L;
+
     public AutoLoadTO(String cacheKey, ProceedingJoinPoint joinPoint, Object args[], int expire, long requestTimeout) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
@@ -78,5 +85,25 @@ public class AutoLoadTO implements Serializable {
 
     public Object[] getArgs() {
         return args;
+    }
+
+    /**
+     * 记录用时
+     * @param useTime
+     */
+    public synchronized void addUseTotalTime(long useTime) {
+        this.loadCnt++;
+        this.useTotalTime+=useTotalTime;
+    }
+
+    /**
+     * 平均用时
+     * @return
+     */
+    public long getAverageUseTime() {
+        if(loadCnt == 0) {
+            return 0;
+        }
+        return this.useTotalTime / this.loadCnt;
     }
 }

@@ -1,7 +1,9 @@
 package com.jarvis.cache;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -10,7 +12,7 @@ import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 用于处理自动加载缓存
+ * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
  * @author jiayu.qiu
  */
 public class AutoLoadHandler<T> {
@@ -34,26 +36,46 @@ public class AutoLoadHandler<T> {
      */
     private Thread threads[];
 
+    /**
+     * 排序进行，对自动加载队列进行排序
+     */
+    private Thread sortThread;
+
+    /**
+     * 自动加载队列
+     */
+    private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
+
+    private boolean sortQueue=false;
+
     private boolean running=false;
 
     /**
      * @param threadCnt 线程数量
      * @param cacheGeterSeter 缓存的set,get方法实现类
      * @param maxElement 自动加载队列的容量
+     * @param sortQueue 是否对自动加载队列进行排序
      */
-    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, long maxElement) {
+    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, long maxElement, boolean sortQueue) {
         if(threadCnt <= 0) {
             return;
         }
         this.cacheGeterSeter=cacheGeterSeter;
         this.maxElement=maxElement;
+        autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
         running=true;
         threads=new Thread[threadCnt];
         autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>();
         for(int i=0; i < threadCnt; i++) {
-            threads[i]=new Thread(new AutoLoadRunnable(i));
+            threads[i]=new Thread(new AutoLoadRunnable());
             threads[i].start();
         }
+        sortThread=new Thread(new SortRunnable());
+        sortThread.start();
+    }
+
+    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, long maxElement) {
+        this(threadCnt, cacheGeterSeter, maxElement, false);
     }
 
     public int getSize() {
@@ -86,43 +108,49 @@ public class AutoLoadHandler<T> {
         }
     }
 
-    class AutoLoadRunnable implements Runnable {
+    class SortRunnable implements Runnable {
 
-        int threadInd;
-
-        public AutoLoadRunnable(int threadInd) {
-            this.threadInd=threadInd;
-        }
+        private final AutoLoadTOComparator comparator=new AutoLoadTOComparator();
 
         @Override
         public void run() {
             while(running) {
-                int ind=threadInd;
-                if(autoLoadMap.isEmpty() || autoLoadMap.size() < (ind + 1)) {
+                if(autoLoadMap.isEmpty() || autoLoadQueue.size() > 0) {// 如果没有数据 或 还有线程在处理，则继续等待
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(500);
                     } catch(InterruptedException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage(), e);
                     }
                     continue;
                 }
-                long beginTime=System.currentTimeMillis();
-                AutoLoadTO tos[]=new AutoLoadTO[autoLoadMap.size()];
-                tos=autoLoadMap.values().toArray(tos);// 复制引用
-                while(ind < tos.length) {
-                    AutoLoadTO tmpTO=tos[ind];
-                    ind+=threads.length;
-                    loadCache(tmpTO);
+
+                AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
+                tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
+                if(sortQueue) {
+                    Arrays.sort(tmpArr, comparator);
                 }
-                long totalTime=System.currentTimeMillis() - beginTime;
-                int sleep=1000;
-                if(totalTime >= 1000) {
-                    sleep=100;
+                for(AutoLoadTO to: tmpArr) {
+                    try {
+                        autoLoadQueue.put(to);
+                    } catch(InterruptedException e) {
+                        logger.error(e.getMessage(), e);
+                    }
                 }
+            }
+        }
+    }
+
+    class AutoLoadRunnable implements Runnable {
+
+        @Override
+        public void run() {
+            while(running) {
                 try {
-                    Thread.sleep(sleep);
+                    AutoLoadTO tmpTO=autoLoadQueue.take();
+                    loadCache(tmpTO);
+                    Thread.sleep(50);
                 } catch(InterruptedException e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage(), e);
                 }
             }
         }
@@ -161,12 +189,14 @@ public class AutoLoadHandler<T> {
                     tmp.setLastLoadTime(System.currentTimeMillis());
                     cacheGeterSeter.setCache(autoLoadTO.getCacheKey(), tmp, autoLoadTO.getExpire());
                     autoLoadTO.setLastLoadTime(System.currentTimeMillis());
+                    autoLoadTO.addUseTotalTime(useTime);
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);
                 } catch(Throwable e) {
                     logger.error(e.getMessage(), e);
+                } finally {
+                    autoLoadTO.setLoading(false);
                 }
-                autoLoadTO.setLoading(false);
             }
         }
     }

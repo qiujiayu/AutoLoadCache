@@ -275,6 +275,7 @@ public class CacheUtil {
             cacheGeterSeter.setCache(cacheKey, tmp, expire);
             if(null != autoLoadTO) {
                 autoLoadTO.setLastLoadTime(startTime);
+                autoLoadTO.addUseTotalTime(useTime);
             }
             return result;
         } catch(Exception e) {
