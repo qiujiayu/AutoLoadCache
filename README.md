@@ -200,6 +200,17 @@ java代码实现后，接下来要在spring中进行相关的配置：
 
 从0.4版本开始增加了Redis的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用：
 
+    <bean id="cachePointCut" class="com.jarvis.cache.redis.CachePointCut" destroy-method="destroy">
+      <constructor-arg value="10" /><!-- 线程数量 -->
+      <constructor-arg value="20000" /><!-- 自动加载队列容量 -->
+      <property name="redisTemplateList">
+        <list>
+          <ref bean="redisTemplate100" />
+          <ref bean="redisTemplate2" />
+        </list>
+      </property>
+    </bean>
+
     <aop:config>
       <aop:aspect id="aa" ref="cachePointCut">
         <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
