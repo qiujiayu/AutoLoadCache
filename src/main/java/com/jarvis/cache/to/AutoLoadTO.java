@@ -87,6 +87,18 @@ public class AutoLoadTO implements Serializable {
         return args;
     }
 
+    public static long getSerialversionuid() {
+        return serialVersionUID;
+    }
+
+    public long getLoadCnt() {
+        return loadCnt;
+    }
+
+    public long getUseTotalTime() {
+        return useTotalTime;
+    }
+
     /**
      * 记录用时
      * @param useTime

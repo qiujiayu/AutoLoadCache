@@ -46,7 +46,7 @@ public class AutoLoadHandler<T> {
      * 自动加载队列
      */
     private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
-    
+
     /**
      * 自动加载队列排序算法
      */
@@ -169,11 +169,18 @@ public class AutoLoadHandler<T> {
         }
 
         private void loadCache(AutoLoadTO autoLoadTO) {
+            if(null == autoLoadTO) {
+                return;
+            }
             if(autoLoadTO.getLastRequestTime() <= 0 || autoLoadTO.getLastLoadTime() <= 0) {
                 return;
             }
             if(autoLoadTO.getRequestTimeout() > 0
                 && (System.currentTimeMillis() - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
+                autoLoadMap.remove(autoLoadTO.getCacheKey());
+                return;
+            }
+            if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 200) {// 如果效率比较高的请求，就没必要使用自动加载了。
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
