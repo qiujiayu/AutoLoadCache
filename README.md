@@ -207,6 +207,8 @@ java代码实现后，接下来要在spring中进行相关的配置：
       </aop:aspect>
     </aop:config>
 
+通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
+
 [实例代码](https://github.com/qiujiayu/cache-example)
 ###2. 将需要使用缓存的方法前增加@Cache注解
 
