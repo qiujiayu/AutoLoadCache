@@ -10,6 +10,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
@@ -27,7 +28,7 @@ public class AutoLoadHandler<T> {
     /**
      * 自动加载队列中允许存放的最大容量
      */
-    private long maxElement=10000;
+    private int maxElement=10000;
 
     private CacheGeterSeter<T> cacheGeterSeter;
 
@@ -45,8 +46,11 @@ public class AutoLoadHandler<T> {
      * 自动加载队列
      */
     private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
-
-    private boolean sortQueue=false;
+    
+    /**
+     * 自动加载队列排序算法
+     */
+    private AutoLoadQueueSortType sortType=AutoLoadQueueSortType.NONE;
 
     private boolean running=false;
 
@@ -56,26 +60,27 @@ public class AutoLoadHandler<T> {
      * @param maxElement 自动加载队列的容量
      * @param sortQueue 是否对自动加载队列进行排序
      */
-    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, long maxElement, boolean sortQueue) {
+    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, int maxElement, AutoLoadQueueSortType sortType) {
         if(threadCnt <= 0) {
             return;
         }
         this.cacheGeterSeter=cacheGeterSeter;
         this.maxElement=maxElement;
-        autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
-        running=true;
-        threads=new Thread[threadCnt];
-        autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>();
+        this.sortType=sortType;
+        this.running=true;
+        this.threads=new Thread[threadCnt];
+        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.maxElement);
+        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.maxElement);
         for(int i=0; i < threadCnt; i++) {
-            threads[i]=new Thread(new AutoLoadRunnable());
-            threads[i].start();
+            this.threads[i]=new Thread(new AutoLoadRunnable());
+            this.threads[i].start();
         }
-        sortThread=new Thread(new SortRunnable());
-        sortThread.start();
+        this.sortThread=new Thread(new SortRunnable());
+        this.sortThread.start();
     }
 
-    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, long maxElement) {
-        this(threadCnt, cacheGeterSeter, maxElement, false);
+    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, int maxElement) {
+        this(threadCnt, cacheGeterSeter, maxElement, AutoLoadQueueSortType.NONE);
     }
 
     public int getSize() {
@@ -126,8 +131,14 @@ public class AutoLoadHandler<T> {
 
                 AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
                 tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
-                if(sortQueue) {
-                    Arrays.sort(tmpArr, comparator);
+                if(null != sortType) {
+                    switch(sortType) {
+                        case OLDEST_FIRST:
+                            Arrays.sort(tmpArr, comparator);
+                            break;
+                        default:
+                            break;
+                    }
                 }
                 for(AutoLoadTO to: tmpArr) {
                     try {
@@ -147,8 +158,10 @@ public class AutoLoadHandler<T> {
             while(running) {
                 try {
                     AutoLoadTO tmpTO=autoLoadQueue.take();
-                    loadCache(tmpTO);
-                    Thread.sleep(50);
+                    if(null != tmpTO) {
+                        loadCache(tmpTO);
+                        Thread.sleep(50);
+                    }
                 } catch(InterruptedException e) {
                     logger.error(e.getMessage(), e);
                 }

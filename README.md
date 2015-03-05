@@ -47,14 +47,14 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
             autoLoadHandler=new AutoLoadHandler<Serializable>(10, this, 20000);
         }
 
-        @Pointcut(value="execution(public !void com.jarvis.example.dao..*.*(..)) && @annotation(cahce)", argNames="cahce")
-        public void daoCachePointcut(Cache cahce) {
+        @Pointcut(value="execution(public !void com.jarvis.example.dao..*.*(..)) && @annotation(cache)", argNames="cache")
+        public void daoCachePointcut(Cache cache) {
             logger.info("----------------------init daoCachePointcut()--------------------");
         }
 
-        @Around(value="daoCachePointcut(cahce)", argNames="pjp, cahce")
-        public Object controllerPointCut(ProceedingJoinPoint pjp, Cache cahce) throws Exception {
-            return CacheUtil.proceed(pjp, cahce, autoLoadHandler, this);
+        @Around(value="daoCachePointcut(cache)", argNames="pjp, cache")
+        public Object controllerPointCut(ProceedingJoinPoint pjp, Cache cache) throws Exception {
+            return CacheUtil.proceed(pjp, cache, autoLoadHandler, this);
         }
 
         public static RedisTemplate<String, Serializable> getRedisTemplate(String key) {
