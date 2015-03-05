@@ -4,6 +4,7 @@
 
 Spring AOP这几年非常热门，使用也越来越多，但个人建议AOP只用于处理一些辅助的功能（比如：接下来我们要说的缓存），而不能把业务逻辑使用AOP中实现，尤其是在需要“事务”的环境中。
 
+
 如下图所示：
 ![Alt 缓存框架](/doc/autoload-cache.png "缓存框架")
 
@@ -197,7 +198,16 @@ java代码实现后，接下来要在spring中进行相关的配置：
         </property>
     </bean>
 
+从0.4版本开始增加了Redis的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用：
 
+    <aop:config>
+      <aop:aspect id="aa" ref="cachePointCut">
+        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
+        <aop:around pointcut-ref="daoCachePointcut" method="controllerPointCut" />
+      </aop:aspect>
+    </aop:config>
+
+[实例代码](https://github.com/qiujiayu/cache-example)
 ###2. 将需要使用缓存的方法前增加@Cache注解
 
     package com.jarvis.example.dao;
