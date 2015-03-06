@@ -43,7 +43,7 @@ public class AutoLoadHandler<T> {
     private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
 
     private boolean running=false;
-    
+
     /**
      * 自动加载配置
      */
@@ -181,6 +181,14 @@ public class AutoLoadHandler<T> {
             }
             if(!autoLoadTO.isLoading()
                 && (System.currentTimeMillis() - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
+                if(config.isCheckFromCacheBeforeLoad()) {
+                    CacheWrapper<T> result=cacheGeterSeter.get(autoLoadTO.getCacheKey());
+                    if(null != result && result.getLastLoadTime() > autoLoadTO.getLastLoadTime()
+                        && (System.currentTimeMillis() - result.getLastLoadTime()) < (autoLoadTO.getExpire() - diff) * 1000) {
+                        autoLoadTO.setLastLoadTime(result.getLastLoadTime());
+                        return;
+                    }
+                }
                 try {
                     autoLoadTO.setLoading(true);
                     ProceedingJoinPoint pjp=autoLoadTO.getJoinPoint();

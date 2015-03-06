@@ -32,6 +32,11 @@ public class AutoLoadConfig {
      * 自动加载队列排序算法
      */
     private AutoLoadQueueSortType sortType=AutoLoadQueueSortType.NONE;
+    
+    /**
+     * 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序只是部署在一台服务器，设置为false, 如果部署到多台服务器，可以考虑设置为true
+     */
+    private boolean checkFromCacheBeforeLoad=false;
 
     public int getThreadCnt() {
         return threadCnt;
@@ -77,6 +82,16 @@ public class AutoLoadConfig {
 
     public void setSlowLoadTime(int slowLoadTime) {
         this.slowLoadTime=slowLoadTime;
+    }
+
+    
+    public boolean isCheckFromCacheBeforeLoad() {
+        return checkFromCacheBeforeLoad;
+    }
+
+    
+    public void setCheckFromCacheBeforeLoad(boolean checkFromCacheBeforeLoad) {
+        this.checkFromCacheBeforeLoad=checkFromCacheBeforeLoad;
     }
 
 }
