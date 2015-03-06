@@ -8,9 +8,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
@@ -24,11 +24,6 @@ public class AutoLoadHandler<T> {
      * 自动加载队列
      */
     private Map<String, AutoLoadTO> autoLoadMap;
-
-    /**
-     * 自动加载队列中允许存放的最大容量
-     */
-    private int maxElement=10000;
 
     private CacheGeterSeter<T> cacheGeterSeter;
 
@@ -47,40 +42,34 @@ public class AutoLoadHandler<T> {
      */
     private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
 
-    /**
-     * 自动加载队列排序算法
-     */
-    private AutoLoadQueueSortType sortType=AutoLoadQueueSortType.NONE;
-
     private boolean running=false;
+    
+    /**
+     * 自动加载配置
+     */
+    private AutoLoadConfig config;
 
     /**
-     * @param threadCnt 线程数量
      * @param cacheGeterSeter 缓存的set,get方法实现类
-     * @param maxElement 自动加载队列的容量
-     * @param sortQueue 是否对自动加载队列进行排序
+     * @param config 配置
      */
-    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, int maxElement, AutoLoadQueueSortType sortType) {
-        if(threadCnt <= 0) {
-            return;
-        }
+    public AutoLoadHandler(CacheGeterSeter<T> cacheGeterSeter, AutoLoadConfig config) {
         this.cacheGeterSeter=cacheGeterSeter;
-        this.maxElement=maxElement;
-        this.sortType=sortType;
+        this.config=config;
         this.running=true;
-        this.threads=new Thread[threadCnt];
-        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.maxElement);
-        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.maxElement);
-        for(int i=0; i < threadCnt; i++) {
+        this.threads=new Thread[this.config.getThreadCnt()];
+        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.config.getMaxElement());
+        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
+        this.sortThread=new Thread(new SortRunnable());
+        this.sortThread.start();
+        for(int i=0; i < this.config.getThreadCnt(); i++) {
             this.threads[i]=new Thread(new AutoLoadRunnable());
             this.threads[i].start();
         }
-        this.sortThread=new Thread(new SortRunnable());
-        this.sortThread.start();
     }
 
-    public AutoLoadHandler(int threadCnt, CacheGeterSeter<T> cacheGeterSeter, int maxElement) {
-        this(threadCnt, cacheGeterSeter, maxElement, AutoLoadQueueSortType.NONE);
+    public AutoLoadConfig getConfig() {
+        return config;
     }
 
     public int getSize() {
@@ -108,7 +97,7 @@ public class AutoLoadHandler<T> {
         if(null == autoLoadMap) {
             return;
         }
-        if(autoLoadTO.getExpire() >= 120 && autoLoadMap.size() <= maxElement) {
+        if(autoLoadTO.getExpire() >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
             autoLoadMap.put(autoLoadTO.getCacheKey(), autoLoadTO);
         }
     }
@@ -131,8 +120,8 @@ public class AutoLoadHandler<T> {
 
                 AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
                 tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
-                if(null != sortType) {
-                    switch(sortType) {
+                if(null != config.getSortType()) {
+                    switch(config.getSortType()) {
                         case OLDEST_FIRST:
                             Arrays.sort(tmpArr, comparator);
                             break;
@@ -201,7 +190,7 @@ public class AutoLoadHandler<T> {
                     @SuppressWarnings("unchecked")
                     T result=(T)pjp.proceed(autoLoadTO.getArgs());
                     long useTime=System.currentTimeMillis() - startTime;
-                    if(useTime >= 500) {
+                    if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                         logger.error(className + "." + methodName + ", use time:" + useTime + "ms");
                     }
                     CacheWrapper<T> tmp=new CacheWrapper<T>();

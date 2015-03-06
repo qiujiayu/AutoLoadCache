@@ -17,6 +17,7 @@ import com.jarvis.cache.AutoLoadHandler;
 import com.jarvis.cache.CacheGeterSeter;
 import com.jarvis.cache.CacheUtil;
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
@@ -32,12 +33,8 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
 
     private List<RedisTemplate<String, Serializable>> redisTemplateList;
 
-    public CachePointCut() {
-        autoLoadHandler=new AutoLoadHandler<Serializable>(10, this, 20000);
-    }
-
-    public CachePointCut(int threadCnt, int maxElement) {
-        autoLoadHandler=new AutoLoadHandler<Serializable>(threadCnt, this, maxElement);
+    public CachePointCut(AutoLoadConfig config) {
+        autoLoadHandler=new AutoLoadHandler<Serializable>(this, config);
     }
 
     // @Pointcut(value="execution(public !void com.jarvis.cache_example.dao..*.*(..)) && @annotation(cache)", argNames="cache")
@@ -129,6 +126,16 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
+    }
+    
+    /**
+     * 通过Spring EL 表达式，删除缓存
+     * @param keySpEL Spring EL表达式
+     * @param arguments 参数
+     */
+    public void deleteBySpELKey(String keySpEL, Object[] arguments){
+        String cacheKey=CacheUtil.getDefinedCacheKey(keySpEL, arguments);
+        this.deleteByKey(cacheKey);
     }
 
     /**

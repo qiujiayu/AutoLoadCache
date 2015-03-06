@@ -12,6 +12,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
@@ -222,8 +223,9 @@ public class CacheUtil {
         } finally {
             lock.unlock();
         }
+        AutoLoadConfig config=autoLoadHandler.getConfig();
         if(null == lastProcTime) {
-            return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire);
+            return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire, config);
         }
         long startWait=System.currentTimeMillis();
         while(System.currentTimeMillis() - startWait < 300) {
@@ -234,13 +236,15 @@ public class CacheUtil {
                     logger.error(ex.getMessage(), ex);
                 }
             }
-            cacheWrapper=cacheGeterSeter.get(cacheKey);
-            if(cacheWrapper != null) {
-                break;
+            if(null == processing.get(cacheKey)) {// 防止频繁去缓存取数据，造成缓存服务器压力过大
+                cacheWrapper=cacheGeterSeter.get(cacheKey);
+                if(cacheWrapper != null) {
+                    break;
+                }
             }
         }
         if(null == cacheWrapper) {
-            return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire);
+            return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire, config);
         }
         return cacheWrapper.getCacheObject();
     }
@@ -256,7 +260,7 @@ public class CacheUtil {
      * @throws Exception
      */
     private static <T> T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey,
-        CacheGeterSeter<T> cacheGeterSeter, int expire) throws Exception {
+        CacheGeterSeter<T> cacheGeterSeter, int expire, AutoLoadConfig config) throws Exception {
         try {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(true);
@@ -265,7 +269,7 @@ public class CacheUtil {
             @SuppressWarnings("unchecked")
             T result=(T)pjp.proceed();
             long useTime=System.currentTimeMillis() - startTime;
-            if(useTime >= 500) {
+            if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                 String className=pjp.getTarget().getClass().getName();
                 logger.error(className + "." + pjp.getSignature().getName() + ", use time:" + useTime + "ms");
             }
@@ -286,10 +290,10 @@ public class CacheUtil {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(false);
             }
+            processing.remove(cacheKey);
             synchronized(lock) {
                 lock.notifyAll();
             }
-            processing.remove(cacheKey);
         }
     }
 }
