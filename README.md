@@ -200,9 +200,14 @@ java代码实现后，接下来要在spring中进行相关的配置：
 
 从0.4版本开始增加了Redis的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用：
 
+      <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+        <property name="threadCnt" value="10" />
+        <property name="maxElement" value="20000" />
+        <property name="printSlowLog" value="true" />
+        <property name="slowLoadTime" value="1000" />
+    </bean>
     <bean id="cachePointCut" class="com.jarvis.cache.redis.CachePointCut" destroy-method="destroy">
-      <constructor-arg value="10" /><!-- 线程数量 -->
-      <constructor-arg value="20000" /><!-- 自动加载队列容量 -->
+      <constructor-arg ref="autoLoadConfig" />
       <property name="redisTemplateList">
         <list>
           <ref bean="redisTemplate100" />
