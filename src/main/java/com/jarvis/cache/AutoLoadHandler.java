@@ -113,6 +113,22 @@ public class AutoLoadHandler<T> {
         }
     }
 
+    /**
+     * 获取自动加载队列，如果是web应用，建议把自动加载队列中的数据都输出到页面中，并增加一些管理功能。
+     * @return
+     */
+    public AutoLoadTO[] getAutoLoadQueue() {
+        if(autoLoadMap.isEmpty()) {
+            return null;
+        }
+        AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
+        tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
+        if(null != config.getSortType() && null != config.getSortType().getComparator()) {
+            Arrays.sort(tmpArr, config.getSortType().getComparator());
+        }
+        return tmpArr;
+    }
+
     class SortRunnable implements Runnable {
 
         @Override
@@ -127,10 +143,9 @@ public class AutoLoadHandler<T> {
                     continue;
                 }
 
-                AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
-                tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
-                if(null != config.getSortType() && null != config.getSortType().getComparator()) {
-                    Arrays.sort(tmpArr, config.getSortType().getComparator());
+                AutoLoadTO tmpArr[]=getAutoLoadQueue();
+                if(null == tmpArr) {
+                    continue;
                 }
                 for(AutoLoadTO to: tmpArr) {
                     try {
