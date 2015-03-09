@@ -1,6 +1,5 @@
 package com.jarvis.cache.redis;
 
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -127,13 +126,13 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
             logger.error(ex.getMessage(), ex);
         }
     }
-    
+
     /**
      * 通过Spring EL 表达式，删除缓存
      * @param keySpEL Spring EL表达式
      * @param arguments 参数
      */
-    public void deleteBySpELKey(String keySpEL, Object[] arguments){
+    public void deleteDefinedCacheKey(String keySpEL, Object[] arguments) {
         String cacheKey=CacheUtil.getDefinedCacheKey(keySpEL, arguments);
         this.deleteByKey(cacheKey);
     }
@@ -158,6 +157,13 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
                             byte[][] keys2=new byte[keys.size()][];
                             keys.toArray(keys2);
                             connection.del(keys2);
+
+                            for(byte[] tmp: keys2) {
+                                JdkSerializationRedisSerializer serializer=
+                                    (JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
+                                String tmpKey=(String)serializer.deserialize(tmp);
+                                autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey);
+                            }
                         }
                         return null;
                     }
@@ -172,7 +178,7 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
                     byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
 
                     connection.del(key);
-
+                    autoLoadHandler.resetAutoLoadLastLoadTime(cacheKey);
                     return null;
                 }
             });

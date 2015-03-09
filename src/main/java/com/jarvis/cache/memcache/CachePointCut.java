@@ -44,7 +44,7 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
     public CacheWrapper<Serializable> get(String key) {
         return (CacheWrapper<Serializable>)memcachedClient.get(key);
     }
-    
+
     /**
      * 批量删除缓存
      * @param keys
@@ -53,12 +53,13 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
         try {
             if(null != keys && !keys.isEmpty()) {
                 for(String key: keys) {
-                    memcachedClient.delete(key);
+                    this.delete(key);
                 }
             }
         } catch(Exception e) {
         }
     }
+
     /**
      * 通过组成Key直接删除
      * @param key
@@ -66,24 +67,34 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
     public void delete(String key) {
         try {
             memcachedClient.delete(key);
+            autoLoadHandler.resetAutoLoadLastLoadTime(key);
         } catch(Exception e) {
         }
     }
-    
-    public void delete(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments,
-        String subKeySpEL){
+
+    /**
+     * 根据默认缓存Key删除缓存
+     * @param cs Class
+     * @param method
+     * @param arguments
+     * @param subKeySpEL
+     * @param deleteByPrefixKey 是否批量删除
+     */
+    public void deleteByDefaultCacheKey(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments, String subKeySpEL) {
         String cacheKey=CacheUtil.getDefaultCacheKey(cs.getName(), method, arguments, subKeySpEL);
         this.delete(cacheKey);
     }
+
     /**
      * 通过Spring EL 表达式，删除缓存
      * @param keySpEL Spring EL表达式
      * @param arguments 参数
      */
-    public void deleteBySpELKey(String keySpEL, Object[] arguments){
+    public void deleteDefinedCacheKey(String keySpEL, Object[] arguments) {
         String cacheKey=CacheUtil.getDefinedCacheKey(keySpEL, arguments);
         this.delete(cacheKey);
     }
+
     public AutoLoadHandler<Serializable> getAutoLoadHandler() {
         return autoLoadHandler;
     }

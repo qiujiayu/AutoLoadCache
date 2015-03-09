@@ -26,7 +26,7 @@ public class CacheUtil {
 
     private static final String SPLIT_STR="_";
 
-    private static final Map<String, Long> processing=new ConcurrentHashMap<String, Long>();
+    private static final Map<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
 
     private static final ReentrantLock lock=new ReentrantLock();
 
@@ -213,22 +213,22 @@ public class CacheUtil {
             return cacheWrapper.getCacheObject();
         }
 
-        Long lastProcTime=null;
+        Boolean isProcessing=null;
         try {
             lock.lock();
-            lastProcTime=processing.get(cacheKey);// 为发减少数据层的并发，增加等待机制。
-            if(null == lastProcTime) {
-                processing.put(cacheKey, System.currentTimeMillis());
+            isProcessing=processing.get(cacheKey);// 为发减少数据层的并发，增加等待机制。
+            if(null == isProcessing) {
+                processing.put(cacheKey, Boolean.TRUE);
             }
         } finally {
             lock.unlock();
         }
         AutoLoadConfig config=autoLoadHandler.getConfig();
-        if(null == lastProcTime) {
+        if(null == isProcessing) {
             return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire, config);
         }
         long startWait=System.currentTimeMillis();
-        while(System.currentTimeMillis() - startWait < 300) {
+        while(System.currentTimeMillis() - startWait < 500) {
             synchronized(lock) {
                 try {
                     lock.wait();
@@ -239,14 +239,11 @@ public class CacheUtil {
             if(null == processing.get(cacheKey)) {// 防止频繁去缓存取数据，造成缓存服务器压力过大
                 cacheWrapper=cacheGeterSeter.get(cacheKey);
                 if(cacheWrapper != null) {
-                    break;
+                    return cacheWrapper.getCacheObject();
                 }
             }
         }
-        if(null == cacheWrapper) {
-            return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire, config);
-        }
-        return cacheWrapper.getCacheObject();
+        return loadData(pjp, autoLoadTO, cacheKey, cacheGeterSeter, expire, config);
     }
 
     /**

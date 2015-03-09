@@ -86,6 +86,17 @@ public class AutoLoadHandler<T> {
         return autoLoadMap.get(cacheKey);
     }
 
+    /**
+     * 重置自动加载时间
+     * @param cacheKey
+     */
+    public void resetAutoLoadLastLoadTime(String cacheKey) {
+        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
+        if(null != autoLoadTO && !autoLoadTO.isLoading()) {
+            autoLoadTO.setLastLoadTime(1L);
+        }
+    }
+
     public void shutdown() {
         running=false;
         autoLoadMap.clear();
@@ -104,14 +115,12 @@ public class AutoLoadHandler<T> {
 
     class SortRunnable implements Runnable {
 
-        private final AutoLoadTOComparator comparator=new AutoLoadTOComparator();
-
         @Override
         public void run() {
             while(running) {
                 if(autoLoadMap.isEmpty() || autoLoadQueue.size() > 0) {// 如果没有数据 或 还有线程在处理，则继续等待
                     try {
-                        Thread.sleep(500);
+                        Thread.sleep(1000);
                     } catch(InterruptedException e) {
                         logger.error(e.getMessage(), e);
                     }
@@ -120,14 +129,8 @@ public class AutoLoadHandler<T> {
 
                 AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
                 tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
-                if(null != config.getSortType()) {
-                    switch(config.getSortType()) {
-                        case OLDEST_FIRST:
-                            Arrays.sort(tmpArr, comparator);
-                            break;
-                        default:
-                            break;
-                    }
+                if(null != config.getSortType() && null != config.getSortType().getComparator()) {
+                    Arrays.sort(tmpArr, config.getSortType().getComparator());
                 }
                 for(AutoLoadTO to: tmpArr) {
                     try {
@@ -161,15 +164,24 @@ public class AutoLoadHandler<T> {
             if(null == autoLoadTO) {
                 return;
             }
+            long now=System.currentTimeMillis();
             if(autoLoadTO.getLastRequestTime() <= 0 || autoLoadTO.getLastLoadTime() <= 0) {
                 return;
             }
             if(autoLoadTO.getRequestTimeout() > 0
-                && (System.currentTimeMillis() - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
+                && (now - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 200) {// 如果效率比较高的请求，就没必要使用自动加载了。
+                autoLoadMap.remove(autoLoadTO.getCacheKey());
+                return;
+            }
+            // 对于使用频率很低的数据，也可以考虑不用自动加载
+            long difFirstRequestTime=now - autoLoadTO.getFirstRequestTime();
+            long oneHourSecs=3600000L;
+            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000
+                && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -179,12 +191,11 @@ public class AutoLoadHandler<T> {
             } else {
                 diff=60;
             }
-            if(!autoLoadTO.isLoading()
-                && (System.currentTimeMillis() - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
+            if(!autoLoadTO.isLoading() && (now - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
                 if(config.isCheckFromCacheBeforeLoad()) {
                     CacheWrapper<T> result=cacheGeterSeter.get(autoLoadTO.getCacheKey());
                     if(null != result && result.getLastLoadTime() > autoLoadTO.getLastLoadTime()
-                        && (System.currentTimeMillis() - result.getLastLoadTime()) < (autoLoadTO.getExpire() - diff) * 1000) {
+                        && (now - result.getLastLoadTime()) < (autoLoadTO.getExpire() - diff) * 1000) {
                         autoLoadTO.setLastLoadTime(result.getLastLoadTime());
                         return;
                     }

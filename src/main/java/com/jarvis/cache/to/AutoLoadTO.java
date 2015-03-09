@@ -16,12 +16,34 @@ public class AutoLoadTO implements Serializable {
 
     private Object args[];
 
+    /**
+     * 缓存Key
+     */
     private String cacheKey;
 
-    private long lastLoadTime=0;
+    /**
+     * 上次从DAO加载数据时间
+     */
+    private long lastLoadTime=0L;
 
-    private long lastRequestTime=0;
+    /**
+     * 上次请求数据时间
+     */
+    private long lastRequestTime=0L;
 
+    /**
+     * 第一次请求数据时间
+     */
+    private long firstRequestTime=0L;
+
+    /**
+     * 请求数据次数
+     */
+    private long requestTimes=0L;
+
+    /**
+     * 缓存过期时间
+     */
     private int expire;
 
     private long requestTimeout=7200L;// 缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据
@@ -33,6 +55,9 @@ public class AutoLoadTO implements Serializable {
      */
     private long loadCnt=0L;
 
+    /**
+     * 从DAO中加载数据，使用时间的总和
+     */
     private long useTotalTime=0L;
 
     public AutoLoadTO(String cacheKey, ProceedingJoinPoint joinPoint, Object args[], int expire, long requestTimeout) {
@@ -52,7 +77,21 @@ public class AutoLoadTO implements Serializable {
     }
 
     public void setLastRequestTime(long lastRequestTime) {
-        this.lastRequestTime=lastRequestTime;
+        synchronized(this) {
+            this.lastRequestTime=lastRequestTime;
+            if(firstRequestTime == 0) {
+                firstRequestTime=lastRequestTime;
+            }
+            requestTimes++;
+        }
+    }
+
+    public long getFirstRequestTime() {
+        return firstRequestTime;
+    }
+
+    public long getRequestTimes() {
+        return requestTimes;
     }
 
     public int getExpire() {
@@ -103,9 +142,11 @@ public class AutoLoadTO implements Serializable {
      * 记录用时
      * @param useTime
      */
-    public synchronized void addUseTotalTime(long useTime) {
-        this.loadCnt++;
-        this.useTotalTime+=useTotalTime;
+    public void addUseTotalTime(long useTime) {
+        synchronized(this) {
+            this.loadCnt++;
+            this.useTotalTime+=useTotalTime;
+        }
     }
 
     /**
