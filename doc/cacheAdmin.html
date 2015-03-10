@@ -27,6 +27,7 @@ table {
   <script type="text/javascript">
   var cacheManagerName="1"
   function removeCache(cacheKey){
+    if(!cacheKey){return;}
     if(confirm("Are you sure?")){
       document.getElementById("act").value="removeCache";
       document.getElementById("cacheKey").value=cacheKey;
@@ -60,10 +61,11 @@ table {
       <option value="2" selected>2</option>
     </select>
     <input type="submit" value="submit"></input>
-  </form>
+  </form>cache key:
+  <input type="text" id="deleteCacheKey"/> <input type="button" onclick="removeCache(document.getElementById('deleteCacheKey').value)" value="remove cache"/>
   <form id="updateCacheForm" action="">
     <input type="hidden" id="act" name="act" value="" />
-    <input type="hidden" id="cacheKey" name="cacheKey" value="" />
+    <input type="hidden" id="cacheKey" name="cacheKey" value=""/>
     <input type="hidden" id="cacheManagerName" name="cacheManagerName" value="" />
   </form>
   <table cellpadding="0" cellspacing="0">

@@ -89,8 +89,8 @@ public class AdminServlet extends HttpServlet {
         html.append("</style>");
         html.append("<script type=\"text/javascript\">");
         html.append("var cacheManagerName=\"" + cacheManagerName + "\";");
-        html.append("function removeCache(cacheKey){");
-        html.append("  if(confirm(\"Are you sure?\")){");
+        html.append("function removeCache(cacheKey){if(!cacheKey){return;}");
+        html.append("  if(confirm(\"确定要删除缓存?\")){");
         html.append("    document.getElementById(\"act\").value=\"removeCache\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
@@ -98,7 +98,7 @@ public class AdminServlet extends HttpServlet {
         html.append("}}");
 
         html.append("function removeAutoloadTO(cacheKey){");
-        html.append("  if(confirm(\"Are you sure?\")){");
+        html.append("  if(confirm(\"确定要删除?\")){");
         html.append("    document.getElementById(\"act\").value=\"removeAutoloadTO\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
@@ -106,7 +106,7 @@ public class AdminServlet extends HttpServlet {
         html.append("}}");
 
         html.append("function resetLastLoadTime(cacheKey){");
-        html.append("  if(confirm(\"Are you sure?\")){");
+        html.append("  if(confirm(\"确定要重置?\")){");
         html.append("    document.getElementById(\"act\").value=\"resetLastLoadTime\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
@@ -126,8 +126,9 @@ public class AdminServlet extends HttpServlet {
                 + tmpName + "</option>");
         }
         html.append("</select>");
-        html.append("<input type=\"submit\" value=\"submit\"></input>");
+        html.append("<input type=\"submit\" value=\"更改缓存\"></input>");
         html.append("</form>");
+        html.append("cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
         html.append("<form id=\"updateCacheForm\" action=\"\">");
         html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheKey\" name=\"cacheKey\" value=\"\" />");
@@ -173,11 +174,11 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
             html.append("    <td>" + tmpTO.getAverageUseTime() + "毫秒</td>");
             html.append("    <td><a href=\"javascript:void()\" onclick=\"removeCache('" + tmpTO.getCacheKey()
-                + "')\">remove cache</a></td>");
+                + "')\">删除缓存</a></td>");
             html.append("    <td><a href=\"javascript:void()\" onclick=\"removeAutoloadTO('" + tmpTO.getCacheKey()
-                + "')\">remove AutoloadTO</a></td>");
+                + "')\">移除 AutoloadTO</a></td>");
             html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + tmpTO.getCacheKey()
-                + "')\">reset last load time</a></td>");
+                + "')\">重置最后加载时间</a></td>");
             html.append("  </tr>");
         }
         html.append("</table>");
