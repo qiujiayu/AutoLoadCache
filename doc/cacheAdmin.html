@@ -1,0 +1,117 @@
+<html>
+<head>
+  <title>Cache Admin</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <style type="text/css">
+th {
+    text-align: center;
+    line-height: 24px;
+    border-top: 1px solid #555555;
+    border-bottom: 1px solid #555555;
+    border-right: 1px solid #555555;
+    word-wrap: break-word;
+}
+
+table {
+    border-left: 1px solid #555555;
+}
+
+ td {
+    border-right: 1px solid #555555;
+    border-bottom: 1px solid #555555;
+    text-align: center;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+  </style>
+  <script type="text/javascript">
+  var cacheManagerName="1"
+  function removeCache(cacheKey){
+    if(confirm("Are you sure?")){
+      document.getElementById("act").value="removeCache";
+      document.getElementById("cacheKey").value=cacheKey;
+      document.getElementById("cacheManagerName").value=cacheManagerName;
+      document.getElementById("updateCacheForm").submit();
+    }
+  }
+  function removeAutoloadTO(cacheKey){
+    if(confirm("Are you sure?")){
+      document.getElementById("act").value="removeAutoloadTO";
+      document.getElementById("cacheKey").value=cacheKey;
+      document.getElementById("cacheManagerName").value=cacheManagerName;
+      document.getElementById("updateCacheForm").submit();
+    }
+  }
+  function resetLastLoadTime(cacheKey){
+    if(confirm("Are you sure?")){
+      document.getElementById("act").value="resetLastLoadTime";
+      document.getElementById("cacheKey").value=cacheKey;
+      document.getElementById("cacheManagerName").value=cacheManagerName;
+      document.getElementById("updateCacheForm").submit();
+    }
+  }
+  </script>
+</head>
+<body>
+  <form  action="">
+    cache manager bean name:
+    <select name="cacheManagerName">
+      <option value="1">1</option>
+      <option value="2" selected>2</option>
+    </select>
+    <input type="submit" value="submit"></input>
+  </form>
+  <form id="updateCacheForm" action="">
+    <input type="hidden" id="act" name="act" value="" />
+    <input type="hidden" id="cacheKey" name="cacheKey" value="" />
+    <input type="hidden" id="cacheManagerName" name="cacheManagerName" value="" />
+  </form>
+  <table cellpadding="0" cellspacing="0">
+    <tr>
+      <th>CacheKey </th>
+      <th>className.method </th>
+      <th>last request time </th>
+      <th>first request time </th>
+      <th>request times </th>
+      <th>expire-time(expire) </th>
+      <th>request timeout </th>
+      <th>last load time </th>
+      <th>load count </th>
+      <th>average use time </th>
+      <th>remove cache </th>
+      <th>remove AutoloadTO </th>
+      <th>reset last load time </th>
+    </tr>
+    <tr>
+      <td>缓存Key</td>
+      <td>类名.方法名</td>
+      <td>上次请求时间</td>
+      <td>第一次请求时间</td>
+      <td>请求次数</td>
+      <td>过期时间(expire)</td>
+      <td>requestTimeout</td>
+      <td>上次加载时间</td>
+      <td>加载次数</td>
+      <td>加载平均用时</td>
+      <td><a href="javascript:void()" onclick="removeCache('1111')">remove cache</a></td>
+      <td><a href="javascript:void()" onclick="removeAutoloadTO('1111')">remove AutoloadTO</a></td>
+      <td><a href="javascript:void()" onclick="resetLastLoadTime('1111')">reset last load time</a></td>
+    </tr>
+    <tr>
+      <td>缓存Key</td>
+      <td>类名.方法名</td>
+      <td>上次请求时间</td>
+      <td>第一次请求时间</td>
+      <td>请求次数</td>
+      <td>过期时间(expire)</td>
+      <td>requestTimeout</td>
+      <td>上次加载时间</td>
+      <td>加载次数</td>
+      <td>加载平均用时</td>
+      <td>删除缓存</td>
+      <td>从自动加载队列中移除</td>
+      <td>重置上次加载时间</td>
+    </tr>
+  </table>
+</body>
+</html>

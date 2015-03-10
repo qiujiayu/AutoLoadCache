@@ -26,186 +26,19 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 如果将应用部署在多台服务器上，理论上可以认为自动加载队列是由这几台服务器共同完成自动加载任务。比如应用部署在A,B两台服务器上，A服务器自动加载了数据D，（因为两台服务器的自动加载队列是独立的，所以加载的顺序也是一样的），接着有用户从B服务器请求数据D，这时会把数据D的最后加载时间更新给B服务器，这样B服务器就不会重复加载数据D。
 
 
-##使用方法
-###1. 实现com.jarvis.cache.CacheGeterSeter 
-下面举个使用Redis做缓存服务器的例子：
+##使用方法 
 
-    package com.jarvis.example.cache;
-    import ... ...
-    /**
-     * 缓存切面，用于拦截数据并调用Redis进行缓存操作
-     */
-    @Aspect
-    public class CachePointCut implements CacheGeterSeter<Serializable> {
+从0.4版本开始增加了Redis及Memcache的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用。
 
-        private static final Logger logger=Logger.getLogger(CachePointCut.class);
+Redis 例子:
 
-        private AutoLoadHandler<Serializable> autoLoadHandler;
-
-        private static List<RedisTemplate<String, Serializable>> redisTemplateList;
-
-        public CachePointCut() {
-            autoLoadHandler=new AutoLoadHandler<Serializable>(10, this, 20000);
-        }
-
-        @Pointcut(value="execution(public !void com.jarvis.example.dao..*.*(..)) && @annotation(cache)", argNames="cache")
-        public void daoCachePointcut(Cache cache) {
-            logger.info("----------------------init daoCachePointcut()--------------------");
-        }
-
-        @Around(value="daoCachePointcut(cache)", argNames="pjp, cache")
-        public Object controllerPointCut(ProceedingJoinPoint pjp, Cache cache) throws Exception {
-            return CacheUtil.proceed(pjp, cache, autoLoadHandler, this);
-        }
-
-        public static RedisTemplate<String, Serializable> getRedisTemplate(String key) {
-            if(null == redisTemplateList || redisTemplateList.isEmpty()) {
-                return null;
-            }
-            int hash=Math.abs(key.hashCode());
-            Integer clientKey=hash % redisTemplateList.size();
-            RedisTemplate<String, Serializable> redisTemplate=redisTemplateList.get(clientKey);
-            return redisTemplate;
-        }
-
-        @Override
-        public void setCache(final String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
-            try {
-                final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);
-                redisTemplate.execute(new RedisCallback<Object>() {
-
-                    @Override
-                    public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                        byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-                        JdkSerializationRedisSerializer serializer=(JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
-                        byte[] val=serializer.serialize(result);
-                        connection.set(key, val);
-                        connection.expire(key, expire);
-                        return null;
-                    }
-                });
-            } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
-            }
-        }
-
-        @Override
-        public CacheWrapper<Serializable> get(final String cacheKey) {
-            CacheWrapper<Serializable> res=null;
-            try {
-                final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);
-                res=redisTemplate.execute(new RedisCallback<CacheWrapper<Serializable>>() {
-
-                    @Override
-                    public CacheWrapper<Serializable> doInRedis(RedisConnection connection) throws DataAccessException {
-                        byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-                        byte[] value=connection.get(key);
-                        if(null != value && value.length > 0) {
-                            JdkSerializationRedisSerializer serializer=
-                                (JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
-                            @SuppressWarnings("unchecked")
-                            CacheWrapper<Serializable> res=(CacheWrapper<Serializable>)serializer.deserialize(value);
-                            return res;
-                        }
-                        return null;
-                    }
-                });
-            } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
-            }
-            return res;
-        }
-
-        /**
-         * 删除缓存
-         * @param cs Class
-         * @param method
-         * @param arguments
-         * @param subKeySpEL
-         * @param deleteByPrefixKey 是否批量删除
-         */
-        public static void delete(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments, String subKeySpEL,
-            boolean deleteByPrefixKey) {
-            try {
-                if(deleteByPrefixKey) {
-                    final String cacheKey=CacheUtil.getDefaultCacheKeyPrefix(cs.getName(), method, arguments, subKeySpEL) + "*";
-                    for(final RedisTemplate<String, Serializable> redisTemplate : redisTemplateList){
-                        redisTemplate.execute(new RedisCallback<Object>() {
-                            @Override
-                            public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                                byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-                                Set<byte[]> keys=connection.keys(key);
-                                if(null != keys && keys.size() > 0) {
-                                    byte[][] keys2=new byte[keys.size()][];
-                                    keys.toArray(keys2);
-                                    connection.del(keys2);
-                                }
-                                return null;
-                            }
-                        });
-                    }
-
-                } else {
-                    final String cacheKey=CacheUtil.getDefaultCacheKey(cs.getName(), method, arguments, subKeySpEL);
-                    final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);
-                    redisTemplate.execute(new RedisCallback<Object>() {
-
-                        @Override
-                        public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                            byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-
-                            connection.del(key);
-
-                            return null;
-                        }
-                    });
-                }
-            } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
-            }
-        }
-
-        public AutoLoadHandler<Serializable> getAutoLoadHandler() {
-            return autoLoadHandler;
-        }
-
-        public void destroy() {
-            autoLoadHandler.shutdown();
-            autoLoadHandler=null;
-        }
-
-        public List<RedisTemplate<String, Serializable>> getRedisTemplateList() {
-            return redisTemplateList;
-        }
-
-        public void setRedisTemplateList(List<RedisTemplate<String, Serializable>> redisTemplateList) {
-            CachePointCut.redisTemplateList=redisTemplateList;
-        }
-
-    }
-
-从上面的代码可以看出，对缓存的操作，还是由业务系统自己来实现的，我们只是对AOP拦截到的ProceedingJoinPoint，进行做一些处理。
-
-java代码实现后，接下来要在spring中进行相关的配置：
-
-    <aop:aspectj-autoproxy proxy-target-class="true"/>
-    <bean id="cachePointCut" class="com.jarvis.example.cache.CachePointCut" destroy-method="destroy">
-        <property name="redisTemplateList">
-            <list>
-                <ref bean="redisTemplate1"/>
-                <ref bean="redisTemplate2"/>
-            </list>
-        </property>
-    </bean>
-
-从0.4版本开始增加了Redis的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用：
-
-      <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
-        <property name="threadCnt" value="10" />
-        <property name="maxElement" value="20000" />
+    <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+        <property name="threadCnt" value="10" /><!-- 线程数量 -->
+        <property name="maxElement" value="20000" /><!-- 自动加载队列容量 -->
         <property name="printSlowLog" value="true" />
         <property name="slowLoadTime" value="1000" />
     </bean>
+
     <bean id="cachePointCut" class="com.jarvis.cache.redis.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
       <property name="redisTemplateList">
@@ -217,17 +50,13 @@ java代码实现后，接下来要在spring中进行相关的配置：
     </bean>
 
     <aop:config>
-      <aop:aspect id="aa" ref="cachePointCut">
+      <aop:aspect ref="cachePointCut">
         <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
-        <aop:around pointcut-ref="daoCachePointcut" method="controllerPointCut" />
+        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
       </aop:aspect>
     </aop:config>
 
-通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
-
-[实例代码](https://github.com/qiujiayu/cache-example)
-
-Memcache例子：
+Memcache 例子：
 
     <bean id="memcachedClient" class="net.spy.memcached.spring.MemcachedClientFactoryBean">
         <property name="servers" value="192.138.11.165:11211,192.138.11.166:11211" />
@@ -248,10 +77,22 @@ Memcache例子：
     </bean>
 
     <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
-      <constructor-arg value="10" /><!-- 线程数量 -->
-      <constructor-arg value="20000" /><!-- 自动加载队列容量 -->
+      <constructor-arg ref="autoLoadConfig" />
       <property name="memcachedClient", ref="memcachedClient" />
     </bean>
+
+    <aop:config>
+      <aop:aspect ref="cachePointCut">
+        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
+        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
+      </aop:aspect>
+    </aop:config>
+
+通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
+
+[实例代码](https://github.com/qiujiayu/cache-example)
+
+
 ###2. 将需要使用缓存的方法前增加@Cache注解
 
     package com.jarvis.example.dao;
@@ -348,6 +189,12 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
         boolean autoload() default false;
 
         /**
+         * 自动缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，优化级高级autoload，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
+         * @return
+         */
+        String autoloadCondition() default "";
+
+        /**
          * 当autoload为true时，缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据,如果requestTimeout为0时，会一直自动加载
          * @return
          */
@@ -364,6 +211,15 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
          */
         String condition() default "";
     }
+
+###AutoLoadConfig 配置说明
+
+* threadCnt 处理自动加载队列的线程数量，默认值为：10;
+* maxElement 自动加载队列中允许存放的最大容量, 默认值为：20000
+* printSlowLog 是否打印比较耗时的请求，默认值为：true
+* slowLoadTime 当请求耗时超过此值时，记录目录（printSlowLog=true 时才有效），单位：毫秒，默认值：500;
+* sortType 自动加载队列排序算法, **0**：按在Map中存储的顺序（即无序）；**1** ：越接近过期时间，越耗时的排在最前；**2**：根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。更详细的说明，请查看代码com.jarvis.cache.type.AutoLoadQueueSortType
+* checkFromCacheBeforeLoad 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序部署的服务器数量比较少，设置为false, 如果部署的服务器比较多，可以考虑设置为true
 
 
 ##注意事项
@@ -428,7 +284,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 在代码重构时，可能会出现改方法返回值类型的情况，而参数不变的情况，那上线部署时，可能会从缓存中取到旧数据类型的数据，可以通过以下方法处理：
 
 * 上线后，快速清理缓存中的数据；
-* 在CacheGeterSeter的实现类中统一加个version；
+* 在ICacheManager的实现类中统一加个version；
 * 在@Cache中加version（未实现）。
 
 ###6. 对于一些比较耗时的方法尽量使用自动加载。
@@ -475,5 +331,6 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 2. 非常方便更换缓存服务器或缓存实现（比如：从Memcache换成Redis）；
 3. 非常方便增减缓存服务器（如：增加Redis的节点数）；
 4. 非常方便增加或去除缓存，方便测试期间排查问题；
-
+5. 通过Spring配置，能很简单方便使用，也很容易修改维护；支持配置多种缓存实现；
+6. 可以通过继承AbstractCacheManager，自己实现维护的操作方法，也可以增加除Memcache、Redis外的缓存技术支持。
 

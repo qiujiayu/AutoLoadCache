@@ -27,6 +27,12 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
+     * 自动缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
+     * @return
+     */
+    String autoloadCondition() default "";
+
+    /**
      * 当autoload为true时，缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据,如果requestTimeout为0时，会一直自动加载
      * @return
      */

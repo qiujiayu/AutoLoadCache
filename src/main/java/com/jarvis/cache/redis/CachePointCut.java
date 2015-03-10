@@ -5,17 +5,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 
+import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.AutoLoadHandler;
-import com.jarvis.cache.CacheGeterSeter;
 import com.jarvis.cache.CacheUtil;
-import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -23,27 +21,14 @@ import com.jarvis.cache.to.CacheWrapper;
  * 缓存切面，用于拦截数据并调用Redis进行缓存
  * @author jiayu.qiu
  */
-// @Aspect
-public class CachePointCut implements CacheGeterSeter<Serializable> {
+public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     private static final Logger logger=Logger.getLogger(CachePointCut.class);
-
-    private AutoLoadHandler<Serializable> autoLoadHandler;
 
     private List<RedisTemplate<String, Serializable>> redisTemplateList;
 
     public CachePointCut(AutoLoadConfig config) {
-        autoLoadHandler=new AutoLoadHandler<Serializable>(this, config);
-    }
-
-    // @Pointcut(value="execution(public !void com.jarvis.cache_example.dao..*.*(..)) && @annotation(cache)", argNames="cache")
-    // public void daoCachePointcut(Cache cache) {
-    // logger.error("----------------------init daoCachePointcut()--------------------");
-    // }
-
-    // @Around(value="daoCachePointcut(cache)", argNames="pjp, cache")
-    public Object controllerPointCut(ProceedingJoinPoint pjp, Cache cache) throws Exception {
-        return CacheUtil.proceed(pjp, cache, autoLoadHandler, this);
+        super(config);
     }
 
     public RedisTemplate<String, Serializable> getRedisTemplate(String key) {
@@ -121,7 +106,7 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
             } else {
                 cacheKey=CacheUtil.getDefaultCacheKey(cs.getName(), method, arguments, subKeySpEL);
             }
-            deleteByKey(cacheKey);
+            delete(cacheKey);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -134,17 +119,19 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
      */
     public void deleteDefinedCacheKey(String keySpEL, Object[] arguments) {
         String cacheKey=CacheUtil.getDefinedCacheKey(keySpEL, arguments);
-        this.deleteByKey(cacheKey);
+        this.delete(cacheKey);
     }
 
     /**
      * 根据缓存Key删除缓存
      * @param cacheKey 如果传进来的值中 带有 * 号，则会使用批量删除（遍历所有Redis服务器）
      */
-    public void deleteByKey(final String cacheKey) {
+    @Override
+    public void delete(final String cacheKey) {
         if(null == redisTemplateList || redisTemplateList.isEmpty()) {
             return;
         }
+        final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
         if(cacheKey.indexOf("*") != -1) {
             for(final RedisTemplate<String, Serializable> redisTemplate: redisTemplateList) {
                 redisTemplate.execute(new RedisCallback<Object>() {
@@ -183,15 +170,6 @@ public class CachePointCut implements CacheGeterSeter<Serializable> {
                 }
             });
         }
-    }
-
-    public AutoLoadHandler<Serializable> getAutoLoadHandler() {
-        return autoLoadHandler;
-    }
-
-    public void destroy() {
-        autoLoadHandler.shutdown();
-        autoLoadHandler=null;
     }
 
     public List<RedisTemplate<String, Serializable>> getRedisTemplateList() {

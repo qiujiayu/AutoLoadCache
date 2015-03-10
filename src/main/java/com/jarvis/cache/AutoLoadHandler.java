@@ -25,7 +25,7 @@ public class AutoLoadHandler<T> {
      */
     private Map<String, AutoLoadTO> autoLoadMap;
 
-    private CacheGeterSeter<T> cacheGeterSeter;
+    private ICacheManager<T> cacheManager;
 
     /**
      * 缓存池
@@ -50,11 +50,11 @@ public class AutoLoadHandler<T> {
     private AutoLoadConfig config;
 
     /**
-     * @param cacheGeterSeter 缓存的set,get方法实现类
+     * @param cacheManager 缓存的set,get方法实现类
      * @param config 配置
      */
-    public AutoLoadHandler(CacheGeterSeter<T> cacheGeterSeter, AutoLoadConfig config) {
-        this.cacheGeterSeter=cacheGeterSeter;
+    public AutoLoadHandler(ICacheManager<T> cacheManager, AutoLoadConfig config) {
+        this.cacheManager=cacheManager;
         this.config=config;
         this.running=true;
         this.threads=new Thread[this.config.getThreadCnt()];
@@ -84,6 +84,13 @@ public class AutoLoadHandler<T> {
             return null;
         }
         return autoLoadMap.get(cacheKey);
+    }
+
+    public void removeAutoLoadTO(String cacheKey) {
+        if(null == autoLoadMap) {
+            return;
+        }
+        autoLoadMap.remove(cacheKey);
     }
 
     /**
@@ -208,7 +215,7 @@ public class AutoLoadHandler<T> {
             }
             if(!autoLoadTO.isLoading() && (now - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
                 if(config.isCheckFromCacheBeforeLoad()) {
-                    CacheWrapper<T> result=cacheGeterSeter.get(autoLoadTO.getCacheKey());
+                    CacheWrapper<T> result=cacheManager.get(autoLoadTO.getCacheKey());
                     if(null != result && result.getLastLoadTime() > autoLoadTO.getLastLoadTime()
                         && (now - result.getLastLoadTime()) < (autoLoadTO.getExpire() - diff) * 1000) {
                         autoLoadTO.setLastLoadTime(result.getLastLoadTime());
@@ -230,7 +237,7 @@ public class AutoLoadHandler<T> {
                     CacheWrapper<T> tmp=new CacheWrapper<T>();
                     tmp.setCacheObject(result);
                     tmp.setLastLoadTime(System.currentTimeMillis());
-                    cacheGeterSeter.setCache(autoLoadTO.getCacheKey(), tmp, autoLoadTO.getExpire());
+                    cacheManager.setCache(autoLoadTO.getCacheKey(), tmp, autoLoadTO.getExpire());
                     autoLoadTO.setLastLoadTime(System.currentTimeMillis());
                     autoLoadTO.addUseTotalTime(useTime);
                 } catch(Exception e) {
