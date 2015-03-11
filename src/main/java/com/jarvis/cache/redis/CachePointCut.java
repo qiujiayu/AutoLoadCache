@@ -51,8 +51,9 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
                     byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
                     JdkSerializationRedisSerializer serializer=(JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
                     byte[] val=serializer.serialize(result);
-                    connection.set(key, val);
-                    connection.expire(key, expire);
+                    // connection.set(key, val);
+                    // connection.expire(key, expire);
+                    connection.setEx(key, expire, val);
                     return null;
                 }
             });
@@ -124,7 +125,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     /**
      * 根据缓存Key删除缓存
-     * @param cacheKey 如果传进来的值中 带有 * 号，则会使用批量删除（遍历所有Redis服务器）
+     * @param cacheKey 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）
      */
     @Override
     public void delete(final String cacheKey) {
@@ -132,7 +133,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
-        if(cacheKey.indexOf("*") != -1) {
+        if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
             for(final RedisTemplate<String, Serializable> redisTemplate: redisTemplateList) {
                 redisTemplate.execute(new RedisCallback<Object>() {
 

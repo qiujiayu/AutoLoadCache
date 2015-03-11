@@ -14,4 +14,6 @@ public interface ICacheManager<T> {
     void delete(String key);
 
     AutoLoadHandler<T> getAutoLoadHandler();
+
+    void destroy();
 }

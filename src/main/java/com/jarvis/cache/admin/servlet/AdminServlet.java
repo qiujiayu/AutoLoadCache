@@ -16,6 +16,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.lib.util.BeanUtil;
 
 /**
  * 缓存管理页面
@@ -38,12 +39,17 @@ public class AdminServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html");
         String cacheManagerName=req.getParameter("cacheManagerName");
+        if(null == cacheManagerNames || cacheManagerNames.length == 0) {
+            String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
+            resp.getWriter().println(errMsg);
+            return;
+        }
+        if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
+            cacheManagerName=cacheManagerNames[0];
+        }
         printHtmlHead(resp, cacheManagerName);
         try {
-            if(null == cacheManagerNames || cacheManagerNames.length == 0) {
-                String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
-                throw new Exception(errMsg);
-            }
+
             ApplicationContext ctx=
                 WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
             ICacheManager<?> cacheManager=(ICacheManager<?>)ctx.getBean(cacheManagerName);
@@ -51,11 +57,16 @@ public class AdminServlet extends HttpServlet {
                 String errMsg=cacheManagerName + " is not exists!";
                 throw new Exception(errMsg);
             }
-            doServices(req, resp, cacheManager);
-            printForm(resp, cacheManagerName);
-            printList(resp, cacheManager);
+            String act=req.getParameter("act");
+            if(null != act) {
+                doServices(req, resp, cacheManager);
+            } else {
+                printForm(resp, cacheManagerName);
+                printList(req, resp, cacheManager, cacheManagerName);
+            }
         } catch(Exception e) {
-            resp.getOutputStream().println(e.getMessage());
+            e.printStackTrace();
+            resp.getWriter().println(e.getMessage());
         }
 
         printCloseHtml(resp);
@@ -66,10 +77,24 @@ public class AdminServlet extends HttpServlet {
         String cacheKey=req.getParameter("cacheKey");
         if("removeCache".equals(act)) {
             cacheManager.delete(cacheKey);
+            resp.getWriter().println("处理成功！");
         } else if("removeAutoloadTO".equals(act)) {
             cacheManager.getAutoLoadHandler().removeAutoLoadTO(cacheKey);
+            resp.getWriter().println("处理成功！");
         } else if("resetLastLoadTime".equals(act)) {
             cacheManager.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKey);
+            resp.getWriter().println("处理成功！");
+        } else if("showArgs".equals(act)) {
+            AutoLoadTO tmpTO=cacheManager.getAutoLoadHandler().getAutoLoadTO(cacheKey);
+            if(null != tmpTO && null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
+                Object[] args=tmpTO.getArgs();
+                int len=args.length;
+                StringBuilder html=new StringBuilder();
+                for(int i=0; i < len; i++) {
+                    html.append("#args[" + i + "] = ").append(BeanUtil.toString(args[i])).append("<hr/>");
+                }
+                resp.getWriter().println(html.toString());
+            }
         }
     }
 
@@ -113,12 +138,12 @@ public class AdminServlet extends HttpServlet {
         html.append("    document.getElementById(\"updateCacheForm\").submit();");
         html.append("}}");
         html.append("</script></head><body>");
-        resp.getOutputStream().println(html.toString());
+        resp.getWriter().println(html.toString());
     }
 
     private void printForm(HttpServletResponse resp, String cacheManagerName) throws IOException {
         StringBuilder html=new StringBuilder();
-        html.append("<form  action=\"\">");
+        html.append("<form  action=\"\" method=\"get\">");
         html.append("cache manager bean name:");
         html.append("<select name=\"cacheManagerName\">");
         for(String tmpName: cacheManagerNames) {
@@ -129,15 +154,21 @@ public class AdminServlet extends HttpServlet {
         html.append("<input type=\"submit\" value=\"更改缓存\"></input>");
         html.append("</form>");
         html.append("cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
-        html.append("<form id=\"updateCacheForm\" action=\"\">");
+        html.append("<form id=\"updateCacheForm\" action=\"\" method=\"get\" target=\"_blank\">");
         html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheKey\" name=\"cacheKey\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheManagerName\" name=\"cacheManagerName\" value=\"\" />");
         html.append("</form>");
-        resp.getOutputStream().println(html.toString());
+        resp.getWriter().println(html.toString());
     }
 
-    private void printList(HttpServletResponse resp, ICacheManager<?> cacheManager) throws IOException {
+    private void printList(HttpServletRequest req, HttpServletResponse resp, ICacheManager<?> cacheManager, String cacheManagerName)
+        throws IOException {
+        AutoLoadTO queue[]=cacheManager.getAutoLoadHandler().getAutoLoadQueue();
+        if(null == queue || queue.length == 0) {
+            resp.getWriter().println("自动加载队列中无数据！");
+            return;
+        }
         StringBuilder html=new StringBuilder();
         html.append("<table cellpadding=\"0\" cellspacing=\"0\">");
         html.append("  <tr>");
@@ -154,8 +185,9 @@ public class AdminServlet extends HttpServlet {
         html.append("    <th>remove cache </th>");
         html.append("    <th>remove AutoloadTO </th>");
         html.append("    <th>reset last load time </th>");
+        html.append("    <th>show arguments </th>");
         html.append("  </tr>");
-        AutoLoadTO queue[]=cacheManager.getAutoLoadHandler().getAutoLoadQueue();
+
         for(AutoLoadTO tmpTO: queue) {
             ProceedingJoinPoint pjp=tmpTO.getJoinPoint();
             String className=pjp.getTarget().getClass().getName();
@@ -166,9 +198,9 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime()) + "</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getFirstRequestTime()) + "</td>");
             html.append("    <td>" + tmpTO.getRequestTimes() + "次</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getExpire()) + "(" + tmpTO.getExpire()
+            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getExpire() * 1000) + "(" + tmpTO.getExpire()
                 + "秒)</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getRequestTimeout()) + "("
+            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getRequestTimeout() * 1000) + "("
                 + tmpTO.getRequestTimeout() + "秒)</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime()) + "</td>");
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
@@ -179,15 +211,21 @@ public class AdminServlet extends HttpServlet {
                 + "')\">移除 AutoloadTO</a></td>");
             html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + tmpTO.getCacheKey()
                 + "')\">重置最后加载时间</a></td>");
+            html.append("<td>");
+            if(null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
+                html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName="
+                    + cacheManagerName + "&cacheKey=" + tmpTO.getCacheKey() + "\" target=\"_blank\">show args values</a>");
+            }
+            html.append("</td>");
             html.append("  </tr>");
         }
         html.append("</table>");
 
-        resp.getOutputStream().println(html.toString());
+        resp.getWriter().println(html.toString());
     }
 
     private void printCloseHtml(HttpServletResponse resp) throws IOException {
-        resp.getOutputStream().println("</body></html>");
+        resp.getWriter().println("</body></html>");
     }
 
     private String getDateFormat(long time) {
@@ -195,7 +233,7 @@ public class AdminServlet extends HttpServlet {
             return "";
         }
         Date date=new Date(time);
-        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSS");
+        SimpleDateFormat df=new SimpleDateFormat("MM/dd/HH:mm:ss");
         return df.format(date);
     }
 }

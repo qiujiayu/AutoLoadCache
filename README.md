@@ -334,3 +334,26 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 5. 通过Spring配置，能很简单方便使用，也很容易修改维护；支持配置多种缓存实现；
 6. 可以通过继承AbstractCacheManager，自己实现维护的操作方法，也可以增加除Memcache、Redis外的缓存技术支持。
 
+##缓存管理页面
+
+从1.0版本开始增加缓存管理页面。
+
+web.xml配置：
+
+    <servlet>
+      <servlet-name>cacheadmin</servlet-name>
+      <servlet-class>com.jarvis.cache.admin.servlet.AdminServlet</servlet-class>
+      <init-param>
+        <param-name>cacheManagerNames</param-name>
+        <param-value>cachePointCut</param-value>
+      </init-param>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+      <servlet-name>cacheadmin</servlet-name>
+      <url-pattern>/cacheadmin</url-pattern>
+    </servlet-mapping>
+
+显示内容，如下图所示：
+![Alt 缓存管理](/doc/cache_admin.png "缓存管理")
+

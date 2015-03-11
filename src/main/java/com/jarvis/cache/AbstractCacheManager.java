@@ -37,7 +37,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
     public AutoLoadHandler<T> getAutoLoadHandler() {
         return this.autoLoadHandler;
     }
-    
+
     /**
      * 生成缓存 Key
      * @param pjp
@@ -177,6 +177,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         }
     }
 
+    @Override
     public void destroy() {
         autoLoadHandler.shutdown();
         autoLoadHandler=null;
