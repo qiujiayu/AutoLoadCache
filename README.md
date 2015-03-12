@@ -28,6 +28,9 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
 ##使用方法 
 
+###1. Spring AOP配置
+
+
 从0.4版本开始增加了Redis及Memcache的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用。
 
 Redis 例子:
