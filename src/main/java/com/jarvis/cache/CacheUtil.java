@@ -15,6 +15,8 @@ public class CacheUtil {
 
     private static final String SPLIT_STR="_";
 
+    private static final String ARGS="args";
+
     private static final ExpressionParser parser=new SpelExpressionParser();
 
     /**
@@ -60,9 +62,13 @@ public class CacheUtil {
      * @return
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
-        EvaluationContext context=new StandardEvaluationContext();
-        context.setVariable("args", arguments);
-        return parser.parseExpression(keySpEL).getValue(context, String.class);
+        if(keySpEL.indexOf("#" + ARGS) != -1) {
+            EvaluationContext context=new StandardEvaluationContext();
+            context.setVariable(ARGS, arguments);
+            return parser.parseExpression(keySpEL).getValue(context, String.class);
+        } else {
+            return keySpEL;
+        }
     }
 
     /**
@@ -117,9 +123,9 @@ public class CacheUtil {
     public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
         sb.append(className).append(".").append(method);
-        if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.trim().length() > 0) {
+        if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
             EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable("args", arguments);
+            context.setVariable(ARGS, arguments);
             String subKey=parser.parseExpression(subKeySpEL).getValue(context, String.class);
             if(null != subKey && subKey.trim().length() > 0) {
                 sb.append(".").append(subKey);
@@ -133,7 +139,7 @@ public class CacheUtil {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
             EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable("args", arguments);
+            context.setVariable(ARGS, arguments);
             rv=parser.parseExpression(cache.condition()).getValue(context, Boolean.class);
         }
         return rv;
@@ -143,7 +149,7 @@ public class CacheUtil {
         boolean autoload=cache.autoload();
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
             EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable("args", arguments);
+            context.setVariable(ARGS, arguments);
             autoload=parser.parseExpression(cache.autoloadCondition()).getValue(context, Boolean.class);
         }
         return autoload;

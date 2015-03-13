@@ -154,19 +154,45 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
     package com.jarvis.example.dao;
     import ... ...
     public class GoodsCommentDAO{
+        private CachePointCut cachePointCut;
         @Cache(expire=600, subKeySpEL="#args[0]", autoload=true, requestTimeout=18000)
         public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
             ... ...
         }
-        public void addComment(Long goodsId, String comment) {
+        public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
-            deleteCache(goodsId);
+            deleteCache(comment.goodsId);
         }
         private void deleteCache(Long goodsId) {
             Object arguments[]=new Object[]{goodsId};
-            CachePointCut.delete(this.getClass(), "getCommentListByGoodsId", arguments, "#args[0]", true);
+            cachePointCut.delete(this.getClass(), "getCommentListByGoodsId", arguments, "#args[0]", true);
         }
     }
+
+从1.1版本开始增加了@CacheDelete方法进行删除缓存，如果用@CacheDelete 来删除缓存的话，在@Cache中使用自定义缓存Key，将上面的代码重新改一下:
+
+
+    package com.jarvis.example.dao;
+    import ... ...
+    public class GoodsCommentDAO{
+        @Cache(expire=600, key="'goods_comment_'+#args[0]+'.list__'+#args[1]+'_'+#args[2]", autoload=true, requestTimeout=18000)
+        public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
+            ... ...
+        }
+
+        @CacheDelete({"'goods_comment_'+#args[0].goodsId+'*'"})
+        public void addComment(Comment comment) {
+            ... ...// 省略添加评论代码
+        }
+    }
+
+删除缓存AOP 配置：
+
+    <aop:aspect ref="cachePointCut" order="1000">
+      <aop:pointcut id="deleteCachePointcut"
+        expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
+      <aop:after pointcut-ref="deleteCachePointcut" method="deleteCache" />
+    </aop:aspect>
 
 ###@Cache
 

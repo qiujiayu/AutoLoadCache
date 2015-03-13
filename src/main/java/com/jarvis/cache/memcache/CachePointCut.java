@@ -38,6 +38,9 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
      */
     @Override
     public void delete(String key) {
+        if(null == memcachedClient || null == key) {
+            return;
+        }
         try {
             memcachedClient.delete(key);
             this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);

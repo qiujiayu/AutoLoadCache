@@ -129,7 +129,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
      */
     @Override
     public void delete(final String cacheKey) {
-        if(null == redisTemplateList || redisTemplateList.isEmpty()) {
+        if(null == redisTemplateList || redisTemplateList.isEmpty() || null==cacheKey) {
             return;
         }
         final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();

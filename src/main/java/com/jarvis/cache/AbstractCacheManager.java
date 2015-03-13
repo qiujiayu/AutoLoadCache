@@ -6,9 +6,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -57,6 +59,13 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         return cacheKey;
     }
 
+    /**
+     * 处理@Cache 拦截
+     * @param pjp
+     * @param cache
+     * @return
+     * @throws Exception
+     */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
         Object[] arguments=pjp.getArgs();
         if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
@@ -173,6 +182,23 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             processing.remove(cacheKey);
             synchronized(lock) {
                 lock.notifyAll();
+            }
+        }
+    }
+
+    /**
+     * 处理@CacheDelete 拦截
+     * @param pjp
+     * @param cacheDelete
+     * @throws Exception
+     */
+    public void deleteCache(JoinPoint jp, CacheDelete cacheDelete) {
+        Object[] arguments=jp.getArgs();
+        String[] keys=cacheDelete.value();
+        if(null != keys && keys.length > 0) {
+            for(int i=0; i < keys.length; i++) {
+                String key=CacheUtil.getDefinedCacheKey(keys[i], arguments);
+                this.delete(key);
             }
         }
     }
