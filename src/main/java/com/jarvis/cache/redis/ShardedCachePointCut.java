@@ -34,7 +34,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         super(config);
     }
 
-    private void returnResource(ShardedJedis shardedJedis, boolean broken) {
+    private void returnResource(ShardedJedis shardedJedis) {
         shardedJedis.close();
     }
 
@@ -44,16 +44,14 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         ShardedJedis shardedJedis=null;
-        boolean broken=false;
         try {
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
             jedis.setex(keySerializer.serialize(cacheKey), expire, valueSerializer.serialize(result));
         } catch(Exception ex) {
-            broken=true;
             logger.error(ex.getMessage(), ex);
         } finally {
-            returnResource(shardedJedis, broken);
+            returnResource(shardedJedis);
         }
     }
 
@@ -65,17 +63,15 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         }
         CacheWrapper<Serializable> res=null;
         ShardedJedis shardedJedis=null;
-        boolean broken=false;
         try {
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
             byte bytes[]=jedis.get(keySerializer.serialize(cacheKey));
             res=(CacheWrapper<Serializable>)valueSerializer.deserialize(bytes);
         } catch(Exception ex) {
-            broken=true;
             logger.error(ex.getMessage(), ex);
         } finally {
-            returnResource(shardedJedis, broken);
+            returnResource(shardedJedis);
         }
         return res;
     }
@@ -123,10 +119,11 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
-
+        ShardedJedis shardedJedis=null;
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。
-            Collection<Jedis> list=shardedJedisPool.getResource().getAllShards();
             try {
+                shardedJedis=shardedJedisPool.getResource();
+                Collection<Jedis> list=shardedJedis.getAllShards();
                 for(Jedis jedis: list) {
                     Set<byte[]> keys=jedis.keys(keySerializer.serialize(cacheKey));
                     if(null != keys && keys.size() > 0) {
@@ -141,20 +138,19 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
                 }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
+            } finally {
+                returnResource(shardedJedis);
             }
         } else {
-            ShardedJedis shardedJedis=null;
-            boolean broken=false;
             try {
                 shardedJedis=shardedJedisPool.getResource();
                 Jedis jedis=shardedJedis.getShard(cacheKey);
                 jedis.del(keySerializer.serialize(cacheKey));
                 autoLoadHandler.resetAutoLoadLastLoadTime(cacheKey);
             } catch(Exception ex) {
-                broken=true;
                 logger.error(ex.getMessage(), ex);
             } finally {
-                returnResource(shardedJedis, broken);
+                returnResource(shardedJedis);
             }
         }
     }
