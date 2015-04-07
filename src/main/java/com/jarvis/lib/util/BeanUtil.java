@@ -2,6 +2,7 @@ package com.jarvis.lib.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.AccessibleObject;
@@ -154,16 +155,27 @@ public class BeanUtil {
      * @throws Exception
      */
     public static Object deepClone(Object obj) throws Exception {
-        if(null == obj) {
+        return deserialize(serialize(obj));
+    }
+    
+    public static byte[] serialize(Object obj) throws IOException {
+        if(null==obj){
             return null;
         }
         // 将对象写到流里
         ByteArrayOutputStream bo=new ByteArrayOutputStream();
         ObjectOutputStream oo=new ObjectOutputStream(bo);
         oo.writeObject(obj);
-        // 从流里读出来
-        ByteArrayInputStream bi=new ByteArrayInputStream(bo.toByteArray());
+        oo.flush();
+        return bo.toByteArray();
+    }
+    
+    public static Object deserialize(byte[] bytes) throws Exception {
+        if(null==bytes || bytes.length==0){
+            return null;
+        }
+        ByteArrayInputStream bi=new ByteArrayInputStream(bytes);
         ObjectInputStream oi=new ObjectInputStream(bi);
-        return(oi.readObject());
+        return oi.readObject();
     }
 }

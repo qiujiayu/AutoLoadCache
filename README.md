@@ -386,3 +386,7 @@ web.xml配置：
 显示内容，如下图所示：
 ![Alt 缓存管理](/doc/cache_admin.png "缓存管理")
 
+##未来计划：zookeeper + redis集群方案实现
+
+大概思路是：使用一个独立程序去管理各个业务的redis配置，这程序启动时把相关的配置写到zookeeper中，然后去ping各个redis，如果redis ping不通，则会从zookeeper中删除，如果恢复了，则加回到zookeeper中。
+应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
