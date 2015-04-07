@@ -195,7 +195,7 @@ public class AutoLoadHandler<T> {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
-            if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 200) {// 如果效率比较高的请求，就没必要使用自动加载了。
+            if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {// 如果效率比较高的请求，就没必要使用自动加载了。
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
