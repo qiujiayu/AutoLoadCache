@@ -69,7 +69,6 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         try {
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
-            System.out.println(jedis.getClient().getHost() + ":" + jedis.getClient().getPort());
             byte bytes[]=jedis.get(keySerializer.serialize(cacheKey));
             res=(CacheWrapper<Serializable>)valueSerializer.deserialize(bytes);
         } catch(Exception ex) {
@@ -139,7 +138,6 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
                             autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey);
                         }
                     }
-                    System.out.println(cacheKey+"-->" + jedis.getClient().getHost() + ":" + jedis.getClient().getPort()+" size:"+keys.size());
                 }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
