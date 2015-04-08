@@ -222,7 +222,6 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                     }
                     break;
             }
-            System.out.println(key);
             if(null != key && key.trim().length() > 0) {
                 this.delete(key);
             }
