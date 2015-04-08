@@ -23,6 +23,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     @Override
     public void setCache(String cacheKey, CacheWrapper<Serializable> result, int expire) {
+        result.setLastLoadTime(System.currentTimeMillis());
         memcachedClient.set(cacheKey, expire, result);
     }
 

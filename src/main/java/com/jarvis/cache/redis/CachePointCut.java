@@ -43,6 +43,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     @Override
     public void setCache(final String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
         try {
+            result.setLastLoadTime(System.currentTimeMillis());
             final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);
             redisTemplate.execute(new RedisCallback<Object>() {
 

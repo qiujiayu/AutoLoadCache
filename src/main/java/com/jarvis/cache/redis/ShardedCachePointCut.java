@@ -45,6 +45,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         }
         ShardedJedis shardedJedis=null;
         try {
+            result.setLastLoadTime(System.currentTimeMillis());
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
             jedis.setex(keySerializer.serialize(cacheKey), expire, valueSerializer.serialize(result));
