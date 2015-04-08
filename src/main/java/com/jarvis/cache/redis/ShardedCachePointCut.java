@@ -43,6 +43,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         if(null == shardedJedisPool || null == cacheKey) {
             return;
         }
+        System.out.println(cacheKey);
         ShardedJedis shardedJedis=null;
         try {
             result.setLastLoadTime(System.currentTimeMillis());

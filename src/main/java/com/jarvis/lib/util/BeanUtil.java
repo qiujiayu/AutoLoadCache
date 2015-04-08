@@ -157,9 +157,9 @@ public class BeanUtil {
     public static Object deepClone(Object obj) throws Exception {
         return deserialize(serialize(obj));
     }
-    
+
     public static byte[] serialize(Object obj) throws IOException {
-        if(null==obj){
+        if(null == obj) {
             return null;
         }
         // 将对象写到流里
@@ -169,9 +169,9 @@ public class BeanUtil {
         oo.flush();
         return bo.toByteArray();
     }
-    
+
     public static Object deserialize(byte[] bytes) throws Exception {
-        if(null==bytes || bytes.length==0){
+        if(null == bytes || bytes.length == 0) {
             return null;
         }
         ByteArrayInputStream bi=new ByteArrayInputStream(bytes);

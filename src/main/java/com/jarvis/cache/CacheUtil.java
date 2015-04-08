@@ -55,6 +55,12 @@ public class CacheUtil {
         return tmp.toString();
     }
 
+    public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
+        EvaluationContext context=new StandardEvaluationContext();
+        context.setVariable(ARGS, arguments);
+        return parser.parseExpression(keySpEL).getValue(context, valueType);
+    }
+
     /**
      * 生成自定义缓存Key
      * @param keySpEL
@@ -63,9 +69,7 @@ public class CacheUtil {
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
         if(keySpEL.indexOf("#" + ARGS) != -1) {
-            EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable(ARGS, arguments);
-            return parser.parseExpression(keySpEL).getValue(context, String.class);
+            return getElValue(keySpEL, arguments, String.class);
         } else {
             return keySpEL;
         }
@@ -124,9 +128,7 @@ public class CacheUtil {
         StringBuilder sb=new StringBuilder();
         sb.append(className).append(".").append(method);
         if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
-            EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable(ARGS, arguments);
-            String subKey=parser.parseExpression(subKeySpEL).getValue(context, String.class);
+            String subKey=getElValue(subKeySpEL, arguments, String.class);
             if(null != subKey && subKey.trim().length() > 0) {
                 sb.append(".").append(subKey);
             }
@@ -138,9 +140,7 @@ public class CacheUtil {
     public static boolean isCacheable(Cache cache, Object[] arguments) {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
-            EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable(ARGS, arguments);
-            rv=parser.parseExpression(cache.condition()).getValue(context, Boolean.class);
+            rv=getElValue(cache.condition(), arguments, Boolean.class);
         }
         return rv;
     }
@@ -148,9 +148,7 @@ public class CacheUtil {
     public static boolean isAutoload(Cache cache, Object[] arguments) {
         boolean autoload=cache.autoload();
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
-            EvaluationContext context=new StandardEvaluationContext();
-            context.setVariable(ARGS, arguments);
-            autoload=parser.parseExpression(cache.autoloadCondition()).getValue(context, Boolean.class);
+            autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
         }
         return autoload;
     }

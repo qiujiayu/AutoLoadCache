@@ -11,6 +11,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
+import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -194,10 +195,35 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      */
     public void deleteCache(JoinPoint jp, CacheDelete cacheDelete) {
         Object[] arguments=jp.getArgs();
-        String[] keys=cacheDelete.value();
-        if(null != keys && keys.length > 0) {
-            for(int i=0; i < keys.length; i++) {
-                String key=CacheUtil.getDefinedCacheKey(keys[i], arguments);
+        CacheDeleteKey[] keys=cacheDelete.value();
+        if(null == keys || keys.length == 0) {
+            return;
+        }
+        for(int i=0; i < keys.length; i++) {
+            CacheDeleteKey keyConfig=keys[i];
+            String key=null;
+            switch(keyConfig.keyType()) {
+                case DEFINED:
+                    key=CacheUtil.getDefinedCacheKey(keyConfig.value(), arguments);
+                    break;
+                case DEFAULT:
+                    String className=keyConfig.cls().getName();
+                    String method=keyConfig.method();
+                    String subKeySpEL=keyConfig.subKeySpEL();
+                    if(keyConfig.deleteByPrefixKey()) {
+                        key=CacheUtil.getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL) + "*";
+                    } else {
+                        int len=keyConfig.argsEl().length;
+                        Object[] args=new Object[len];
+                        for(int j=0; j < len; j++) {
+                            args[j]=CacheUtil.getElValue(keyConfig.argsEl()[j], arguments, Object.class);
+                        }
+                        key=CacheUtil.getDefaultCacheKey(className, method, args, subKeySpEL);
+                    }
+                    break;
+            }
+            System.out.println(key);
+            if(null != key && key.trim().length() > 0) {
                 this.delete(key);
             }
         }

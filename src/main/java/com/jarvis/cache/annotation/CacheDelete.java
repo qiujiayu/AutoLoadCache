@@ -9,9 +9,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface CacheDelete {
 
-    /**
-     * 删除缓存的Key，支持使用SpEL表达式
-     * @return
-     */
-    String[] value();
+    CacheDeleteKey[] value();
 }
