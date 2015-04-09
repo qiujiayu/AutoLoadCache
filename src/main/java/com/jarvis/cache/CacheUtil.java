@@ -1,5 +1,8 @@
 package com.jarvis.cache;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -18,6 +21,7 @@ public class CacheUtil {
     private static final String ARGS="args";
 
     private static final ExpressionParser parser=new SpelExpressionParser();
+    private static final Pattern pattern_hash=Pattern.compile("(\\+?)\\$hash\\((.[^)]*)\\)");
 
     /**
      * 生成字符串的HashCode
@@ -75,10 +79,15 @@ public class CacheUtil {
      * @return
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
-        // keySpEL=keySpEL.replaceAll("$toString(", "T(com.jarvis.lib.util.BeanUtil).toString(");
+        Matcher m=pattern_hash.matcher(keySpEL);
+        StringBuffer sb=new StringBuffer();
+        while(m.find()) {
+            m.appendReplacement(sb, "$1T(com.jarvis.cache.CacheUtil).getUniqueHashStr($2)");
+        }
+        m.appendTail(sb);
         EvaluationContext context=new StandardEvaluationContext();
         context.setVariable(ARGS, arguments);
-        return parser.parseExpression(keySpEL).getValue(context, valueType);
+        return parser.parseExpression(sb.toString()).getValue(context, valueType);
     }
 
     /**
