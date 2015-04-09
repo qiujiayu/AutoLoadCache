@@ -187,7 +187,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
             ... ...
         }
 
-        @CacheDelete({"'goods_comment_'+#args[0].goodsId+'*'"}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        @CacheDelete({@CacheDeleteKey(value="'goods_comment_'+#args[0].goodsId+'*'", keyType=CacheKeyType.DEFINED)}) // 删除当前所属商品的所有评论，不删除其它商品评论
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
         }
