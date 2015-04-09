@@ -119,6 +119,10 @@ Memcache 例子：
 
     为了使用方便，在Spring EL表达式，"$hash(...)"会被替换为："T(com.jarvis.cache.CacheUtil).getUniqueHashStr(...)"
 
+    在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
+
+
+
 
 2. 默认生成缓存Key的方法：CacheUtil.getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL)
 

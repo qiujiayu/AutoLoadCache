@@ -42,6 +42,9 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     @Override
     public void setCache(final String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
+        if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
+            throw new java.lang.RuntimeException("cacheKey:" + cacheKey + "; has '*' or '?'");
+        }
         try {
             result.setLastLoadTime(System.currentTimeMillis());
             final RedisTemplate<String, Serializable> redisTemplate=getRedisTemplate(cacheKey);

@@ -21,6 +21,7 @@ public class CacheUtil {
     private static final String ARGS="args";
 
     private static final ExpressionParser parser=new SpelExpressionParser();
+
     private static final Pattern pattern_hash=Pattern.compile("(\\+?)\\$hash\\((.[^)]*)\\)");
 
     /**
