@@ -48,36 +48,25 @@ public class BeanUtil {
             return ((Enum)obj).name();
         } else if(cl.isArray()) {
             String r="[";
-            for(int i=0; i < Array.getLength(obj); i++) {
+            int len=Array.getLength(obj);
+            for(int i=0; i < len; i++) {
                 if(i > 0) {
                     r+=",";
                 }
                 Object val=Array.get(obj, i);
-                if(null == val) {
-                    r+="null";
-                } else if(isPrimitive(val)) {
-                    r+=String.valueOf(val);
-                } else {
-                    r+=toString(val);
-                }
+                r+=toString(val);
             }
             return r + "]";
         } else if(obj instanceof Collection) {
             Collection tempCol=(Collection)obj;
-            Object[] tempArr=tempCol.toArray();
+            Iterator it=tempCol.iterator();
             String r="[";
-            for(int i=0; i < tempArr.length; i++) {
+            for(int i=0; it.hasNext(); i++) {
                 if(i > 0) {
                     r+=",";
                 }
-                Object val=tempArr[i];
-                if(null == val) {
-                    r+="null";
-                } else if(isPrimitive(val)) {
-                    r+=String.valueOf(val);
-                } else {
-                    r+=toString(val);
-                }
+                Object val=it.next();
+                r+=toString(val);
             }
             return r + "]";
         } else if(obj instanceof Map) {
@@ -90,22 +79,10 @@ public class BeanUtil {
                     r+=",";
                 }
                 Object key=entry.getKey();
-                if(null == key) {
-                    r+="null";
-                } else if(isPrimitive(key)) {
-                    r+=String.valueOf(key);
-                } else {
-                    r+=toString(key);
-                }
+                r+=toString(key);
                 r+="=";
                 Object val=entry.getValue();
-                if(null == val) {
-                    r+="null";
-                } else if(isPrimitive(val)) {
-                    r+=String.valueOf(val);
-                } else {
-                    r+=toString(val);
-                }
+                r+=toString(val);
             }
             return r + "}";
         }
@@ -120,25 +97,21 @@ public class BeanUtil {
             r+="[";
             // get the names and values of all fields
             for(Field f: fields) {
-                if(!Modifier.isStatic(f.getModifiers())) {
-                    if(f.isSynthetic() || f.getName().indexOf("this$") != -1) {
-                        continue;
-                    }
-                    r+=f.getName() + "=";
-                    try {
-                        Object val=f.get(obj);
-                        if(null == val) {
-                            r+="null";
-                        } else if(isPrimitive(val)) {
-                            r+=String.valueOf(val);
-                        } else {
-                            r+=toString(val);
-                        }
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
-                    r+=",";
+                if(Modifier.isStatic(f.getModifiers())) {
+                    continue;
                 }
+                if(f.isSynthetic() || f.getName().indexOf("this$") != -1) {
+                    continue;
+                }
+                r+=f.getName() + "=";
+                try {
+                    Object val=f.get(obj);
+                    r+=toString(val);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+                r+=",";
+
             }
             if(r.endsWith(",")) {
                 r=r.substring(0, r.length() - 1);
