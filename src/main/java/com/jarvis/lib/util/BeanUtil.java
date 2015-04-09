@@ -9,9 +9,9 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -62,14 +62,15 @@ public class BeanUtil {
                 }
             }
             return r + "]";
-        } else if(obj instanceof List) {
-            List tempList=(List)obj;
+        } else if(obj instanceof Collection) {
+            Collection tempCol=(Collection)obj;
+            Object [] tempArr=tempCol.toArray();
             String r="[";
-            for(int i=0; i < tempList.size(); i++) {
+            for(int i=0; i < tempArr.length; i++) {
                 if(i > 0) {
                     r+=",";
                 }
-                Object val=tempList.get(i);
+                Object val=tempArr[i];
                 if(null == val) {
                     r+="null";
                 } else if(isPrimitive(val)) {
