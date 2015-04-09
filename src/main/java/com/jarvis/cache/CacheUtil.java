@@ -35,7 +35,16 @@ public class CacheUtil {
     }
 
     /**
-     * 通过Hash算法，将长字符串转为短字符串
+     * 将Object 对象转换为唯一的Hash字符串
+     * @param obj
+     * @return
+     */
+    public static String getUniqueHashStr(Object obj) {
+        return getMiscHashCode(BeanUtil.toString(obj));
+    }
+
+    /**
+     * 通过混合Hash算法，将长字符串转为短字符串（字符串长度小于等于20时，不做处理）
      * @param str
      * @return
      */
@@ -43,19 +52,30 @@ public class CacheUtil {
         if(null == str || str.length() == 0) {
             return "";
         }
+        if(str.length() <= 20) {
+            return str;
+        }
         StringBuilder tmp=new StringBuilder();
         tmp.append(str.hashCode()).append(SPLIT_STR).append(getHashCode(str));
-        if(str.length() >= 2) {
-            int mid=str.length() / 2;
-            String str1=str.substring(0, mid);
-            String str2=str.substring(mid);
-            tmp.append(SPLIT_STR).append(str1.hashCode());
-            tmp.append(SPLIT_STR).append(str2.hashCode());
-        }
+
+        int mid=str.length() / 2;
+        String str1=str.substring(0, mid);
+        String str2=str.substring(mid);
+        tmp.append(SPLIT_STR).append(str1.hashCode());
+        tmp.append(SPLIT_STR).append(str2.hashCode());
+
         return tmp.toString();
     }
 
+    /**
+     * 将Spring EL 表达式转换期望的值
+     * @param keySpEL
+     * @param arguments
+     * @param valueType
+     * @return
+     */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
+        // keySpEL=keySpEL.replaceAll("$toString(", "T(com.jarvis.lib.util.BeanUtil).toString(");
         EvaluationContext context=new StandardEvaluationContext();
         context.setVariable(ARGS, arguments);
         return parser.parseExpression(keySpEL).getValue(context, valueType);
@@ -86,11 +106,7 @@ public class CacheUtil {
         StringBuilder sb=new StringBuilder();
         sb.append(getDefaultCacheKeyPrefix(className, method, arguments, null));
         if(null != arguments && arguments.length > 0) {
-            StringBuilder arg=new StringBuilder();
-            for(Object obj: arguments) {
-                arg.append(BeanUtil.toString(obj));
-            }
-            sb.append(getMiscHashCode(arg.toString()));
+            sb.append(getUniqueHashStr(arguments));
         }
         return sb.toString();
     }
@@ -107,11 +123,7 @@ public class CacheUtil {
         StringBuilder sb=new StringBuilder();
         sb.append(getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL));
         if(null != arguments && arguments.length > 0) {
-            StringBuilder arg=new StringBuilder();
-            for(Object obj: arguments) {
-                arg.append(BeanUtil.toString(obj));
-            }
-            sb.append(getMiscHashCode(arg.toString()));
+            sb.append(getUniqueHashStr(arguments));
         }
         return sb.toString();
     }

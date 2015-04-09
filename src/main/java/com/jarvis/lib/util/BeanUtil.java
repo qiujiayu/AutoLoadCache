@@ -64,7 +64,7 @@ public class BeanUtil {
             return r + "]";
         } else if(obj instanceof Collection) {
             Collection tempCol=(Collection)obj;
-            Object [] tempArr=tempCol.toArray();
+            Object[] tempArr=tempCol.toArray();
             String r="[";
             for(int i=0; i < tempArr.length; i++) {
                 if(i > 0) {

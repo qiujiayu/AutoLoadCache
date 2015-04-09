@@ -109,9 +109,13 @@ Memcache 例子：
 
 ##缓存Key的生成
 
+
+
 1. 使用Spring EL 表达式自定义缓存Key:CacheUtil.getDefinedCacheKey(String keySpEL, Object[] arguments)
 
     例如： @Cache(expire=600, key="'goods'+#args[0]")
+    注意：Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。 所以对于复杂的参数，我们可以在Spring EL 表达式中使用："T(com.jarvis.cache.CacheUtil).objectToHashStr(#args)"，会生成一个比较短的Hash字符串。
+
 
 2. 默认生成缓存Key的方法：CacheUtil.getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL)
 
