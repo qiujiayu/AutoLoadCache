@@ -202,7 +202,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
     <aop:aspect ref="cachePointCut" order="1000">
       <aop:pointcut id="deleteCachePointcut"
         expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
-      <aop:after pointcut-ref="deleteCachePointcut" method="deleteCache" />
+      <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
     </aop:aspect>
 
 ###@Cache
