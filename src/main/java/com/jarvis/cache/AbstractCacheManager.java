@@ -190,10 +190,11 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
     /**
      * 处理@CacheDelete 拦截
      * @param pjp
-     * @param cacheDelete
+     * @param cacheDelete 拦截到的注解
+     * @param retVal 返回值
      * @throws Exception
      */
-    public void deleteCache(JoinPoint jp, CacheDelete cacheDelete) {
+    public void deleteCache(JoinPoint jp, CacheDelete cacheDelete, Object retVal) {
         Object[] arguments=jp.getArgs();
         CacheDeleteKey[] keys=cacheDelete.value();
         if(null == keys || keys.length == 0) {
@@ -201,6 +202,9 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         }
         for(int i=0; i < keys.length; i++) {
             CacheDeleteKey keyConfig=keys[i];
+            if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
+                continue;
+            }
             String key=null;
             switch(keyConfig.keyType()) {
                 case DEFINED:

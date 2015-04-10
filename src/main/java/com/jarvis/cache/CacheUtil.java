@@ -9,6 +9,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -80,6 +81,18 @@ public class CacheUtil {
      * @return
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
+        return getElValue(keySpEL, arguments, null, valueType);
+    }
+
+    /**
+     * 将Spring EL 表达式转换期望的值
+     * @param keySpEL
+     * @param arguments
+     * @param valueType
+     * @param retVal
+     * @return
+     */
+    public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
         Matcher m=pattern_hash.matcher(keySpEL);
         StringBuffer sb=new StringBuffer();
         while(m.find()) {
@@ -88,6 +101,7 @@ public class CacheUtil {
         m.appendTail(sb);
         EvaluationContext context=new StandardEvaluationContext();
         context.setVariable(ARGS, arguments);
+        context.setVariable("retVal", retVal);
         return parser.parseExpression(sb.toString()).getValue(context, valueType);
     }
 
@@ -159,6 +173,12 @@ public class CacheUtil {
         return sb.toString();
     }
 
+    /**
+     * 是否可以缓存
+     * @param cache
+     * @param arguments
+     * @return
+     */
     public static boolean isCacheable(Cache cache, Object[] arguments) {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
@@ -167,11 +187,33 @@ public class CacheUtil {
         return rv;
     }
 
+    /**
+     * 是否可以自动加载
+     * @param cache
+     * @param arguments
+     * @return
+     */
     public static boolean isAutoload(Cache cache, Object[] arguments) {
         boolean autoload=cache.autoload();
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
             autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
         }
         return autoload;
+    }
+
+    /**
+     * 是否可以删除缓存
+     * @param cacheDeleteKey
+     * @param arguments
+     * @param retVal
+     * @return
+     */
+    public static boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) {
+        boolean rv=true;
+        if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition()
+            && cacheDeleteKey.condition().length() > 0) {
+            rv=getElValue(cacheDeleteKey.condition(), arguments, retVal, Boolean.class);
+        }
+        return rv;
     }
 }
