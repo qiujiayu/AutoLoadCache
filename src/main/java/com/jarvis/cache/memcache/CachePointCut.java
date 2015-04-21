@@ -55,7 +55,6 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
      * @param method
      * @param arguments
      * @param subKeySpEL
-     * @param deleteByPrefixKey 是否批量删除
      */
     public void deleteByDefaultCacheKey(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments, String subKeySpEL) {
         String cacheKey=CacheUtil.getDefaultCacheKey(cs.getName(), method, arguments, subKeySpEL);

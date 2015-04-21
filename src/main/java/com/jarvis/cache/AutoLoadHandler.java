@@ -122,7 +122,7 @@ public class AutoLoadHandler<T> {
 
     /**
      * 获取自动加载队列，如果是web应用，建议把自动加载队列中的数据都输出到页面中，并增加一些管理功能。
-     * @return
+     * @return autoload 队列
      */
     public AutoLoadTO[] getAutoLoadQueue() {
         if(autoLoadMap.isEmpty()) {

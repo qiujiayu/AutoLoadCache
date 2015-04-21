@@ -46,7 +46,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * 生成缓存 Key
      * @param pjp
      * @param cache
-     * @return
+     * @return String 缓存Key
      */
     private String getCacheKey(ProceedingJoinPoint pjp, Cache cache) {
         String className=pjp.getTarget().getClass().getName();
@@ -60,12 +60,13 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         }
         return cacheKey;
     }
+
     /**
      * 生成缓存 Key
      * @param pjp
      * @param cache
      * @param result 执行结果值
-     * @return
+     * @return 缓存Key
      */
     private String getCacheKey(ProceedingJoinPoint pjp, Cache cache, T result) {
         String className=pjp.getTarget().getClass().getName();
@@ -84,7 +85,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * 处理@Cache 拦截
      * @param pjp
      * @param cache
-     * @return
+     * @return T 返回值
      * @throws Exception
      */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
@@ -143,9 +144,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @param pjp
      * @param autoLoadTO
      * @param cacheKey
-     * @param cacheManager
      * @param expire
-     * @return
+     * @return 返回值
      * @throws Exception
      */
     private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, int expire) throws Exception {
@@ -227,10 +227,9 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     /**
      * 处理@CacheDelete 拦截
-     * @param pjp
+     * @param jp
      * @param cacheDelete 拦截到的注解
      * @param retVal 返回值
-     * @throws Exception
      */
     public void deleteCache(JoinPoint jp, CacheDelete cacheDelete, Object retVal) {
         Object[] arguments=jp.getArgs();

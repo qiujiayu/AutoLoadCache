@@ -30,7 +30,7 @@ public class CacheUtil {
     /**
      * 生成字符串的HashCode
      * @param buf
-     * @return
+     * @return int hashCode
      */
     private static int getHashCode(String buf) {
         int hash=5381;
@@ -45,7 +45,7 @@ public class CacheUtil {
     /**
      * 将Object 对象转换为唯一的Hash字符串
      * @param obj
-     * @return
+     * @return Hash字符串
      */
     public static String getUniqueHashStr(Object obj) {
         return getMiscHashCode(BeanUtil.toString(obj));
@@ -54,7 +54,7 @@ public class CacheUtil {
     /**
      * 通过混合Hash算法，将长字符串转为短字符串（字符串长度小于等于20时，不做处理）
      * @param str
-     * @return
+     * @return Hash字符串
      */
     public static String getMiscHashCode(String str) {
         if(null == str || str.length() == 0) {
@@ -80,7 +80,7 @@ public class CacheUtil {
      * @param keySpEL
      * @param arguments
      * @param valueType
-     * @return
+     * @return EL Value
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
         return getElValue(keySpEL, arguments, null, valueType);
@@ -92,7 +92,7 @@ public class CacheUtil {
      * @param arguments
      * @param valueType
      * @param retVal
-     * @return
+     * @return EL value
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
         Matcher m=pattern_hash.matcher(keySpEL);
@@ -111,7 +111,7 @@ public class CacheUtil {
      * 生成自定义缓存Key
      * @param keySpEL
      * @param arguments
-     * @return
+     * @return cacheKey
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
         if(keySpEL.indexOf("#" + ARGS) != -1) {
@@ -126,7 +126,7 @@ public class CacheUtil {
      * @param keySpEL
      * @param arguments
      * @param retVal
-     * @return
+     * @return CacheKey
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
         if(keySpEL.indexOf("#" + ARGS) != -1 || keySpEL.indexOf("#" + RET_VAL) != -1) {
@@ -141,7 +141,7 @@ public class CacheUtil {
      * @param className 类名称
      * @param method 方法名称
      * @param arguments 参数
-     * @return
+     * @return CacheKey
      */
     public static String getDefaultCacheKey(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
@@ -158,7 +158,7 @@ public class CacheUtil {
      * @param method 方法名称
      * @param arguments 参数
      * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
-     * @return
+     * @return CacheKey
      */
     public static String getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
@@ -175,7 +175,7 @@ public class CacheUtil {
      * @param method 方法名称
      * @param arguments 参数
      * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
-     * @return
+     * @return CacheKey
      */
     public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
@@ -194,7 +194,7 @@ public class CacheUtil {
      * 是否可以缓存
      * @param cache
      * @param arguments
-     * @return
+     * @return cacheAble
      */
     public static boolean isCacheable(Cache cache, Object[] arguments) {
         boolean rv=true;
@@ -208,7 +208,7 @@ public class CacheUtil {
      * 是否可以自动加载
      * @param cache
      * @param arguments
-     * @return
+     * @return autoload
      */
     public static boolean isAutoload(Cache cache, Object[] arguments) {
         boolean autoload=cache.autoload();
@@ -223,7 +223,7 @@ public class CacheUtil {
      * @param cacheDeleteKey
      * @param arguments
      * @param retVal
-     * @return
+     * @return Can Delete
      */
     public static boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) {
         boolean rv=true;
