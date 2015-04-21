@@ -139,13 +139,16 @@ Memcache 例子：
  * **className** 类名称
  * **method** 方法名称
  * **arguments** 参数
- * **subKeySpEL** SpringEL表达式
+ * **subKeySpEL** 
+SpringEL表达式
 
-    生成的Key格式为：{类名称}.{方法名称}{.SpringEL表达式运算结果}:{参数值的Hash字符串}。
+生成的Key格式为：{类名称}.{方法名称}{.SpringEL表达式运算结果}:{参数值的Hash字符串}。
 
-    当@Cache中不设置key值时，使用默认方式生成缓存Key
 
-建议使用默认生成缓存Key的方法，能减少一些维护工作。
+    当@Cache中不设置key值时，使用默认方式生成缓存Key。
+
+根据自己的情况选择不同的缓存Key生成策略，用自定义Key使用比较灵活，但维护成本会高些，而且不能出现笔误。
+
 
 ###subKeySpEL 使用说明
 
