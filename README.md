@@ -28,7 +28,17 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
 ##使用方法 
 
-###1. Spring AOP配置
+###1. Maven
+
+
+    <dependency>
+      <groupId>com.github.qiujiayu</groupId>
+      <artifactId>autoload-cache</artifactId>
+      <version>1.5</version>
+    </dependency>
+
+
+###2. Spring AOP配置
 
 
 从0.4版本开始增加了Redis及Memcache的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用。
@@ -96,7 +106,7 @@ Memcache 例子：
 [实例代码](https://github.com/qiujiayu/cache-example)
 
 
-###2. 将需要使用缓存的方法前增加@Cache注解
+###3. 将需要使用缓存的方法前增加@Cache注解
 
     package com.jarvis.example.dao;
     import ... ...

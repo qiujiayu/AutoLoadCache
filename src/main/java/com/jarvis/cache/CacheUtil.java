@@ -21,6 +21,8 @@ public class CacheUtil {
 
     private static final String ARGS="args";
 
+    private static final String RET_VAL="retVal";
+
     private static final ExpressionParser parser=new SpelExpressionParser();
 
     private static final Pattern pattern_hash=Pattern.compile("(\\+?)\\$hash\\((.[^)]*)\\)");
@@ -101,7 +103,7 @@ public class CacheUtil {
         m.appendTail(sb);
         EvaluationContext context=new StandardEvaluationContext();
         context.setVariable(ARGS, arguments);
-        context.setVariable("retVal", retVal);
+        context.setVariable(RET_VAL, retVal);
         return parser.parseExpression(sb.toString()).getValue(context, valueType);
     }
 
@@ -114,6 +116,21 @@ public class CacheUtil {
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
         if(keySpEL.indexOf("#" + ARGS) != -1) {
             return getElValue(keySpEL, arguments, String.class);
+        } else {
+            return keySpEL;
+        }
+    }
+
+    /**
+     * 根据请求参数和执行结果值，进行构造缓存Key
+     * @param keySpEL
+     * @param arguments
+     * @param retVal
+     * @return
+     */
+    public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
+        if(keySpEL.indexOf("#" + ARGS) != -1 || keySpEL.indexOf("#" + RET_VAL) != -1) {
+            return getElValue(keySpEL, arguments, retVal, String.class);
         } else {
             return keySpEL;
         }

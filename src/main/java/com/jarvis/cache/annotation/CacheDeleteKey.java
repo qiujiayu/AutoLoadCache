@@ -10,11 +10,13 @@ import com.jarvis.cache.type.CacheKeyType;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface CacheDeleteKey {
+
     /**
      * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
      * @return
      */
     String condition() default "";
+
     /**
      * 删除缓存的Key，支持使用SpEL表达式
      * @return

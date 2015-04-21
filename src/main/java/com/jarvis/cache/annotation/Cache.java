@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.jarvis.cache.type.CacheOpType;
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Cache {
@@ -49,4 +51,10 @@ public @interface Cache {
      * @return
      */
     String condition() default "";
+
+    /**
+     * 缓存的操作类型：默认是READ_WRITE，先缓存取数据，如果没有数据则从DAO中获取并写入缓存；如果是WRITE则从DAO取完数据后，写入缓存
+     * @return
+     */
+    CacheOpType opType() default CacheOpType.READ_WRITE;
 }
