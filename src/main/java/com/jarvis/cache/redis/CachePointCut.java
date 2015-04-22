@@ -2,14 +2,13 @@ package com.jarvis.cache.redis;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.AutoLoadHandler;
@@ -20,12 +19,19 @@ import com.jarvis.cache.to.CacheWrapper;
 /**
  * 缓存切面，用于拦截数据并调用Redis进行缓存
  * @author jiayu.qiu
+ * @see com.jarvis.cache.redis.ShardedCachePointCut
+ * @deprecated 建议使用com.jarvis.cache.redis.ShardedCachePointCut
  */
+@Deprecated
 public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     private static final Logger logger=Logger.getLogger(CachePointCut.class);
 
     private List<RedisTemplate<String, Serializable>> redisTemplateList;
+
+    private StringRedisSerializer keySerializer=new StringRedisSerializer();
+
+    private JdkSerializationRedisSerializer valSerializer=new JdkSerializationRedisSerializer();
 
     public CachePointCut(AutoLoadConfig config) {
         super(config);
@@ -43,7 +49,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     @Override
     public void setCache(final String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
-            throw new java.lang.RuntimeException("cacheKey:" + cacheKey + "; has '*' or '?'");
+            throw new RuntimeException("cacheKey:" + cacheKey + "; has '*' or '?'");
         }
         try {
             result.setLastLoadTime(System.currentTimeMillis());
@@ -52,12 +58,15 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
                 @Override
                 public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                    byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-                    JdkSerializationRedisSerializer serializer=(JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
-                    byte[] val=serializer.serialize(result);
-                    // connection.set(key, val);
-                    // connection.expire(key, expire);
-                    connection.setEx(key, expire, val);
+
+                    try {
+                        byte[] key=keySerializer.serialize(cacheKey);
+                        byte[] val=valSerializer.serialize(result);
+                        connection.setEx(key, expire, val);
+                    } catch(Exception ex) {
+                        logger.error(ex.getMessage(), ex);
+                    }
+
                     return null;
                 }
             });
@@ -75,15 +84,20 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
                 @Override
                 public CacheWrapper<Serializable> doInRedis(RedisConnection connection) throws DataAccessException {
-                    byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
+
+                    byte[] key=keySerializer.serialize(cacheKey);
 
                     byte[] value=connection.get(key);
                     if(null != value && value.length > 0) {
-                        JdkSerializationRedisSerializer serializer=
-                            (JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
-                        @SuppressWarnings("unchecked")
-                        CacheWrapper<Serializable> res=(CacheWrapper<Serializable>)serializer.deserialize(value);
-                        return res;
+
+                        try {
+                            @SuppressWarnings("unchecked")
+                            CacheWrapper<Serializable> res=(CacheWrapper<Serializable>)valSerializer.deserialize(value);
+                            return res;
+                        } catch(Exception ex) {
+                            logger.error(ex.getMessage(), ex);
+                        }
+
                     }
                     return null;
                 }
@@ -137,26 +151,24 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
+        String params[]=new String[]{cacheKey};
+        final byte[][] p=new byte[params.length][];
+        for(int i=0; i < params.length; i++) {
+            p[i]=keySerializer.serialize(params[i]);
+        }
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
+            final StringBuilder script=new StringBuilder();
+            script.append("local keys = redis.call('keys', KEYS[1]);\n");
+            script.append("if(not keys or #keys == 0) then \n return nil; \n end \n");
+            script.append("redis.call('del', unpack(keys)); \n return keys;");
+            
             for(final RedisTemplate<String, Serializable> redisTemplate: redisTemplateList) {
                 redisTemplate.execute(new RedisCallback<Object>() {
 
                     @Override
                     public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                        byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-                        Set<byte[]> keys=connection.keys(key);
-                        if(null != keys && keys.size() > 0) {
-                            byte[][] keys2=new byte[keys.size()][];
-                            keys.toArray(keys2);
-                            connection.del(keys2);
-
-                            for(byte[] tmp: keys2) {
-                                JdkSerializationRedisSerializer serializer=
-                                    (JdkSerializationRedisSerializer)redisTemplate.getValueSerializer();
-                                String tmpKey=(String)serializer.deserialize(tmp);
-                                autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey);
-                            }
-                        }
+                        byte[] scriptBytes=keySerializer.serialize(script.toString());
+                        connection.eval(scriptBytes, ReturnType.STATUS, 1, p);
                         return null;
                     }
                 });
@@ -167,8 +179,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
                 @Override
                 public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                    byte[] key=redisTemplate.getStringSerializer().serialize(cacheKey);
-
+                    byte[] key=keySerializer.serialize(cacheKey);
                     connection.del(key);
                     autoLoadHandler.resetAutoLoadLastLoadTime(cacheKey);
                     return null;

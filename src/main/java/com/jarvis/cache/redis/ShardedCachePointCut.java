@@ -2,7 +2,7 @@ package com.jarvis.cache.redis;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -128,16 +128,21 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             try {
                 shardedJedis=shardedJedisPool.getResource();
                 Collection<Jedis> list=shardedJedis.getAllShards();
+                StringBuilder script=new StringBuilder();
+                script.append("local keys = redis.call('keys', KEYS[1]);\n");
+                script.append("if(not keys or #keys == 0) then \n return nil; \n end \n");
+                script.append("redis.call('del', unpack(keys)); \n return keys;");
                 for(Jedis jedis: list) {
-                    Set<byte[]> keys=jedis.keys(keySerializer.serialize(cacheKey));
-                    if(null != keys && keys.size() > 0) {
-                        byte[][] keys2=new byte[keys.size()][];
-                        keys.toArray(keys2);
-                        jedis.del(keys2);
-                        for(byte[] tmp: keys2) {
-                            String tmpKey=(String)keySerializer.deserialize(tmp);
-                            autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        List<String> keys=(List<String>)jedis.eval(script.toString(), 1, cacheKey);
+                        if(null != keys && keys.size() > 0) {
+                            for(String tmpKey: keys) {
+                                autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey);
+                            }
                         }
+                    } catch(Exception ex) {
+                        logger.error(ex.getMessage(), ex);
                     }
                 }
             } catch(Exception ex) {

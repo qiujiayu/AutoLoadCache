@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>1.5</version>
+  <version>1.6</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>User Spring AOP and annotation to do with cache.</description>
@@ -12,7 +12,7 @@
     <license>
       <name>The Apache Software License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
+      <distribution>The Apache Software License, Version 2.0</distribution>
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
