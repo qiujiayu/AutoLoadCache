@@ -161,7 +161,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
             script.append("local keys = redis.call('keys', KEYS[1]);\n");
             script.append("if(not keys or #keys == 0) then \n return nil; \n end \n");
             script.append("redis.call('del', unpack(keys)); \n return keys;");
-            
+
             for(final RedisTemplate<String, Serializable> redisTemplate: redisTemplateList) {
                 redisTemplate.execute(new RedisCallback<Object>() {
 
