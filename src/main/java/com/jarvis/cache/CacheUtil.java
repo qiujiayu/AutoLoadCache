@@ -192,14 +192,29 @@ public class CacheUtil {
 
     /**
      * 是否可以缓存
-     * @param cache
-     * @param arguments
-     * @return cacheAble
+     * @param cache Cache
+     * @param arguments 参数
+     * @return cacheAble 是否可以进行缓存
      */
     public static boolean isCacheable(Cache cache, Object[] arguments) {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
             rv=getElValue(cache.condition(), arguments, Boolean.class);
+        }
+        return rv;
+    }
+
+    /**
+     * 是否可以缓存
+     * @param cache Cache
+     * @param arguments 参数
+     * @param result 执行结果
+     * @return cacheAble 是否可以进行缓存
+     */
+    public static boolean isCacheable(Cache cache, Object[] arguments, Object result) {
+        boolean rv=true;
+        if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
+            rv=getElValue(cache.condition(), arguments, result, Boolean.class);
         }
         return rv;
     }

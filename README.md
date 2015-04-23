@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>1.6</version>
+      <version>1.7</version>
     </dependency>
 
 

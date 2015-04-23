@@ -90,24 +90,25 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
         Object[] arguments=pjp.getArgs();
-        if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
-            return getData(pjp, null);
-        }
         int expire=cache.expire();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             T result=getData(pjp, null);
-            String cacheKey=getCacheKey(pjp, cache, result);
-            writeCache(result, cacheKey, expire);
+            if(CacheUtil.isCacheable(cache, arguments, result)) {
+                String cacheKey=getCacheKey(pjp, cache, result);
+                writeCache(result, cacheKey, expire);
+            }
             return result;
         }
-
+        if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
+            return getData(pjp, null);
+        }
         String cacheKey=getCacheKey(pjp, cache);
         AutoLoadTO autoLoadTO=null;
         if(CacheUtil.isAutoload(cache, arguments)) {
             try {
                 autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
                 if(null == autoLoadTO) {
-                    arguments=(Object[])BeanUtil.deepClone(arguments);
+                    arguments=(Object[])BeanUtil.deepClone(arguments);// 进行深度复制
                     autoLoadTO=new AutoLoadTO(cacheKey, pjp, arguments, expire, cache.requestTimeout());
                     autoLoadHandler.setAutoLoadTO(autoLoadTO);
                 }
@@ -118,7 +119,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         }
         CacheWrapper<T> cacheWrapper=this.get(cacheKey);
         if(null != cacheWrapper) {
-            if(null != autoLoadTO && cacheWrapper.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {
+            if(null != autoLoadTO && cacheWrapper.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {// 同步最后加载时间
                 autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
             }
             return cacheWrapper.getCacheObject();
@@ -128,9 +129,9 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     /**
      * 写缓存
-     * @param result
-     * @param cacheKey
-     * @param expire
+     * @param result 缓存数据
+     * @param cacheKey 缓存Key
+     * @param expire 缓存时间
      */
     private void writeCache(T result, String cacheKey, int expire) {
         CacheWrapper<T> tmp=new CacheWrapper<T>();
