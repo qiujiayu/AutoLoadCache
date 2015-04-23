@@ -43,33 +43,55 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
 从0.4版本开始增加了Redis及Memcache的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用。
 
-Redis 例子:
+Redis 配置:
 
-    <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
-        <property name="threadCnt" value="10" /><!-- 线程数量 -->
-        <property name="maxElement" value="20000" /><!-- 自动加载队列容量 -->
-        <property name="printSlowLog" value="true" />
-        <property name="slowLoadTime" value="1000" />
+    <!-- Jedis 连接池配置 -->
+    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+      <property name="maxTotal" value="2000" />
+      <property name="maxIdle" value="100" />
+      <property name="minIdle" value="50" />
+      <property name="maxWaitMillis" value="2000" />
+      <property name="testOnBorrow" value="false" />
+      <property name="testOnReturn" value="false" />
+      <property name="testWhileIdle" value="false" />
     </bean>
-
-    <bean id="cachePointCut" class="com.jarvis.cache.redis.CachePointCut" destroy-method="destroy">
-      <constructor-arg ref="autoLoadConfig" />
-      <property name="redisTemplateList">
+    <bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool">
+      <constructor-arg ref="jedisPoolConfig" />
+      <constructor-arg>
         <list>
-          <ref bean="redisTemplate100" />
-          <ref bean="redisTemplate2" />
+          <bean class="redis.clients.jedis.JedisShardInfo">
+          <constructor-arg value="${redis1.host}" />
+          <constructor-arg type="int" value="${redis1.port}" />
+          <constructor-arg value="instance:01" />
+        </bean>
+        <bean class="redis.clients.jedis.JedisShardInfo">
+          <constructor-arg value="${redis2.host}" />
+          <constructor-arg type="int" value="${redis2.port}" />
+          <constructor-arg value="instance:02" />
+        </bean>
+        <bean class="redis.clients.jedis.JedisShardInfo">
+          <constructor-arg value="${redis3.host}" />
+          <constructor-arg type="int" value="${redis3.port}" />
+          <constructor-arg value="instance:03" />
+        </bean>
         </list>
-      </property>
+      </constructor-arg>
+    </bean>
+    
+    <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+      <property name="threadCnt" value="10" />
+      <property name="maxElement" value="20000" />
+      <property name="printSlowLog" value="true" />
+      <property name="slowLoadTime" value="500" />
+      <property name="sortType" value="1" />
+      <property name="checkFromCacheBeforeLoad" value="true" />
+    </bean>
+    <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
+      <constructor-arg ref="autoLoadConfig" />
+      <property name="shardedJedisPool" ref="shardedJedisPool" />
     </bean>
 
-    <aop:config>
-      <aop:aspect ref="cachePointCut">
-        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
-        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
-      </aop:aspect>
-    </aop:config>
-
-Memcache 例子：
+Memcache 配置：
 
     <bean id="memcachedClient" class="net.spy.memcached.spring.MemcachedClientFactoryBean">
         <property name="servers" value="192.138.11.165:11211,192.138.11.166:11211" />
@@ -94,10 +116,17 @@ Memcache 例子：
       <property name="memcachedClient", ref="memcachedClient" />
     </bean>
 
+
+AOP 配置：
+
     <aop:config>
       <aop:aspect ref="cachePointCut">
-        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
+        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
         <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
+      </aop:aspect>
+      <aop:aspect ref="cachePointCut" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
+        <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
+        <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
       </aop:aspect>
     </aop:config>
 
@@ -106,14 +135,79 @@ Memcache 例子：
 [实例代码](https://github.com/qiujiayu/cache-example)
 
 
-###3. 将需要使用缓存的方法前增加@Cache注解
+###3. 将需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解（Redis为例子）
 
     package com.jarvis.example.dao;
     import ... ...
     public class UserDAO {
-        @Cache(expire=600, autoload=true, requestTimeout=72000)
-        public List<UserTO> getUserList(... ...) {
-            ... ...
+
+        /**
+         * 添加用户的同时，把数据放到缓存中
+         * @param userName
+         * @return
+         */
+        @Cache(expire=600, key="'user'+#retVal.id", opType=CacheOpType.WRITE)
+        public UserTO addUser(String userName) {
+            UserTO user=new UserTO();
+            user.setName(userName);
+            Random rand=new Random();
+            // 数据库返回ID
+            Integer id=rand.nextInt(100000);
+            user.setId(id);
+            System.out.println("add User:" + id);
+            return user;
+        }
+        
+        /**
+         * 
+         * @param id
+         * @return
+         */
+        @Cache(expire=600, autoload=true, key="'user'+#args[0]", condition="#args[0]>0")
+        public UserTO getUserById(Integer id) {
+            UserTO user=new UserTO();
+            user.setId(id);
+            user.setName("name" + id);
+            System.out.println("getUserById from dao");
+            return user;
+        }
+        
+        /**
+         * 
+         * @param user
+         */
+        @CacheDelete({@CacheDeleteKey(value="'user'+#args[0].id", keyType=CacheKeyType.DEFINED)})
+        public void updateUserName(UserTO user) {
+            System.out.println("update user name:" + user.getName());
+            // save to db
+        }
+
+        // 注意：因为没有用 SpEL表达式，所以不需要用单引号
+        @CacheDelete({@CacheDeleteKey(value="user*", keyType=CacheKeyType.DEFINED)})
+        public void clearUserCache() {
+            System.out.println("clearUserCache");
+        }
+
+        // ------------------------以下是使用默认生成Key的方法--------------------
+        @Cache(expire=600, autoload=true, condition="#args[0]>0")
+        public UserTO getUserById2(Integer id) {
+            UserTO user=new UserTO();
+            user.setId(id);
+            user.setName("name" + id);
+            System.out.println("getUserById from dao");
+            return user;
+        }
+
+        @CacheDelete({@CacheDeleteKey(cls=UserDAO.class, method="getUserById2", argsEl={"#args[0].id"}, keyType=CacheKeyType.DEFAULT)})
+        public void updateUserName2(UserTO user) {
+            System.out.println("update user name:" + user.getName());
+            // save to db
+        }
+
+        @CacheDelete({@CacheDeleteKey(deleteByPrefixKey=true, cls=UserDAO.class, method="getUserById2", keyType=CacheKeyType.DEFAULT)})
+        public void clearUserCache2() {
+            System.out.println("clearUserCache");
+            // save to db
         }
     }
 
@@ -263,6 +357,11 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
          * @return
          */
         String condition() default "";
+        /**
+         * 缓存的操作类型：默认是READ_WRITE，先缓存取数据，如果没有数据则从DAO中获取并写入缓存；如果是WRITE则从DAO取完数据后，写入缓存
+         * @return CacheOpType
+        */
+        CacheOpType opType() default CacheOpType.READ_WRITE;
     }
 
 ###AutoLoadConfig 配置说明
@@ -376,7 +475,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
 1. 使用缓存；
 2. 使用自动加载机制；“写”数据往往比读数据性能要差，使用自动加载也能减少写并发。
-3. 从DAO层加载数据时，增加等待机制（拿来主义）：如果有多个请求同时请求同一个数据，会先让其中一个请求去取数据，其它的请求则等待它的数据。
+3. 从DAO层加载数据时，**增加等待机制**（拿来主义）：如果有多个请求同时请求同一个数据，会先让其中一个请求去取数据，其它的请求则等待它的数据。
 
 ##可扩展性及维护性
 
