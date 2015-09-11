@@ -102,9 +102,9 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
     /**
      * 根据默认缓存Key删除缓存
      * @param cs Class
-     * @param method
-     * @param arguments
-     * @param subKeySpEL
+     * @param method 方法名
+     * @param arguments 参数
+     * @param subKeySpEL Spring EL表达式
      * @param deleteByPrefixKey 是否批量删除
      */
     public void deleteByDefaultCacheKey(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments,

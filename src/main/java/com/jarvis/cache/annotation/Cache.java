@@ -13,6 +13,7 @@ public @interface Cache {
 
     /**
      * 缓存的过期时间，单位：秒
+     * @return 时间
      */
     int expire();
 

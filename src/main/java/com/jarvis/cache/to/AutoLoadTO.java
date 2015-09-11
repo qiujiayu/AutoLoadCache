@@ -140,7 +140,7 @@ public class AutoLoadTO implements Serializable {
 
     /**
      * 记录用时
-     * @param useTime
+     * @param useTime 用时
      */
     public void addUseTotalTime(long useTime) {
         synchronized(this) {

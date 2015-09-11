@@ -111,9 +111,9 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     /**
      * 根据默认缓存Key删除缓存
      * @param cs Class
-     * @param method
-     * @param arguments
-     * @param subKeySpEL
+     * @param method 方法名
+     * @param arguments 参数
+     * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @param deleteByPrefixKey 是否批量删除
      */
     public void deleteByDefaultCacheKey(@SuppressWarnings("rawtypes") Class cs, String method, Object[] arguments,

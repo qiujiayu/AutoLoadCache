@@ -95,7 +95,7 @@ public class AutoLoadHandler<T> {
 
     /**
      * 重置自动加载时间
-     * @param cacheKey
+     * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(String cacheKey) {
         AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);

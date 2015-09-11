@@ -83,10 +83,10 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     /**
      * 处理@Cache 拦截
-     * @param pjp
-     * @param cache
+     * @param pjp 切面
+     * @param cache 注解
      * @return T 返回值
-     * @throws Exception
+     * @throws Exception 异常
      */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
         Object[] arguments=pjp.getArgs();
@@ -228,7 +228,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     /**
      * 处理@CacheDelete 拦截
-     * @param jp
+     * @param jp 切点
      * @param cacheDelete 拦截到的注解
      * @param retVal 返回值
      */

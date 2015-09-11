@@ -22,8 +22,8 @@ public class BeanUtil {
 
     /**
      * 是否为基础数据类型
-     * @param obj
-     * @return boolean
+     * @param obj Object
+     * @return boolean true or false
      */
     private static boolean isPrimitive(Object obj) {
         return obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
@@ -33,8 +33,8 @@ public class BeanUtil {
 
     /**
      * 把Bean转换为字符串
-     * @param obj
-     * @return String
+     * @param obj Object
+     * @return String String
      */
     @SuppressWarnings("rawtypes")
     public static String toString(Object obj) {
@@ -124,18 +124,19 @@ public class BeanUtil {
 
     /**
      * 通过序列化进行深度复制
-     * @param obj
-     * @return Object
-     * @throws Exception
+     * @param obj Object
+     * @return Object Object
+     * @throws Exception Exception
      */
     public static Object deepClone(Object obj) throws Exception {
         return deserialize(serialize(obj));
     }
 
     /**
-     * @param obj
-     * @return byte[]
-     * @throws IOException
+     * 串行化
+     * @param obj Object
+     * @return byte[] byte数组
+     * @throws IOException IOException
      */
     public static byte[] serialize(Object obj) throws IOException {
         if(null == obj) {
@@ -150,9 +151,10 @@ public class BeanUtil {
     }
 
     /**
-     * @param bytes
-     * @return Object
-     * @throws Exception
+     * 返串行化
+     * @param bytes byte数组
+     * @return Object Object
+     * @throws Exception Exception
      */
     public static Object deserialize(byte[] bytes) throws Exception {
         if(null == bytes || bytes.length == 0) {

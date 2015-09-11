@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>1.7</version>
+      <version>1.8</version>
     </dependency>
 
 
@@ -89,6 +89,7 @@ Redis 配置:
     <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
+      <property name="namespace" value="test" />
     </bean>
 
 Memcache 配置：
@@ -114,6 +115,7 @@ Memcache 配置：
     <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
       <property name="memcachedClient", ref="memcachedClient" />
+      <property name="namespace" value="test" />
     </bean>
 
 
