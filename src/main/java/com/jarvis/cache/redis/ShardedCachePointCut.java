@@ -30,22 +30,40 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
 
     private ShardedJedisPool shardedJedisPool;
 
+    private String namespace;
+
     public ShardedCachePointCut(AutoLoadConfig config) {
         super(config);
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace=namespace;
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
         shardedJedis.close();
     }
 
+    private String appendNamespace(String cacheKey) {
+        if(null != namespace && namespace.length() > 0) {
+            return namespace + ":" + cacheKey;
+        }
+        return cacheKey;
+    }
+
     @Override
-    public void setCache(final String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
+    public void setCache(String cacheKey, final CacheWrapper<Serializable> result, final int expire) {
         if(null == shardedJedisPool || null == cacheKey) {
             return;
         }
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
             throw new java.lang.RuntimeException("cacheKey:" + cacheKey + "; has '*' or '?'");
         }
+        cacheKey=appendNamespace(cacheKey);
         ShardedJedis shardedJedis=null;
         try {
             result.setLastLoadTime(System.currentTimeMillis());
@@ -61,13 +79,14 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(final String cacheKey) {
+    public CacheWrapper<Serializable> get(String cacheKey) {
         if(null == shardedJedisPool || null == cacheKey) {
             return null;
         }
         CacheWrapper<Serializable> res=null;
         ShardedJedis shardedJedis=null;
         try {
+            cacheKey=appendNamespace(cacheKey);
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
             byte bytes[]=jedis.get(keySerializer.serialize(cacheKey));
@@ -118,10 +137,11 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
      * @param cacheKey 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）
      */
     @Override
-    public void delete(final String cacheKey) {
+    public void delete(String cacheKey) {
         if(null == shardedJedisPool || null == cacheKey) {
             return;
         }
+        cacheKey=appendNamespace(cacheKey);
         final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
         ShardedJedis shardedJedis=null;
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。

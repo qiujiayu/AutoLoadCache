@@ -17,20 +17,39 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     private MemcachedClient memcachedClient;
 
+    private String namespace;
+
     public CachePointCut(AutoLoadConfig config) {
         super(config);
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace=namespace;
+    }
+
+    private String appendNamespace(String cacheKey) {
+        if(null != namespace && namespace.length() > 0) {
+            return namespace + ":" + cacheKey;
+        }
+        return cacheKey;
     }
 
     @Override
     public void setCache(String cacheKey, CacheWrapper<Serializable> result, int expire) {
         result.setLastLoadTime(System.currentTimeMillis());
+        cacheKey=appendNamespace(cacheKey);
         memcachedClient.set(cacheKey, expire, result);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(String key) {
-        return (CacheWrapper<Serializable>)memcachedClient.get(key);
+    public CacheWrapper<Serializable> get(String cacheKey) {
+        cacheKey=appendNamespace(cacheKey);
+        return (CacheWrapper<Serializable>)memcachedClient.get(cacheKey);
     }
 
     /**
@@ -38,13 +57,14 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
      * @param key
      */
     @Override
-    public void delete(String key) {
-        if(null == memcachedClient || null == key) {
+    public void delete(String cacheKey) {
+        if(null == memcachedClient || null == cacheKey) {
             return;
         }
+        cacheKey=appendNamespace(cacheKey);
         try {
-            memcachedClient.delete(key);
-            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
+            memcachedClient.delete(cacheKey);
+            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKey);
         } catch(Exception e) {
         }
     }
@@ -78,8 +98,8 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     public void delete(List<String> keys) {
         try {
             if(null != keys && !keys.isEmpty()) {
-                for(String key: keys) {
-                    this.delete(key);
+                for(String cacheKey: keys) {
+                    this.delete(cacheKey);
                 }
             }
         } catch(Exception e) {
