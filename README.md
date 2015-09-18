@@ -217,13 +217,20 @@ AOP 配置：
 
 
 
-1. 使用Spring EL 表达式自定义缓存Key:CacheUtil.getDefinedCacheKey(String keySpEL, Object[] arguments)
+1. 使用Spring EL 表达式自定义缓存Key:CacheUtil.getDefinedCacheKey(String keySpEL, Object[] arguments)，我们称之为自定义缓存Key:
 
-    例如： @Cache(expire=600, key="'goods'+#args[0]")
+    例如： 
+
+        @Cache(expire=600, key="'goods.getGoodsById'+#args[0]")
+        public GoodsTO getGoodsById(Long id){...}
 
     注意：Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。 所以对于复杂的参数，我们可以在Spring EL 表达式中使用："T(com.jarvis.cache.CacheUtil).objectToHashStr(#args)"，会生成一个比较短的Hash字符串。
 
-    为了使用方便，在Spring EL表达式，"$hash(...)"会被替换为："T(com.jarvis.cache.CacheUtil).getUniqueHashStr(...)"
+    为了使用方便，在Spring EL表达式，"$hash(...)"会被替换为："T(com.jarvis.cache.CacheUtil).getUniqueHashStr(...)",例如：
+     
+        @Cache(expire=720, key="'GOODS.getGoods:'+$hash(#args)")
+        public List<GoodsTO> getGoods(GoodsCriteriaTO goodsCriteria){...}
+    生成的缓存Key为"GOODS.getGoods:xxx",xxx为args，的转在的字符串。
 
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
 
@@ -274,22 +281,19 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
     package com.jarvis.example.dao;
     import ... ...
     public class GoodsCommentDAO{
-        private CachePointCut cachePointCut;
+        
         @Cache(expire=600, subKeySpEL="#args[0]", autoload=true, requestTimeout=18000)
         public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
             ... ...
         }
+        @CacheDelete({@CacheDeleteKey(cls=GoodsCommentDAO.class, method="getCommentListByGoodsId", deleteByPrefixKey=true, subKeySpEL=subKeySpEL="#args[0].goodsId" , keyType=CacheKeyType.DEFAULT)})
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
-            deleteCache(comment.goodsId);
         }
-        private void deleteCache(Long goodsId) {
-            Object arguments[]=new Object[]{goodsId};
-            cachePointCut.delete(this.getClass(), "getCommentListByGoodsId", arguments, "#args[0]", true);
         }
     }
 
-从1.1版本开始增加了@CacheDelete方法进行删除缓存，如果用@CacheDelete 来删除缓存的话，在@Cache中使用自定义缓存Key，将上面的代码重新改一下:
+使用自定义缓存Key的方案：
 
 
     package com.jarvis.example.dao;
