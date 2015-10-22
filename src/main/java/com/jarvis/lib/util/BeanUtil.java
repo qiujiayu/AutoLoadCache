@@ -127,13 +127,11 @@ public class BeanUtil {
 
     /**
      * 通过序列化进行深度复制
-     * @param <T>
      * @param obj Object
-     * @param serializer ISerializer<T>
-     * @return Object Object
+     * @param serializer ISerializer
      * @throws Exception Exception
      */
-    public static <T> Object deepClone(T obj, ISerializer<T> serializer) throws Exception {
+    public static <T> T deepClone(T obj, ISerializer<T> serializer) throws Exception {
         return serializer.deserialize(serializer.serialize(obj));
     }
 }
