@@ -1,4 +1,4 @@
-package com.jarvis.cache.redis;
+package com.jarvis.cache.serializer;
 
 import java.nio.charset.Charset;
 
@@ -12,23 +12,25 @@ import java.nio.charset.Charset;
  * Does not perform any null conversion since empty strings are valid keys/values.
  * </p>
  */
-public class StringRedisSerializer implements RedisSerializer<String> {
+public class StringSerializer implements ISerializer<String> {
 
     private final Charset charset;
 
-    public StringRedisSerializer() {
+    public StringSerializer() {
         this(Charset.forName("UTF8"));
     }
 
-    public StringRedisSerializer(Charset charset) {
+    public StringSerializer(Charset charset) {
         this.charset=charset;
     }
 
-    public String deserialize(byte[] bytes) {
+    @Override
+    public String deserialize(byte[] bytes) throws Exception {
         return(bytes == null ? null : new String(bytes, charset));
     }
 
-    public byte[] serialize(String string) {
+    @Override
+    public byte[] serialize(String string) throws Exception {
         return(string == null ? null : string.getBytes(charset));
     }
 }

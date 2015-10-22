@@ -12,6 +12,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.serializer.ISerializer;
+import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -33,8 +35,21 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     private AutoLoadHandler<T> autoLoadHandler;
 
+    /**
+     * 序列化工具，默认使用JDK自动的
+     */
+    private ISerializer<Object> serializer=new JdkSerializer();
+
     public AbstractCacheManager(AutoLoadConfig config) {
         autoLoadHandler=new AutoLoadHandler<T>(this, config);
+    }
+
+    public ISerializer<Object> getSerializer() {
+        return serializer;
+    }
+
+    public void setSerializer(ISerializer<Object> serializer) {
+        this.serializer=serializer;
     }
 
     @Override
@@ -108,7 +123,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             try {
                 autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
                 if(null == autoLoadTO) {
-                    arguments=(Object[])BeanUtil.deepClone(arguments);// 进行深度复制
+                    arguments=(Object[])BeanUtil.deepClone(arguments, this.serializer);// 进行深度复制
                     autoLoadTO=new AutoLoadTO(cacheKey, pjp, arguments, expire, cache.requestTimeout());
                     autoLoadHandler.setAutoLoadTO(autoLoadTO);
                 }

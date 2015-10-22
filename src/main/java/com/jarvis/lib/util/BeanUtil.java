@@ -1,10 +1,5 @@
 package com.jarvis.lib.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -16,6 +11,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.jarvis.cache.serializer.ISerializer;
 
 /**
  * @author jiayu.qiu
@@ -130,44 +127,13 @@ public class BeanUtil {
 
     /**
      * 通过序列化进行深度复制
+     * @param <T>
      * @param obj Object
+     * @param serializer ISerializer<T>
      * @return Object Object
      * @throws Exception Exception
      */
-    public static Object deepClone(Object obj) throws Exception {
-        return deserialize(serialize(obj));
-    }
-
-    /**
-     * 串行化
-     * @param obj Object
-     * @return byte[] byte数组
-     * @throws IOException IOException
-     */
-    public static byte[] serialize(Object obj) throws IOException {
-        if(null == obj) {
-            return null;
-        }
-        // 将对象写到流里
-        ByteArrayOutputStream bo=new ByteArrayOutputStream();
-        ObjectOutputStream oo=new ObjectOutputStream(bo);
-        oo.writeObject(obj);
-        oo.flush();
-        return bo.toByteArray();
-    }
-
-    /**
-     * 返串行化
-     * @param bytes byte数组
-     * @return Object Object
-     * @throws Exception Exception
-     */
-    public static Object deserialize(byte[] bytes) throws Exception {
-        if(null == bytes || bytes.length == 0) {
-            return null;
-        }
-        ByteArrayInputStream bi=new ByteArrayInputStream(bytes);
-        ObjectInputStream oi=new ObjectInputStream(bi);
-        return oi.readObject();
+    public static <T> Object deepClone(T obj, ISerializer<T> serializer) throws Exception {
+        return serializer.deserialize(serializer.serialize(obj));
     }
 }

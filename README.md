@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>1.9</version>
+      <version>2.0</version>
     </dependency>
 
 
@@ -86,8 +86,13 @@ Redis 配置:
       <property name="sortType" value="1" />
       <property name="checkFromCacheBeforeLoad" value="true" />
     </bean>
+
+    <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
+    <!-- <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />-->
+
     <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
+      <property name="serializer" ref="kryoSerializer" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
       <property name="namespace" value="test" />
     </bean>
@@ -112,8 +117,11 @@ Memcache 配置：
         <property name="useNagleAlgorithm" value="false" />
     </bean>
 
+    <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
+    <!-- <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />-->
     <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
+      <property name="serializer" ref="kryoSerializer" />
       <property name="memcachedClient", ref="memcachedClient" />
       <property name="namespace" value="test" />
     </bean>
@@ -519,3 +527,38 @@ web.xml配置：
 
 大概思路是：使用一个独立程序去管理各个业务的redis配置，这程序启动时把相关的配置写到zookeeper中，然后去ping各个redis，如果redis ping不通，则会从zookeeper中删除，如果恢复了，则加回到zookeeper中。
 应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
+
+## 更新日志
+
+* ####2.0 增加了Hessian 和 Kryo 序列化支持，还是使用JDK自带的处理方法。修改方法如下：
+    
+        <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
+        <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
+        <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
+          <constructor-arg ref="autoLoadConfig" />
+          <property name="serializer" ref="kryoSerializer" />
+          <property name="shardedJedisPool" ref="shardedJedisPool" />
+          <property name="namespace" value="test" />
+        </bean>
+
+    虽然Kryo效率比较高，但使用Kryo时需要注意，如果一个Bean只改了属性名称，不改变属性类型，反序列化时，会原来属性值赋给新的属性，如，原来Bean是这样的：
+
+        public class Simple implements java.io.Serializable {
+          private String name;
+          private Integer age;
+          private Integer sex;
+          ... ...
+        }
+
+    但后来因为业务的变化，把sex改为grade:
+
+        public class Simple implements java.io.Serializable {
+          private String name;
+          private Integer age;
+          private Integer grade;
+          ... ...
+        }
+
+     如果缓存中有旧数据，会使得原来sex的值赋给了grade，出现这样的原因，是Kryo是不保存属性名称的，只保存属性的类型。
+
+* ####1.9 增加了命名空间，避免不同的系统之支缓存冲突

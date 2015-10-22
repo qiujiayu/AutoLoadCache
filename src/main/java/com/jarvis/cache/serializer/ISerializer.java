@@ -1,6 +1,6 @@
-package com.jarvis.cache.redis;
+package com.jarvis.cache.serializer;
 
-public interface RedisSerializer<T> {
+public interface ISerializer<T> {
 
     /**
      * Serialize the given object to binary data.
