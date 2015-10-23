@@ -3,20 +3,25 @@ package com.test;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import com.caucho.hessian.io.Hessian2Input;
-import com.caucho.hessian.io.Hessian2Output;
-import com.caucho.hessian.io.SerializerFactory;
+import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.lib.util.BeanUtil;
 
-public class HessianTest {
-    private static SerializerFactory _serializerFactory= SerializerFactory.createDefault();
+public class JdkSerializerTest {
+
     public static void main(String[] args) throws Exception {
         long start=System.currentTimeMillis();
         CacheWrapper<Simple> wrapper=new CacheWrapper<Simple>();
         wrapper.setCacheObject(Simple.getSimple());
-        String fileName="hessian.bin";
+        
+        BeanUtil.deepClone(wrapper, new JdkSerializer());
+        String fileName="jdk.bin";
         for(int i=0; i < 1000; i++) {
             write(wrapper, new FileOutputStream(fileName));
         }
@@ -34,11 +39,9 @@ public class HessianTest {
         end=System.currentTimeMillis();
         System.out.println("read:" + (end - start));
     }
-    
-    private static void write(Object obj, OutputStream os) throws Exception {
-        
-        Hessian2Output output=new Hessian2Output(os);
-        output.setSerializerFactory(_serializerFactory);
+
+    private static void write(Object obj, OutputStream outputStream) throws Exception {
+        ObjectOutputStream output=new ObjectOutputStream(new GZIPOutputStream(outputStream));
         output.writeObject(obj);
         output.flush();
         output.close();
@@ -47,12 +50,10 @@ public class HessianTest {
     }
 
     private static void read(InputStream inputStream) throws Exception {
-        Hessian2Input input=new Hessian2Input(inputStream);
-        input.setSerializerFactory(_serializerFactory);
-        // Simple someObject = kryo.readObject(input, Simple.class);
+        ObjectInputStream input=new ObjectInputStream(new GZIPInputStream(inputStream));
         @SuppressWarnings("unchecked")
         CacheWrapper<Simple> someObject=(CacheWrapper<Simple>)input.readObject();
         input.close();
-        // System.out.println(someObject.getCacheObject());
+        //System.out.println(someObject.getCacheObject());
     }
 }

@@ -3,20 +3,25 @@ package com.jarvis.cache.serializer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
-import com.caucho.hessian.io.HessianInput;
-import com.caucho.hessian.io.HessianOutput;
+import com.caucho.hessian.io.AbstractHessianInput;
+import com.caucho.hessian.io.AbstractHessianOutput;
+import com.caucho.hessian.io.Hessian2Input;
+import com.caucho.hessian.io.Hessian2Output;
+import com.caucho.hessian.io.SerializerFactory;
 
 public class HessianSerializer implements ISerializer<Object> {
+    
+    private static final SerializerFactory serializerFactory = new SerializerFactory();
 
     @Override
     public byte[] serialize(Object obj) throws Exception {
         if(obj == null) {
-            return new byte[0];
+            return null;
         }
 
         ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
-        HessianOutput output=new HessianOutput(outputStream);
-
+        AbstractHessianOutput output=new Hessian2Output(outputStream);
+        output.setSerializerFactory(serializerFactory);
         // 将对象写到流里
         output.writeObject(obj);
         output.flush();
@@ -31,8 +36,8 @@ public class HessianSerializer implements ISerializer<Object> {
             return null;
         }
         ByteArrayInputStream inputStream=new ByteArrayInputStream(bytes);
-        HessianInput input=new HessianInput(inputStream);
-
+        AbstractHessianInput input=new Hessian2Input(inputStream);
+        input.setSerializerFactory(serializerFactory);
         Object obj=input.readObject();
         input.close();
         return obj;

@@ -87,14 +87,13 @@ Redis 配置:
       <property name="checkFromCacheBeforeLoad" value="true" />
     </bean>
 
-    <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
-    <!-- <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />-->
+    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
 
     <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
-      <property name="serializer" ref="kryoSerializer" />
+      <property name="serializer" ref="hessianSerializer" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
-      <property name="namespace" value="test" />
+      <property name="namespace" value="test_hessian" />
     </bean>
 
 Memcache 配置：
@@ -117,11 +116,11 @@ Memcache 配置：
         <property name="useNagleAlgorithm" value="false" />
     </bean>
 
-    <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
-    <!-- <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />-->
+
+    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
     <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
-      <property name="serializer" ref="kryoSerializer" />
+      <property name="serializer" ref="hessianSerializer" />
       <property name="memcachedClient", ref="memcachedClient" />
       <property name="namespace" value="test" />
     </bean>
@@ -530,6 +529,8 @@ web.xml配置：
 
 ## 更新日志
 
+* ####2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 序列化支持，用户可以根据自己的情况实现ISerializer接口。使用Hession2来操作，效率比JDK的快不少，数据包也小些，也就能提高网络传输效率。
+
 * ####2.0 增加了Hessian 和 Kryo 序列化支持，还是使用JDK自带的处理方法。修改方法如下：
     
         <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
@@ -541,24 +542,8 @@ web.xml配置：
           <property name="namespace" value="test" />
         </bean>
 
-    虽然Kryo效率比较高，但使用Kryo时需要注意，如果一个Bean只改了属性名称，不改变属性类型，反序列化时，会原来属性值赋给新的属性，如，原来Bean是这样的：
+    虽然Kryo效率比较高，但使用Kryo会出现的问题比较多，所以还是慎重使用，系统经常维护的就不太适合使用，经过测试，改变属性名称，或删除中间的属性等情况都可能反序列出错误的值，所以如果遇到有减少或修改的情况要及时清里缓存。如果是增加属性则会反序列化失败，这正符合我们的要求。
 
-        public class Simple implements java.io.Serializable {
-          private String name;
-          private Integer age;
-          private Integer sex;
-          ... ...
-        }
-
-    但后来因为业务的变化，把sex改为grade:
-
-        public class Simple implements java.io.Serializable {
-          private String name;
-          private Integer age;
-          private Integer grade;
-          ... ...
-        }
-
-     如果缓存中有旧数据，会使得原来sex的值赋给了grade，出现这样的原因，是Kryo是不保存属性名称的，只保存属性的类型。
+    
 
 * ####1.9 增加了命名空间，避免不同的系统之支缓存冲突

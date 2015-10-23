@@ -12,5 +12,7 @@ public class BeanTest {
         System.out.println(now.toString());
         System.out.println(String.valueOf(now));
         System.out.println(str);
+
+
     }
 }

@@ -4,11 +4,11 @@ public class Simple implements java.io.Serializable {
 
     private static final long serialVersionUID=-4333266259384775868L;
 
-    private String name;
+    private Integer sex;
 
     private Integer age;
 
-    private String sex;
+    private String name;
 
     public String getName() {
         return name;
@@ -26,11 +26,11 @@ public class Simple implements java.io.Serializable {
         this.age=age;
     }
 
-    public String getSex() {
+    public Integer getSex() {
         return sex;
     }
 
-    public void setSex(String sex) {
+    public void setSex(Integer sex) {
         this.sex=sex;
     }
 
@@ -38,7 +38,7 @@ public class Simple implements java.io.Serializable {
         Simple simple=new Simple();
         simple.setAge(10);
         simple.setName("XiaoMing");
-        simple.setSex("2");
+        simple.setSex(2);
         return simple;
     }
 
