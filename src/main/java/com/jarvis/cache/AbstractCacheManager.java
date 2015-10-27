@@ -12,8 +12,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -36,9 +36,9 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
     private AutoLoadHandler<T> autoLoadHandler;
 
     /**
-     * 序列化工具，默认使用JDK自动的
+     * 序列化工具，默认使用Hessian2
      */
-    private ISerializer<Object> serializer=new JdkSerializer();
+    private ISerializer<Object> serializer=new HessianSerializer();
 
     public AbstractCacheManager(AutoLoadConfig config) {
         autoLoadHandler=new AutoLoadHandler<T>(this, config);
@@ -105,6 +105,10 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
         Object[] arguments=pjp.getArgs();
+        // Signature signature = pjp.getSignature();
+        // MethodSignature methodSignature=(MethodSignature) signature;
+        // Class returnType = methodSignature.getReturnType(); // 获取返回值类型
+        // System.out.println("returnType:"+returnType.getName());
         int expire=cache.expire();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             T result=getData(pjp, null);

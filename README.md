@@ -529,15 +529,15 @@ web.xml配置：
 
 ## 更新日志
 
-* ####2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 序列化支持，用户可以根据自己的情况实现ISerializer接口。使用Hession2来操作，效率比JDK的快不少，数据包也小些，也就能提高网络传输效率。
+* ####2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 支持，用户可以根据自己的情况实现ISerializer接口。优化HessianSerializer，提升性能，并将HessianSerializer作为默认的序列化和反序列化工具。
 
 * ####2.0 增加了Hessian 和 Kryo 序列化支持，还是使用JDK自带的处理方法。修改方法如下：
     
-        <bean id="kryoSerializer" class="com.jarvis.cache.serializer.KryoSerializer" />
+        <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
         <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
         <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
           <constructor-arg ref="autoLoadConfig" />
-          <property name="serializer" ref="kryoSerializer" />
+          <property name="serializer" ref="hessianSerializer" />
           <property name="shardedJedisPool" ref="shardedJedisPool" />
           <property name="namespace" value="test" />
         </bean>

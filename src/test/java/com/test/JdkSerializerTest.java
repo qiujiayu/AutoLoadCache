@@ -1,13 +1,9 @@
 package com.test;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.to.CacheWrapper;
@@ -19,41 +15,39 @@ public class JdkSerializerTest {
         long start=System.currentTimeMillis();
         CacheWrapper<Simple> wrapper=new CacheWrapper<Simple>();
         wrapper.setCacheObject(Simple.getSimple());
-        
+
         BeanUtil.deepClone(wrapper, new JdkSerializer());
-        String fileName="jdk.bin";
+        byte[] data=null;
         for(int i=0; i < 1000; i++) {
-            write(wrapper, new FileOutputStream(fileName));
+            data=write(wrapper);
         }
         long end=System.currentTimeMillis();
         System.out.println("write:" + (end - start));
-
+        System.out.println("size:" + data.length);
         start=System.currentTimeMillis();
         for(int i=0; i < 1000; i++) {
-            InputStream inputStream=new FileInputStream(fileName);
-            if(i == 0) {
-                System.out.println("size:" + inputStream.available());
-            }
-            read(inputStream);
+            read(data);
         }
         end=System.currentTimeMillis();
         System.out.println("read:" + (end - start));
     }
 
-    private static void write(Object obj, OutputStream outputStream) throws Exception {
-        ObjectOutputStream output=new ObjectOutputStream(new GZIPOutputStream(outputStream));
+    private static byte[] write(Object obj) throws Exception {
+        ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
+        ObjectOutputStream output=new ObjectOutputStream(outputStream);
         output.writeObject(obj);
         output.flush();
-        output.close();
+        return outputStream.toByteArray();
         // System.out.println(bo.toByteArray().length);
         // System.out.println(new JdkSerializer().serialize(wrapper).length);
     }
 
-    private static void read(InputStream inputStream) throws Exception {
-        ObjectInputStream input=new ObjectInputStream(new GZIPInputStream(inputStream));
+    private static void read(byte[] data) throws Exception {
+        ByteArrayInputStream inputStream=new ByteArrayInputStream(data);
+        ObjectInputStream input=new ObjectInputStream(inputStream);
         @SuppressWarnings("unchecked")
         CacheWrapper<Simple> someObject=(CacheWrapper<Simple>)input.readObject();
         input.close();
-        //System.out.println(someObject.getCacheObject());
+        // System.out.println(someObject.getCacheObject());
     }
 }
