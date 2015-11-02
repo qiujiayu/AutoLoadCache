@@ -23,7 +23,7 @@ public class BeanTest {
 
     public static void getService() {
         try {
-            
+
             Class entityClass=ReflectUtils.getClassGenricType(SimpleWrapper.class);
             System.out.println("entityClass==" + entityClass);
             // System.out.println("getOwnerType==" + type.getOwnerType());

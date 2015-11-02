@@ -13,7 +13,7 @@ import com.jarvis.cache.to.CacheWrapper;
 public class HessianTest {
 
     private static SerializerFactory _serializerFactory=SerializerFactory.createDefault();
-    static{
+    static {
         _serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
     }
 
@@ -34,10 +34,10 @@ public class HessianTest {
         }
         end=System.currentTimeMillis();
         System.out.println("read:" + (end - start));
-        
+
         BigDecimal amount=new BigDecimal(14.0);
         data=write(amount);
-        System.out.println( read(data));
+        System.out.println(read(data));
     }
 
     private static byte[] write(Object obj) throws Exception {

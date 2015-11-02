@@ -529,6 +529,9 @@ web.xml配置：
 
 ## 更新日志
 
+
+* ####2.2 解决Hessian不能正确序列化BigDecimal问题
+
 * ####2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 支持，用户可以根据自己的情况实现ISerializer接口。优化HessianSerializer，提升性能，并将HessianSerializer作为默认的序列化和反序列化工具。
 
 * ####2.0 增加了Hessian 和 Kryo 序列化支持，还是使用JDK自带的处理方法。修改方法如下：
