@@ -8,6 +8,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.reflect.MethodSignature;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
@@ -105,10 +107,10 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      */
     public T proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
         Object[] arguments=pjp.getArgs();
-        // Signature signature = pjp.getSignature();
-        // MethodSignature methodSignature=(MethodSignature) signature;
-        // Class returnType = methodSignature.getReturnType(); // 获取返回值类型
-        // System.out.println("returnType:"+returnType.getName());
+        Signature signature = pjp.getSignature();
+        MethodSignature methodSignature=(MethodSignature) signature;
+        Class returnType = methodSignature.getReturnType(); // 获取返回值类型
+        System.out.println("returnType:"+returnType.getName());
         int expire=cache.expire();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             T result=getData(pjp, null);
