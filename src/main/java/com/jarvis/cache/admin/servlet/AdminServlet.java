@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.context.ApplicationContext;
@@ -28,10 +29,22 @@ public class AdminServlet extends HttpServlet {
 
     private String cacheManagerNames[]=null;
 
+    private String user="admin";
+
+    private String password="admin";
+
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         String tmpNames=servletConfig.getInitParameter("cacheManagerNames");
         cacheManagerNames=tmpNames.split(",");
+        String _user=servletConfig.getInitParameter("user");
+        if(null != _user) {
+            user=_user;
+        }
+        String _password=servletConfig.getInitParameter("password");
+        if(null != _password) {
+            password=_password;
+        }
     }
 
     @Override
@@ -57,12 +70,35 @@ public class AdminServlet extends HttpServlet {
                 String errMsg=cacheManagerName + " is not exists!";
                 throw new Exception(errMsg);
             }
+            HttpSession session=req.getSession();
+            String logined=(String)session.getAttribute("LOGINED");
             String act=req.getParameter("act");
-            if(null != act) {
-                doServices(req, resp, cacheManager);
-            } else {
-                printForm(resp, cacheManagerName);
-                printList(req, resp, cacheManager, cacheManagerName);
+            if(null == logined) {
+                String message=null;
+                boolean printLoginForm=true;
+                if("login".equals(act)) {
+                    String _user=req.getParameter("user");
+                    String _password=req.getParameter("password");
+                    if(user.equals(_user) && password.equals(_password)) {
+                        session.setAttribute("LOGINED", "LOGINED");
+                        printLoginForm=false;
+                        act=null;
+                    } else {
+                        message="用户名或密码错误！";
+                    }
+                }
+                if(printLoginForm) {
+                    printLoginForm(resp, message);
+                }
+            }
+            logined=(String)session.getAttribute("LOGINED");
+            if(null != logined) {
+                if(null != act) {
+                    doServices(req, resp, cacheManager);
+                } else {
+                    printForm(resp, cacheManagerName);
+                    printList(req, resp, cacheManager, cacheManagerName);
+                }
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -138,6 +174,20 @@ public class AdminServlet extends HttpServlet {
         html.append("    document.getElementById(\"updateCacheForm\").submit();");
         html.append("}}");
         html.append("</script></head><body>");
+        resp.getWriter().println(html.toString());
+    }
+
+    private void printLoginForm(HttpServletResponse resp, String message) throws IOException {
+        StringBuilder html=new StringBuilder();
+        if(null != message) {
+            html.append("ERROR:" + message);
+        }
+        html.append("<form  action=\"\" method=\"post\">");
+        html.append("user:<input type=\"text\" name=\"user\" />");
+        html.append("password:<input type=\"password\" name=\"password\" />");
+        html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"login\" />");
+        html.append("<input type=\"submit\" value=\"登录\"></input>");
+        html.append("</form>");
         resp.getWriter().println(html.toString());
     }
 
