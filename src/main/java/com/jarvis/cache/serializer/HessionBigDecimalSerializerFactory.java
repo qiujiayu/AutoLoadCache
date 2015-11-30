@@ -11,9 +11,9 @@ import com.caucho.hessian.io.StringValueSerializer;
 
 public class HessionBigDecimalSerializerFactory extends AbstractSerializerFactory {
 
-    private StringValueSerializer bigDecimalSerializer=new StringValueSerializer();
+    private static final StringValueSerializer bigDecimalSerializer=new StringValueSerializer();
 
-    private BigDecimalDeserializer bigDecimalDeserializer=new BigDecimalDeserializer();
+    private static final BigDecimalDeserializer bigDecimalDeserializer=new BigDecimalDeserializer();
 
     @Override
     public Serializer getSerializer(Class cl) throws HessianProtocolException {

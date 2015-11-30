@@ -530,6 +530,10 @@ web.xml配置：
 ## 更新日志
 
 
+* ####2.4 Jedis更新到2.8
+
+* ####2.3 AdminServlet 增加登录用户名和密码；
+
 * ####2.2 解决Hessian不能正确序列化BigDecimal问题
 
 * ####2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 支持，用户可以根据自己的情况实现ISerializer接口。优化HessianSerializer，提升性能，并将HessianSerializer作为默认的序列化和反序列化工具。
