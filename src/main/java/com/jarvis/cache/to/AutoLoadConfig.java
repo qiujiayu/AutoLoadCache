@@ -11,7 +11,7 @@ public class AutoLoadConfig {
     /**
      * 处理自动加载队列的线程数量
      */
-    private int threadCnt=10;
+    private Integer threadCnt=10;
 
     /**
      * 自动加载队列中允许存放的最大容量

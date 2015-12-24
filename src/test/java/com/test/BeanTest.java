@@ -1,15 +1,25 @@
 package com.test;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
 import java.util.Calendar;
-import java.util.List;
 
+import com.jarvis.cache.redis.ShardedCachePointCut;
+import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
 
 public class BeanTest {
 
     public static void main(String args[]) {
+
+        AutoLoadConfig config=new AutoLoadConfig();
+        Class configClass=config.getClass();
+        Field fields[]=configClass.getDeclaredFields();
+        for(Field field: fields) {
+            field.setAccessible(true);
+            System.out.println(field.getType().getName());
+        }
+        System.out.println(ShardedCachePointCut.class.getSuperclass().getSuperclass().getName());
         Calendar now=Calendar.getInstance();
         String str=BeanUtil.toString(now.getTime().getTime());
         System.out.println(now.toString());

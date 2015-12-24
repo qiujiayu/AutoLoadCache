@@ -35,6 +35,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     private AutoLoadHandler<T> autoLoadHandler;
 
+    private String namespace;
+
     /**
      * 序列化工具，默认使用Hessian2
      */
@@ -57,6 +59,21 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         return this.autoLoadHandler;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace=namespace;
+    }
+
+    private String appendNamespace(String cacheKey) {
+        if(null != namespace && namespace.length() > 0) {
+            return namespace + ":" + cacheKey;
+        }
+        return cacheKey;
+    }
+
     /**
      * 生成缓存 Key
      * @param pjp
@@ -68,11 +85,13 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         String methodName=pjp.getSignature().getName();
         Object[] arguments=pjp.getArgs();
         String cacheKey=null;
+
         if(null != cache.key() && cache.key().trim().length() > 0) {
-            cacheKey=CacheUtil.getDefinedCacheKey(cache.key(), arguments);
+            cacheKey+=CacheUtil.getDefinedCacheKey(cache.key(), arguments);
         } else {
-            cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
+            cacheKey+=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
         }
+        cacheKey=appendNamespace(cacheKey);
         return cacheKey;
     }
 
@@ -93,6 +112,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         } else {
             cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
         }
+        cacheKey=appendNamespace(cacheKey);
         return cacheKey;
     }
 
@@ -284,6 +304,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                     break;
             }
             if(null != key && key.trim().length() > 0) {
+                key=appendNamespace(key);
                 this.delete(key);
             }
         }

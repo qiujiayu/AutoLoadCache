@@ -8,7 +8,7 @@ import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
 import com.jarvis.cache.serializer.HessionBigDecimalSerializerFactory;
-import com.jarvis.cache.to.CacheWrapper;
+import com.test.hessian.MyTO;
 
 public class HessianTest {
 
@@ -19,11 +19,11 @@ public class HessianTest {
 
     public static void main(String[] args) throws Exception {
         long start=System.currentTimeMillis();
-        CacheWrapper<Simple> wrapper=new CacheWrapper<Simple>();
-        wrapper.setCacheObject(Simple.getSimple());
+        MyTO to=new MyTO();
+        to.setId("111");
         byte[] data=null;
         for(int i=0; i < 1000; i++) {
-            data=write(wrapper);
+            data=write(to);
         }
         long end=System.currentTimeMillis();
         System.out.println("write:" + (end - start));
