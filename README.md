@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>2.2</version>
+      <version>2.6</version>
     </dependency>
 
 
@@ -529,6 +529,7 @@ web.xml配置：
 
 ## 更新日志
 
+* ####2.5 2.6 当autoload=true，缓存Key中没有加上命名空间，对1.9及以上版本有影响
 
 * ####2.4 Jedis更新到2.8
 

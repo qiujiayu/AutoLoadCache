@@ -87,12 +87,11 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         String cacheKey=null;
 
         if(null != cache.key() && cache.key().trim().length() > 0) {
-            cacheKey+=CacheUtil.getDefinedCacheKey(cache.key(), arguments);
+            cacheKey=CacheUtil.getDefinedCacheKey(cache.key(), arguments);
         } else {
-            cacheKey+=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
+            cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
         }
-        cacheKey=appendNamespace(cacheKey);
-        return cacheKey;
+        return appendNamespace(cacheKey);
     }
 
     /**
@@ -112,8 +111,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         } else {
             cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
         }
-        cacheKey=appendNamespace(cacheKey);
-        return cacheKey;
+        return appendNamespace(cacheKey);
     }
 
     /**
