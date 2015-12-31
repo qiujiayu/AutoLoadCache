@@ -26,8 +26,8 @@ public class BeanUtil {
      */
     private static boolean isPrimitive(Object obj) {
         return obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
-            || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
-            || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal;
+                || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
+                || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal;
     }
 
     /**
@@ -88,6 +88,8 @@ public class BeanUtil {
                 r+=toString(val);
             }
             return r + "}";
+        }else if(obj instanceof Class){
+            return "";
         }
         String r=cl.getName();
         do {
