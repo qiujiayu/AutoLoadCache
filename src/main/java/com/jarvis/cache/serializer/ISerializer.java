@@ -4,11 +4,11 @@ public interface ISerializer<T> {
 
     /**
      * Serialize the given object to binary data.
-     * @param t object to serialize
+     * @param obj object to serialize
      * @return the equivalent binary data
      * @throws Exception 异常
      */
-    byte[] serialize(T t) throws Exception;
+    byte[] serialize(T obj) throws Exception;
 
     /**
      * Deserialize an object from the given binary data.

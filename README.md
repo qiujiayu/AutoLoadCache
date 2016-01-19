@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>2.8</version>
+      <version>2.9</version>
     </dependency>
 
 
@@ -529,6 +529,8 @@ web.xml配置：
 
 ## 更新日志
 
+* ####2.9 引入 fast-serialization，<bean id="fstSerializer" class="com.jarvis.cache.serializer.FSTSerializer" />。
+
 * ####2.8 com.jarvis.lib.util.BeanUtil.toString()方法中增加反射缓存，提升反射效率
 
 * ####2.7 当参数类型为 Class，自动生成的缓存Key会出问题。（感谢zhaopeng 提供的代码）
@@ -555,7 +557,5 @@ web.xml配置：
         </bean>
 
     虽然Kryo效率比较高，但使用Kryo会出现的问题比较多，所以还是慎重使用，系统经常维护的就不太适合使用，经过测试，改变属性名称，或删除中间的属性等情况都可能反序列出错误的值，所以如果遇到有减少或修改的情况要及时清里缓存。如果是增加属性则会反序列化失败，这正符合我们的要求。
-
-    
 
 * ####1.9 增加了命名空间，避免不同的系统之支缓存冲突
