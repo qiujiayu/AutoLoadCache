@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.jarvis.cache.serializer.ISerializer;
 
@@ -18,6 +19,9 @@ import com.jarvis.cache.serializer.ISerializer;
  * @author jiayu.qiu
  */
 public class BeanUtil {
+
+    @SuppressWarnings("rawtypes")
+    private static final Map<Class, Field[]> fieldsCahce=new ConcurrentHashMap<Class, Field[]>();
 
     /**
      * 是否为基础数据类型
@@ -94,8 +98,14 @@ public class BeanUtil {
         }
         String r=cl.getName();
         do {
-            Field[] fields=cl.getDeclaredFields();
-            AccessibleObject.setAccessible(fields, true);
+            Field[] fields=fieldsCahce.get(cl);
+            if(null == fields) {
+                fields=cl.getDeclaredFields();
+                if(null != fields) {
+                    AccessibleObject.setAccessible(fields, true);
+                }
+                fieldsCahce.put(cl, fields);
+            }
             if(null == fields || fields.length == 0) {
                 cl=cl.getSuperclass();
                 continue;
