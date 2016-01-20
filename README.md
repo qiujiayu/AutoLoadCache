@@ -86,7 +86,7 @@ Redis 配置:
       <property name="sortType" value="1" />
       <property name="checkFromCacheBeforeLoad" value="true" />
     </bean>
-
+    <!-- 可以通过implements com.jarvis.cache.serializer.ISerializer<Object> 实现 Kryo 和 FST Serializer 工具，框架的核对不在这里，所以不提供过多的实现 -->
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
 
     <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
