@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>2.9</version>
+      <version>2.8</version>
     </dependency>
 
 
@@ -528,8 +528,6 @@ web.xml配置：
 应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
 
 ## 更新日志
-
-* ####2.9 引入 fast-serialization，<bean id="fstSerializer" class="com.jarvis.cache.serializer.FSTSerializer" />。
 
 * ####2.8 com.jarvis.lib.util.BeanUtil.toString()方法中增加反射缓存，提升反射效率
 
