@@ -62,7 +62,11 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
                     try {
                         byte[] key=keySerializer.serialize(cacheKey);
                         byte[] val=getSerializer().serialize(result);
-                        connection.setEx(key, expire, val);
+                        if(expire == 0) {
+                            connection.set(key, val);
+                        } else {
+                            connection.setEx(key, expire, val);
+                        }
                     } catch(Exception ex) {
                         logger.error(ex.getMessage(), ex);
                     }

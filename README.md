@@ -85,6 +85,7 @@ Redis 配置:
       <property name="slowLoadTime" value="500" />
       <property name="sortType" value="1" />
       <property name="checkFromCacheBeforeLoad" value="true" />
+      <property name="autoLoadPeriod" value="50" />
     </bean>
     <!-- 可以通过implements com.jarvis.cache.serializer.ISerializer<Object> 实现 Kryo 和 FST Serializer 工具，框架的核对不在这里，所以不提供过多的实现 -->
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
@@ -128,7 +129,7 @@ Memcache 配置：
 
 AOP 配置：
 
-    <aop:config>
+    <aop:config proxy-target-class="true">
       <aop:aspect ref="cachePointCut">
         <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
         <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
@@ -332,7 +333,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
     public @interface Cache {
 
         /**
-         * 缓存的过期时间，单位：秒
+         * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
          */
         int expire();
 
@@ -343,7 +344,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
         String key() default "";
         
         /**
-         * 是否启用自动加载缓存
+         * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
          * @return
          */
         boolean autoload() default false;
@@ -375,6 +376,11 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
          * @return CacheOpType
         */
         CacheOpType opType() default CacheOpType.READ_WRITE;
+        /**
+         * 并发等待时间(毫秒)
+         * @return 时间
+         */
+        int waitTimeOut() default 500;
     }
 
 ###AutoLoadConfig 配置说明
@@ -528,6 +534,19 @@ web.xml配置：
 应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
 
 ## 更新日志
+
+* ####2.9 修复以下几个问题 
+
+    * @Cache(expire=0, waitTimeOut=500),当expire=0时，将设置为永久缓存；waitTimeOut 用于设置并发等待时间(毫秒)。
+
+    * 增加自动加载，单个线程内的等待时间间隔：
+
+            <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+              ... ...
+              <property name="autoLoadPeriod" value="50" /><!--默认值50ms-->
+            </bean>
+
+    * 优化AbstractCacheManager类的loadData方法中线程同步锁。
 
 * ####2.8 com.jarvis.lib.util.BeanUtil.toString()方法中增加反射缓存，提升反射效率
 

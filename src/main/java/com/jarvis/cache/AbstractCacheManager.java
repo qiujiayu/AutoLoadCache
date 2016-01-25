@@ -161,7 +161,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             }
             return cacheWrapper.getCacheObject();
         }
-        return loadData(pjp, autoLoadTO, cacheKey, expire);
+        return loadData(pjp, autoLoadTO, cacheKey, cache);
     }
 
     /**
@@ -182,11 +182,11 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @param pjp
      * @param autoLoadTO
      * @param cacheKey
-     * @param expire
+     * @param cache
      * @return 返回值
      * @throws Exception
      */
-    private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, int expire) throws Exception {
+    private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, Cache cache) throws Exception {
         Boolean isProcessing=null;
         try {
             lock.lock();
@@ -196,16 +196,18 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         } finally {
             lock.unlock();
         }
+        int expire=cache.expire();
+        Object target=pjp.getTarget();
         T result=null;
         try {
             if(null == isProcessing) {
                 result=getData(pjp, autoLoadTO);
             } else {
                 long startWait=System.currentTimeMillis();
-                while(System.currentTimeMillis() - startWait < 500) {// 等待
-                    synchronized(lock) {
+                while(System.currentTimeMillis() - startWait < cache.waitTimeOut()) {// 等待
+                    synchronized(target) {
                         try {
-                            lock.wait();
+                            target.wait();
                         } catch(InterruptedException ex) {
                             logger.error(ex.getMessage(), ex);
                         }
@@ -225,8 +227,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             throw new Exception(e);
         } finally {
             processing.remove(cacheKey);
-            synchronized(lock) {
-                lock.notifyAll();
+            synchronized(target) {
+                target.notifyAll();
             }
         }
         writeCache(result, cacheKey, expire);

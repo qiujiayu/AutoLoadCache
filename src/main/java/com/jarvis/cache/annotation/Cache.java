@@ -12,7 +12,7 @@ import com.jarvis.cache.type.CacheOpType;
 public @interface Cache {
 
     /**
-     * 缓存的过期时间，单位：秒
+     * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
      * @return 时间
      */
     int expire();
@@ -24,7 +24,7 @@ public @interface Cache {
     String key() default "";
 
     /**
-     * 是否启用自动加载缓存
+     * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
      * @return boolean
      */
     boolean autoload() default false;
@@ -58,4 +58,10 @@ public @interface Cache {
      * @return CacheOpType
      */
     CacheOpType opType() default CacheOpType.READ_WRITE;
+
+    /**
+     * 并发等待时间(毫秒)
+     * @return 时间
+     */
+    int waitTimeOut() default 500;
 }

@@ -38,6 +38,11 @@ public class AutoLoadConfig {
      */
     private boolean checkFromCacheBeforeLoad=false;
 
+    /**
+     * 单个线程中执行自动加载的时间间隔
+     */
+    private int autoLoadPeriod=50;
+
     public int getThreadCnt() {
         return threadCnt;
     }
@@ -93,6 +98,14 @@ public class AutoLoadConfig {
 
     public void setCheckFromCacheBeforeLoad(boolean checkFromCacheBeforeLoad) {
         this.checkFromCacheBeforeLoad=checkFromCacheBeforeLoad;
+    }
+
+    public int getAutoLoadPeriod() {
+        return autoLoadPeriod;
+    }
+
+    public void setAutoLoadPeriod(int autoLoadPeriod) {
+        this.autoLoadPeriod=autoLoadPeriod;
     }
 
 }

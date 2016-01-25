@@ -174,7 +174,7 @@ public class AutoLoadHandler<T> {
                     AutoLoadTO tmpTO=autoLoadQueue.take();
                     if(null != tmpTO) {
                         loadCache(tmpTO);
-                        Thread.sleep(50);
+                        Thread.sleep(config.getAutoLoadPeriod());
                     }
                 } catch(InterruptedException e) {
                     logger.error(e.getMessage(), e);

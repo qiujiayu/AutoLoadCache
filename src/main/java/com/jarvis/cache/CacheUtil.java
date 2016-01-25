@@ -181,14 +181,16 @@ public class CacheUtil {
      */
     public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
         StringBuilder sb=new StringBuilder();
-        sb.append(className).append(".").append(method);
-        if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
-            String subKey=getElValue(subKeySpEL, arguments, String.class);
-            if(null != subKey && subKey.trim().length() > 0) {
-                sb.append(".").append(subKey);
+        sb.append(className);
+        if(null != method && method.length() > 0) {
+            sb.append(".").append(method);
+            if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
+                String subKey=getElValue(subKeySpEL, arguments, String.class);
+                if(null != subKey && subKey.trim().length() > 0) {
+                    sb.append(".").append(subKey);
+                }
             }
         }
-        sb.append(":");
         return sb.toString();
     }
 
@@ -232,7 +234,7 @@ public class CacheUtil {
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
             autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
         }
-        return autoload;
+        return autoload && cache.expire() > 120;
     }
 
     /**
