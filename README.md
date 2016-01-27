@@ -535,7 +535,7 @@ web.xml配置：
 
 ## 更新日志
 
-* ####3.11 @CacheDeleteKey中keyType 设置default，发实现向下兼容。
+* ####2.11 @CacheDeleteKey中keyType 设置default，发实现向下兼容。
 
 * ####2.10 修改记录： 
 
