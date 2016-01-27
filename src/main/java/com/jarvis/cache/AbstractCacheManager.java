@@ -270,27 +270,26 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
                 continue;
             }
+
             String key=null;
-            switch(keyConfig.keyType()) {
-                case DEFINED:
-                    key=CacheUtil.getDefinedCacheKey(keyConfig.value(), arguments);
-                    break;
-                case DEFAULT:
-                    String className=keyConfig.cls().getName();
-                    String method=keyConfig.method();
-                    String subKeySpEL=keyConfig.subKeySpEL();
-                    if(keyConfig.deleteByPrefixKey()) {
-                        key=CacheUtil.getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL) + "*";
-                    } else {
-                        int len=keyConfig.argsEl().length;
-                        Object[] args=new Object[len];
-                        for(int j=0; j < len; j++) {
-                            args[j]=CacheUtil.getElValue(keyConfig.argsEl()[j], arguments, Object.class);
-                        }
-                        key=CacheUtil.getDefaultCacheKey(className, method, args, subKeySpEL);
+            if(null != keyConfig.value() && keyConfig.value().length() > 0) {
+                key=CacheUtil.getDefinedCacheKey(keyConfig.value(), arguments);
+            } else {
+                String className=keyConfig.cls().getName();
+                String method=keyConfig.method();
+                String subKeySpEL=keyConfig.subKeySpEL();
+                if(keyConfig.deleteByPrefixKey()) {
+                    key=CacheUtil.getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL) + "*";
+                } else {
+                    int len=keyConfig.argsEl().length;
+                    Object[] args=new Object[len];
+                    for(int j=0; j < len; j++) {
+                        args[j]=CacheUtil.getElValue(keyConfig.argsEl()[j], arguments, Object.class);
                     }
-                    break;
+                    key=CacheUtil.getDefaultCacheKey(className, method, args, subKeySpEL);
+                }
             }
+            
             if(null != key && key.trim().length() > 0) {
                 key=appendNamespace(key);
                 this.delete(key);

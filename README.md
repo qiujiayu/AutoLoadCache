@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>2.9</version>
+      <version>2.10</version>
     </dependency>
 
 
@@ -534,6 +534,26 @@ web.xml配置：
 应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
 
 ## 更新日志
+
+* ####2.10 修改记录： 
+
+    * 优化ConcurrentHashMap 使用，将以下代码：
+
+            Boolean isProcessing=null;
+            try {
+                lock.lock();
+                if(null == (isProcessing=processing.get(cacheKey))) {// 为发减少数据层的并发，增加等待机制。
+                    processing.put(cacheKey, Boolean.TRUE);
+                }
+            } finally {
+                lock.unlock();
+            }
+
+          改为：
+
+            Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+
+    * 放弃使用 @CacheDeleteKey中keyType， 直接使用它的value值来判断是自定义缓存Key，还是默认生成的缓存Key。所以keyType 变得多余了。
 
 * ####2.9 修复以下几个问题 
 

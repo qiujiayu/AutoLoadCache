@@ -18,7 +18,7 @@ public @interface CacheDeleteKey {
     String condition() default "";
 
     /**
-     * 删除缓存的Key，支持使用SpEL表达式
+     * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key，否则按默认缓存key处理。
      * @return String
      */
     String value() default "";
@@ -27,6 +27,7 @@ public @interface CacheDeleteKey {
      * 生成Key的类型
      * @return CacheKeyType
      */
+    @Deprecated
     CacheKeyType keyType();
 
     /**
@@ -49,7 +50,7 @@ public @interface CacheDeleteKey {
     String method() default "";
 
     /**
-     * 转换缓存方法的参数，当keyType 为DEFAULT 并且 deleteByPrefixKey=true时才会使用上。
+     * 转换缓存方法的参数，当keyType 为DEFAULT 并且 deleteByPrefixKey=false时才会使用上。
      * @return String[]
      */
     String[] argsEl() default "";

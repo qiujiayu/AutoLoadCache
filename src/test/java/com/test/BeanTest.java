@@ -2,6 +2,8 @@ package com.test;
 
 import java.lang.reflect.Field;
 import java.util.Calendar;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.jarvis.cache.redis.ShardedCachePointCut;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -9,9 +11,14 @@ import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
 
 public class BeanTest {
+    private static final Map<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
 
     public static void main(String args[]) {
-
+        Boolean isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        System.out.println("isProcessing1=="+isProcessing);
+        isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        System.out.println("isProcessing2=="+isProcessing);
+        
         AutoLoadConfig config=new AutoLoadConfig();
         Class configClass=config.getClass();
         Field fields[]=configClass.getDeclaredFields();
