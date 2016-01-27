@@ -28,7 +28,7 @@ public @interface CacheDeleteKey {
      * @return CacheKeyType
      */
     @Deprecated
-    CacheKeyType keyType();
+    CacheKeyType keyType() default CacheKeyType.DEFAULT;
 
     /**
      * deleteByPrefixKey 是否根据前缀进行批量删除 只有当 keType为DEFAULT时才有效
