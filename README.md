@@ -186,7 +186,7 @@ AOP 配置：
          * 
          * @param user
          */
-        @CacheDelete({@CacheDeleteKey(value="'user'+#args[0].id", keyType=CacheKeyType.DEFINED)})
+        @CacheDelete({@CacheDeleteKey(value="'user'+#args[0].id")})
         public void updateUserName(UserTO user) {
             System.out.println("update user name:" + user.getName());
             // save to db
@@ -208,13 +208,13 @@ AOP 配置：
             return user;
         }
 
-        @CacheDelete({@CacheDeleteKey(cls=UserDAO.class, method="getUserById2", argsEl={"#args[0].id"}, keyType=CacheKeyType.DEFAULT)})
+        @CacheDelete({@CacheDeleteKey(cls=UserDAO.class, method="getUserById2", argsEl={"#args[0].id"})})
         public void updateUserName2(UserTO user) {
             System.out.println("update user name:" + user.getName());
             // save to db
         }
 
-        @CacheDelete({@CacheDeleteKey(deleteByPrefixKey=true, cls=UserDAO.class, method="getUserById2", keyType=CacheKeyType.DEFAULT)})
+        @CacheDelete({@CacheDeleteKey(deleteByPrefixKey=true, cls=UserDAO.class, method="getUserById2")})
         public void clearUserCache2() {
             System.out.println("clearUserCache");
             // save to db
@@ -294,7 +294,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
         public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
             ... ...
         }
-        @CacheDelete({@CacheDeleteKey(cls=GoodsCommentDAO.class, method="getCommentListByGoodsId", deleteByPrefixKey=true, subKeySpEL=subKeySpEL="#args[0].goodsId" , keyType=CacheKeyType.DEFAULT)})
+        @CacheDelete({@CacheDeleteKey(cls=GoodsCommentDAO.class, method="getCommentListByGoodsId", deleteByPrefixKey=true, subKeySpEL=subKeySpEL="#args[0].goodsId")})
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
         }
@@ -312,7 +312,7 @@ SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的exp
             ... ...
         }
 
-        @CacheDelete({@CacheDeleteKey(value="'goods_comment_'+#args[0].goodsId+'*'", keyType=CacheKeyType.DEFINED)}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        @CacheDelete({@CacheDeleteKey(value="'goods_comment_'+#args[0].goodsId+'*'")}) // 删除当前所属商品的所有评论，不删除其它商品评论
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
         }
