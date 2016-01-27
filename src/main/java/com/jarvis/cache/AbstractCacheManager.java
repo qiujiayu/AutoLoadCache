@@ -1,6 +1,5 @@
 package com.jarvis.cache;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -27,7 +26,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
-    private final Map<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
+    private final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();// 解决java.lang.NoSuchMethodError: java.util.Map.putIfAbsent
 
     private AutoLoadHandler<T> autoLoadHandler;
 
