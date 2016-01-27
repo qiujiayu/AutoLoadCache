@@ -2,8 +2,6 @@ package com.jarvis.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
@@ -30,8 +28,6 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
     private final Map<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
-
-    private final Lock lock=new ReentrantLock();
 
     private AutoLoadHandler<T> autoLoadHandler;
 
@@ -187,15 +183,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @throws Exception
      */
     private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, Cache cache) throws Exception {
-        Boolean isProcessing=null;
-        try {
-            lock.lock();
-            if(null == (isProcessing=processing.get(cacheKey))) {// 为发减少数据层的并发，增加等待机制。
-                processing.put(cacheKey, Boolean.TRUE);
-            }
-        } finally {
-            lock.unlock();
-        }
+        Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
         int expire=cache.expire();
         Object target=pjp.getTarget();
         T result=null;
