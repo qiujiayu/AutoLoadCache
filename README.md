@@ -535,6 +535,12 @@ web.xml配置：
 
 ## 更新日志
 
+* ####2.13 优化多线程并发等机制, 代码调整如下：
+
+    ![Alt 优化多线程并发等机制](/doc/wait.png "优化多线程并发等机制")
+
+    由于我们这里要实现的功能是，当前的线程要等待前一个正在运行线程的结果，但我们不知道前一个线程的执行到哪一步。有可能在我们要执行wait时，已经完成notifyAll了。通过调整逻辑变得更加严谨。
+
 * ####2.12 解决jdk1.8之前中 java.lang.NoSuchMethodError: java.util.Map.putIfAbsent 错误。
 
 * ####2.11 @CacheDeleteKey中keyType 设置default，以实现向下兼容。

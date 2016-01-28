@@ -26,7 +26,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
-    private final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();// 解决java.lang.NoSuchMethodError: java.util.Map.putIfAbsent
+    private final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();// 解决java.lang.NoSuchMethodError:
+                                                                                                         // java.util.Map.putIfAbsent
 
     private AutoLoadHandler<T> autoLoadHandler;
 
@@ -192,17 +193,18 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             } else {
                 long startWait=System.currentTimeMillis();
                 while(System.currentTimeMillis() - startWait < cache.waitTimeOut()) {// 等待
-                    synchronized(target) {
-                        try {
-                            target.wait();
-                        } catch(InterruptedException ex) {
-                            logger.error(ex.getMessage(), ex);
-                        }
-                    }
                     if(null == processing.get(cacheKey)) {// 防止频繁去缓存取数据，造成缓存服务器压力过大
                         CacheWrapper<T> cacheWrapper=this.get(cacheKey);
                         if(cacheWrapper != null) {
                             return cacheWrapper.getCacheObject();
+                        }
+                    } else {
+                        synchronized(target) {
+                            try {
+                                target.wait(10);
+                            } catch(InterruptedException ex) {
+                                logger.error(ex.getMessage(), ex);
+                            }
                         }
                     }
                 }
@@ -288,7 +290,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                     key=CacheUtil.getDefaultCacheKey(className, method, args, subKeySpEL);
                 }
             }
-            
+
             if(null != key && key.trim().length() > 0) {
                 key=appendNamespace(key);
                 this.delete(key);
