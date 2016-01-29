@@ -198,6 +198,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                         if(cacheWrapper != null) {
                             return cacheWrapper.getCacheObject();
                         }
+                        break;// 如果上个请求已经出异常，则需要跳出
                     } else {
                         synchronized(target) {
                             try {
