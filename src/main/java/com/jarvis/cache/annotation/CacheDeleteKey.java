@@ -23,7 +23,7 @@ public @interface CacheDeleteKey {
 
     /**
      * 哈希表中的字段，支持使用SpEL表达式
-     * @return
+     * @return String
      */
     String hfield() default "";
 }

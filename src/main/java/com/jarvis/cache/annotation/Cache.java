@@ -18,14 +18,14 @@ public @interface Cache {
     int expire();
 
     /**
-     * 自定义缓存Key
-     * @return String 自定义缓存Key，(注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
+     * 自定义缓存Key (注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
+     * @return String 自定义缓存Key
      */
     String key() default "";
 
     /**
      * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
-     * @return
+     * @return String
      */
     String hfield() default "";
 
@@ -60,7 +60,7 @@ public @interface Cache {
     CacheOpType opType() default CacheOpType.READ_WRITE;
 
     /**
-     * 并发等待时间(毫秒)
+     * 并发等待时间(毫秒),等待正在DAO中加载数据的线程返回的等待时间。
      * @return 时间
      */
     int waitTimeOut() default 500;

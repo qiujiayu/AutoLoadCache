@@ -143,6 +143,8 @@ public class BeanUtil {
      * @param obj Object
      * @param serializer ISerializer
      * @throws Exception Exception
+     * @return T Value 返回值
+     * @param <T> 泛型
      */
     public static <T> T deepClone(T obj, ISerializer<T> serializer) throws Exception {
         return serializer.deserialize(serializer.serialize(obj));

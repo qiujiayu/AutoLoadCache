@@ -60,7 +60,7 @@ public class CacheWrapper<T> implements Serializable {
 
     /**
      * 判断缓存是否已经过期
-     * @return
+     * @return boolean
      */
     public boolean isExpired() {
         if(expire > 0) {

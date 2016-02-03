@@ -117,7 +117,6 @@ Memcache 配置：
         <property name="useNagleAlgorithm" value="false" />
     </bean>
 
-
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
     <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
@@ -140,92 +139,111 @@ AOP 配置：
       </aop:aspect>
     </aop:config>
 
-通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
 
-[实例代码](https://github.com/qiujiayu/cache-example)
+通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
 
 
 ###3. 将需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解（Redis为例子）
 
-    package com.jarvis.example.dao;
-    import ... ...
-    public class UserDAO {
+[实例代码](https://github.com/qiujiayu/cache-example)
+
+###AutoLoadConfig 配置说明
+
+* threadCnt 处理自动加载队列的线程数量，默认值为：10;
+* maxElement 自动加载队列中允许存放的最大容量, 默认值为：20000
+* printSlowLog 是否打印比较耗时的请求，默认值为：true
+* slowLoadTime 当请求耗时超过此值时，记录目录（printSlowLog=true 时才有效），单位：毫秒，默认值：500;
+* sortType 自动加载队列排序算法, **0**：按在Map中存储的顺序（即无序）；**1** ：越接近过期时间，越耗时的排在最前；**2**：根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。更详细的说明，请查看代码com.jarvis.cache.type.AutoLoadQueueSortType
+* checkFromCacheBeforeLoad 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序部署的服务器数量比较少，设置为false, 如果部署的服务器比较多，可以考虑设置为true
+* autoLoadPeriod 单个线程中执行自动加载的时间间隔, 此值越小，遍历自动加载队列频率起高，对CPU会越消耗CPU
+
+
+###@Cache
+
+    public @interface Cache {
 
         /**
-         * 添加用户的同时，把数据放到缓存中
-         * @param userName
-         * @return
+         * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
+         * @return 时间
          */
-        @Cache(expire=600, key="'user'+#retVal.id", opType=CacheOpType.WRITE)
-        public UserTO addUser(String userName) {
-            UserTO user=new UserTO();
-            user.setName(userName);
-            Random rand=new Random();
-            // 数据库返回ID
-            Integer id=rand.nextInt(100000);
-            user.setId(id);
-            System.out.println("add User:" + id);
-            return user;
-        }
-        
+        int expire();
+
         /**
-         * 
-         * @param id
-         * @return
+         * 自定义缓存Key (注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
+         * @return String 自定义缓存Key
          */
-        @Cache(expire=600, autoload=true, key="'user'+#args[0]", condition="#args[0]>0")
-        public UserTO getUserById(Integer id) {
-            UserTO user=new UserTO();
-            user.setId(id);
-            user.setName("name" + id);
-            System.out.println("getUserById from dao");
-            return user;
-        }
-        
+        String key() default "";
+
         /**
-         * 
-         * @param user
+         * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
+         * @return String
          */
-        @CacheDelete({@CacheDeleteKey(value="'user'+#args[0].id")})
-        public void updateUserName(UserTO user) {
-            System.out.println("update user name:" + user.getName());
-            // save to db
-        }
+        String hfield() default "";
 
-        // 注意：因为没有用 SpEL表达式，所以不需要用单引号
-        @CacheDelete({@CacheDeleteKey(value="user*", keyType=CacheKeyType.DEFINED)})
-        public void clearUserCache() {
-            System.out.println("clearUserCache");
-        }
+        /**
+         * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
+         * @return boolean
+         */
+        boolean autoload() default false;
 
-        // ------------------------以下是使用默认生成Key的方法--------------------
-        @Cache(expire=600, autoload=true, condition="#args[0]>0")
-        public UserTO getUserById2(Integer id) {
-            UserTO user=new UserTO();
-            user.setId(id);
-            user.setName("name" + id);
-            System.out.println("getUserById from dao");
-            return user;
-        }
+        /**
+         * 自动缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
+         * @return String SpEL表达式
+         */
+        String autoloadCondition() default "";
 
-        @CacheDelete({@CacheDeleteKey(cls=UserDAO.class, method="getUserById2", argsEl={"#args[0].id"})})
-        public void updateUserName2(UserTO user) {
-            System.out.println("update user name:" + user.getName());
-            // save to db
-        }
+        /**
+         * 当autoload为true时，缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据,如果requestTimeout为0时，会一直自动加载
+         * @return long 请求过期
+         */
+        long requestTimeout() default 36000L;
 
-        @CacheDelete({@CacheDeleteKey(deleteByPrefixKey=true, cls=UserDAO.class, method="getUserById2")})
-        public void clearUserCache2() {
-            System.out.println("clearUserCache");
-            // save to db
-        }
+        /**
+         * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+         * @return String
+         */
+        String condition() default "";
+
+        /**
+         * 缓存的操作类型：默认是READ_WRITE，先缓存取数据，如果没有数据则从DAO中获取并写入缓存；如果是WRITE则从DAO取完数据后，写入缓存
+         * @return CacheOpType
+         */
+        CacheOpType opType() default CacheOpType.READ_WRITE;
+
+        /**
+         * 并发等待时间(毫秒),等待正在DAO中加载数据的线程返回的等待时间。
+         * @return 时间
+         */
+        int waitTimeOut() default 500;
     }
+
+###@CacheDeleteKey
+
+    public @interface CacheDeleteKey {
+
+        /**
+         * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+         * @return String
+         */
+        String condition() default "";
+
+        /**
+         * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key（不支持通过默认缓存key删除）。
+         * @return String
+         */
+        String value();
+
+        /**
+         * 哈希表中的字段，支持使用SpEL表达式
+         * @return String
+         */
+        String hfield() default "";
+    }
+
 
 ##缓存Key的生成
 
-
-
-1. 使用Spring EL 表达式自定义缓存Key:CacheUtil.getDefinedCacheKey(String keySpEL, Object[] arguments)，我们称之为自定义缓存Key:
+1. 在@Cache中设置key，可以是字符串或Spring EL表达式:
 
     例如： 
 
@@ -243,154 +261,27 @@ AOP 配置：
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
 
 
+2. 当@Cache中不设置key时，会使用默认缓存key。注意：使用@CacheDeleteKey删除缓存时，不支持默认缓存key。
 
 
-2. 默认生成缓存Key的方法：CacheUtil.getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL)
-
- * **className** 类名称
- * **method** 方法名称
- * **arguments** 参数
- * **subKeySpEL** 
-SpringEL表达式
-
-生成的Key格式为：{类名称}.{方法名称}{.SpringEL表达式运算结果}:{参数值的Hash字符串}。
-
-
-    当@Cache中不设置key值时，使用默认方式生成缓存Key。
-
-根据自己的情况选择不同的缓存Key生成策略，用自定义Key使用比较灵活，但维护成本会高些，而且不能出现笔误。
-
-
-###subKeySpEL 使用说明
-
-根据业务的需要，将缓存Key进行分组。举个例子，商品的评论列表：
-
-    package com.jarvis.example.dao;
-    import ... ...
-    public class GoodsCommentDAO{
-        @Cache(expire=600, subKeySpEL="#args[0]", autoload=true, requestTimeout=18000)
-        public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
-            ... ...
-        }
-    }
-
-如果商品Id为：100，那么生成缓存Key格式为:com.jarvis.example.dao.GoodsCommentDAO.getCommentListByGoodsId.100:xxxx
-在Redis中，能精确删除商品Id为100的评论列表，执行命令即可：
-del com.jarvis.example.dao.GoodsCommentDAO.getCommentListByGoodsId.100:*
-
-SpringEL表达式使用起来确实非常方便，如果需要，@Cache中的expire，requestTimeout以及autoload参数都可以用SpringEL表达式来动态设置，但使用起来就变得复杂，所以我们没有这样做。
 
 ###数据实时性
 
-上面商品评论的例子中，如果用户发表了评论，要立即显示该如何来处理？
-
-比较简单的方法就是，在发表评论成功后，立即把缓存中的数据也清除，这样就可以了。
+下面商品评论的例子中，如果用户发表了评论，要立即显示该如何来处理？
 
     package com.jarvis.example.dao;
     import ... ...
     public class GoodsCommentDAO{
-        
-        @Cache(expire=600, subKeySpEL="#args[0]", autoload=true, requestTimeout=18000)
-        public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
-            ... ...
-        }
-        @CacheDelete({@CacheDeleteKey(cls=GoodsCommentDAO.class, method="getCommentListByGoodsId", deleteByPrefixKey=true, subKeySpEL=subKeySpEL="#args[0].goodsId")})
-        public void addComment(Comment comment) {
-            ... ...// 省略添加评论代码
-        }
-        }
-    }
-
-使用自定义缓存Key的方案：
-
-
-    package com.jarvis.example.dao;
-    import ... ...
-    public class GoodsCommentDAO{
-        @Cache(expire=600, key="'goods_comment_'+#args[0]+'.list__'+#args[1]+'_'+#args[2]", autoload=true, requestTimeout=18000)
+        @Cache(expire=600, key="'goods_comment_list_'+#args[0]", hfield = "#args[1]+'_'+#args[2]", autoload=true, requestTimeout=18000)
         public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
             ... ...
         }
 
-        @CacheDelete({@CacheDeleteKey(value="'goods_comment_'+#args[0].goodsId+'*'")}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        @CacheDelete({@CacheDeleteKey(value="'goods_comment_list_'+#args[0].goodsId")}) // 删除当前所属商品的所有评论，不删除其它商品评论
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
         }
     }
-
-删除缓存AOP 配置：
-
-    <aop:aspect ref="cachePointCut" order="1000">
-      <aop:pointcut id="deleteCachePointcut"
-        expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
-      <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
-    </aop:aspect>
-
-###@Cache
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public @interface Cache {
-
-        /**
-         * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
-         */
-        int expire();
-
-        /**
-         * 自定义缓存Key,如果不设置使用系统默认生成缓存Key的方法
-         * @return
-         */
-        String key() default "";
-        
-        /**
-         * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
-         * @return
-         */
-        boolean autoload() default false;
-
-        /**
-         * 自动缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，优化级高级autoload，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
-         * @return
-         */
-        String autoloadCondition() default "";
-
-        /**
-         * 当autoload为true时，缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据,如果requestTimeout为0时，会一直自动加载
-         * @return
-         */
-        long requestTimeout() default 36000L;
-        
-        /**
-         * 使用SpEL，将缓存key，根据业务需要进行二次分组
-         * @return
-         */
-        String subKeySpEL() default "";
-        /**
-         * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存，例如:"#args[0]==1",当第一个参数值为1时，才进缓存。
-         * @return
-         */
-        String condition() default "";
-        /**
-         * 缓存的操作类型：默认是READ_WRITE，先缓存取数据，如果没有数据则从DAO中获取并写入缓存；如果是WRITE则从DAO取完数据后，写入缓存
-         * @return CacheOpType
-        */
-        CacheOpType opType() default CacheOpType.READ_WRITE;
-        /**
-         * 并发等待时间(毫秒)
-         * @return 时间
-         */
-        int waitTimeOut() default 500;
-    }
-
-###AutoLoadConfig 配置说明
-
-* threadCnt 处理自动加载队列的线程数量，默认值为：10;
-* maxElement 自动加载队列中允许存放的最大容量, 默认值为：20000
-* printSlowLog 是否打印比较耗时的请求，默认值为：true
-* slowLoadTime 当请求耗时超过此值时，记录目录（printSlowLog=true 时才有效），单位：毫秒，默认值：500;
-* sortType 自动加载队列排序算法, **0**：按在Map中存储的顺序（即无序）；**1** ：越接近过期时间，越耗时的排在最前；**2**：根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。更详细的说明，请查看代码com.jarvis.cache.type.AutoLoadQueueSortType
-* checkFromCacheBeforeLoad 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序部署的服务器数量比较少，设置为false, 如果部署的服务器比较多，可以考虑设置为true
 
 
 ##注意事项

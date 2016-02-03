@@ -105,7 +105,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
 
     /**
      * 根据缓存Key删除缓存
-     * @param cacheKey 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）
+     * @param cacheKeyTO 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）
      */
     @Override
     public void delete(CacheKeyTO cacheKeyTO) {
