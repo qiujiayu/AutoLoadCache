@@ -19,7 +19,7 @@ public class AutoLoadTO implements Serializable {
     /**
      * 缓存Key
      */
-    private String cacheKey;
+    private CacheKeyTO cacheKey;
 
     /**
      * 上次从DAO加载数据时间
@@ -60,7 +60,7 @@ public class AutoLoadTO implements Serializable {
      */
     private long useTotalTime=0L;
 
-    public AutoLoadTO(String cacheKey, ProceedingJoinPoint joinPoint, Object args[], int expire, long requestTimeout) {
+    public AutoLoadTO(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Object args[], int expire, long requestTimeout) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
         this.args=args;
@@ -106,7 +106,7 @@ public class AutoLoadTO implements Serializable {
         this.lastLoadTime=lastLoadTime;
     }
 
-    public String getCacheKey() {
+    public CacheKeyTO getCacheKey() {
         return cacheKey;
     }
 

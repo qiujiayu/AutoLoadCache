@@ -13,6 +13,7 @@ import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.type.CacheOpType;
 import com.jarvis.lib.util.BeanUtil;
@@ -26,8 +27,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
-    private final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();// 解决java.lang.NoSuchMethodError:
-                                                                                                         // java.util.Map.putIfAbsent
+    // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
+    private final ConcurrentHashMap<CacheKeyTO, Boolean> processing=new ConcurrentHashMap<CacheKeyTO, Boolean>();
 
     private AutoLoadHandler<T> autoLoadHandler;
 
@@ -63,31 +64,37 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         this.namespace=namespace;
     }
 
-    private String appendNamespace(String cacheKey) {
-        if(null != namespace && namespace.length() > 0) {
-            return namespace + ":" + cacheKey;
-        }
-        return cacheKey;
-    }
-
     /**
      * 生成缓存 Key
      * @param pjp
      * @param cache
      * @return String 缓存Key
      */
-    private String getCacheKey(ProceedingJoinPoint pjp, Cache cache) {
+    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache) {
         String className=pjp.getTarget().getClass().getName();
         String methodName=pjp.getSignature().getName();
         Object[] arguments=pjp.getArgs();
-        String cacheKey=null;
-
-        if(null != cache.key() && cache.key().trim().length() > 0) {
-            cacheKey=CacheUtil.getDefinedCacheKey(cache.key(), arguments);
+        String key=null;
+        String hfield=null;
+        String _key=cache.key();
+        if(null != _key && _key.trim().length() > 0) {
+            key=CacheUtil.getDefinedCacheKey(_key, arguments);
+            String _hfield=cache.hfield();
+            if(null != _hfield && _hfield.trim().length() > 0) {
+                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments);
+            }
         } else {
-            cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
+            key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
         }
-        return appendNamespace(cacheKey);
+        if(null == key || key.trim().length() == 0) {
+            logger.error(className + "." + methodName + "; cache key is empty");
+            return null;
+        }
+        CacheKeyTO to=new CacheKeyTO();
+        to.setNamespace(namespace);
+        to.setKey(key);
+        to.setHfield(hfield);
+        return to;
     }
 
     /**
@@ -97,17 +104,66 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @param result 执行结果值
      * @return 缓存Key
      */
-    private String getCacheKey(ProceedingJoinPoint pjp, Cache cache, T result) {
+    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache, T result) {
         String className=pjp.getTarget().getClass().getName();
         String methodName=pjp.getSignature().getName();
         Object[] arguments=pjp.getArgs();
-        String cacheKey=null;
-        if(null != cache.key() && cache.key().trim().length() > 0) {
-            cacheKey=CacheUtil.getDefinedCacheKey(cache.key(), arguments, result);
+        String key=null;
+        String hfield=null;
+        String _key=cache.key();
+        if(null != _key && _key.trim().length() > 0) {
+            key=CacheUtil.getDefinedCacheKey(_key, arguments, result);
+            String _hfield=cache.hfield();
+            if(null != _hfield && _hfield.trim().length() > 0) {
+                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result);
+            }
         } else {
-            cacheKey=CacheUtil.getDefaultCacheKey(className, methodName, arguments, cache.subKeySpEL());
+            key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
         }
-        return appendNamespace(cacheKey);
+        if(null == key || key.trim().length() == 0) {
+            logger.error(className + "." + methodName + "; cache key is empty");
+            return null;
+        }
+        CacheKeyTO to=new CacheKeyTO();
+        to.setNamespace(namespace);
+        to.setKey(key);
+        to.setHfield(hfield);
+        return to;
+    }
+
+    /**
+     * 生成缓存 Key
+     * @param jp
+     * @param cacheDeleteKey
+     * @param retVal 执行结果值
+     * @return 缓存Key
+     */
+    private CacheKeyTO getCacheKey(JoinPoint jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+        String className=jp.getTarget().getClass().getName();
+        String methodName=jp.getSignature().getName();
+        Object[] arguments=jp.getArgs();
+        String key=null;
+        String hfield=null;
+        String _key=cacheDeleteKey.value();
+        if(null != _key && _key.trim().length() > 0) {
+            key=CacheUtil.getDefinedCacheKey(_key, arguments, retVal);
+            String _hfield=cacheDeleteKey.hfield();
+            if(null != _hfield && _hfield.trim().length() > 0) {
+                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, retVal);
+            }
+        } else {
+            logger.error(className + "." + methodName + "; cache key is empty");
+            return null;
+        }
+        if(null == key || key.trim().length() == 0) {
+            logger.error(className + "." + methodName + "; cache key is empty");
+            return null;
+        }
+        CacheKeyTO to=new CacheKeyTO();
+        to.setNamespace(namespace);
+        to.setKey(key);
+        to.setHfield(hfield);
+        return to;
     }
 
     /**
@@ -127,7 +183,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             T result=getData(pjp, null);
             if(CacheUtil.isCacheable(cache, arguments, result)) {
-                String cacheKey=getCacheKey(pjp, cache, result);
+                CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
                 writeCache(result, cacheKey, expire);
             }
             return result;
@@ -135,7 +191,10 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
         if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp, null);
         }
-        String cacheKey=getCacheKey(pjp, cache);
+        CacheKeyTO cacheKey=getCacheKey(pjp, cache);
+        if(null == cacheKey) {
+            return getData(pjp, null);
+        }
         AutoLoadTO autoLoadTO=null;
         if(CacheUtil.isAutoload(cache, arguments)) {
             try {
@@ -151,7 +210,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             }
         }
         CacheWrapper<T> cacheWrapper=this.get(cacheKey);
-        if(null != cacheWrapper) {
+        if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             if(null != autoLoadTO && cacheWrapper.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {// 同步最后加载时间
                 autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
             }
@@ -166,11 +225,12 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @param cacheKey 缓存Key
      * @param expire 缓存时间
      */
-    private void writeCache(T result, String cacheKey, int expire) {
-        CacheWrapper<T> tmp=new CacheWrapper<T>();
-        tmp.setCacheObject(result);
-        tmp.setLastLoadTime(System.currentTimeMillis());
-        this.setCache(cacheKey, tmp, expire);
+    private void writeCache(T result, CacheKeyTO cacheKey, int expire) {
+        if(null == cacheKey) {
+            return;
+        }
+        CacheWrapper<T> tmp=new CacheWrapper<T>(result, expire);
+        this.setCache(cacheKey, tmp);
     }
 
     /**
@@ -182,7 +242,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @return 返回值
      * @throws Exception
      */
-    private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, String cacheKey, Cache cache) throws Exception {
+    private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Exception {
         Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
         int expire=cache.expire();
         Object target=pjp.getTarget();
@@ -195,7 +255,7 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                 while(System.currentTimeMillis() - startWait < cache.waitTimeOut()) {// 等待
                     if(null == processing.get(cacheKey)) {// 防止频繁去缓存取数据，造成缓存服务器压力过大
                         CacheWrapper<T> cacheWrapper=this.get(cacheKey);
-                        if(cacheWrapper != null) {
+                        if(cacheWrapper != null && !cacheWrapper.isExpired()) {
                             return cacheWrapper.getCacheObject();
                         }
                         break;// 如果上个请求已经出异常，则需要跳出
@@ -272,28 +332,8 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
             if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
                 continue;
             }
-
-            String key=null;
-            if(null != keyConfig.value() && keyConfig.value().length() > 0) {
-                key=CacheUtil.getDefinedCacheKey(keyConfig.value(), arguments);
-            } else {
-                String className=keyConfig.cls().getName();
-                String method=keyConfig.method();
-                String subKeySpEL=keyConfig.subKeySpEL();
-                if(keyConfig.deleteByPrefixKey()) {
-                    key=CacheUtil.getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL) + "*";
-                } else {
-                    int len=keyConfig.argsEl().length;
-                    Object[] args=new Object[len];
-                    for(int j=0; j < len; j++) {
-                        args[j]=CacheUtil.getElValue(keyConfig.argsEl()[j], arguments, Object.class);
-                    }
-                    key=CacheUtil.getDefaultCacheKey(className, method, args, subKeySpEL);
-                }
-            }
-
-            if(null != key && key.trim().length() > 0) {
-                key=appendNamespace(key);
+            CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
+            if(null != key) {
                 this.delete(key);
             }
         }

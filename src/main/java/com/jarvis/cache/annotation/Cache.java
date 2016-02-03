@@ -18,10 +18,16 @@ public @interface Cache {
     int expire();
 
     /**
-     * 自定义缓存Key,如果不设置使用系统默认生成缓存Key的方法
-     * @return String 自定义缓存Key
+     * 自定义缓存Key
+     * @return String 自定义缓存Key，(注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
      */
     String key() default "";
+
+    /**
+     * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
+     * @return
+     */
+    String hfield() default "";
 
     /**
      * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
@@ -40,12 +46,6 @@ public @interface Cache {
      * @return long 请求过期
      */
     long requestTimeout() default 36000L;
-
-    /**
-     * 使用SpEL，将缓存key，根据业务需要进行二次分组（使用默认缓存Key的时候才有效）
-     * @return String
-     */
-    String subKeySpEL() default "";
 
     /**
      * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存

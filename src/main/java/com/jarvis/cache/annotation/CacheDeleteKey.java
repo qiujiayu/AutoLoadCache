@@ -5,8 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.jarvis.cache.type.CacheKeyType;
-
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface CacheDeleteKey {
@@ -18,47 +16,14 @@ public @interface CacheDeleteKey {
     String condition() default "";
 
     /**
-     * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key，否则按默认缓存key处理。
+     * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key（删除缓存不支持默认缓存key）。
      * @return String
      */
-    String value() default "";
+    String value();
 
     /**
-     * 生成Key的类型
-     * @return CacheKeyType
+     * 哈希表中的字段，支持使用SpEL表达式
+     * @return
      */
-    @Deprecated
-    CacheKeyType keyType() default CacheKeyType.DEFAULT;
-
-    /**
-     * deleteByPrefixKey 是否根据前缀进行批量删除 只有当 keType为DEFAULT时才有效
-     * @return boolean
-     */
-    boolean deleteByPrefixKey() default false;
-
-    /**
-     * 缓存的Class 只有当 keType为DEFAULT时才有效
-     * @return Class
-     */
-    @SuppressWarnings("rawtypes")
-    Class cls() default Class.class;
-
-    /**
-     * 缓存所在的方法名
-     * @return String
-     */
-    String method() default "";
-
-    /**
-     * 转换缓存方法的参数，当keyType 为DEFAULT 并且 deleteByPrefixKey=false时才会使用上。
-     * @return String[]
-     */
-    String[] argsEl() default "";
-
-    /**
-     * 使用SpEL，将缓存key，根据业务需要进行二次分组（使用默认缓存Key的时候才有效） 只有当 keType为DEFAULT时才有效
-     * @return String
-     */
-    String subKeySpEL() default "";
-
+    String hfield() default "";
 }

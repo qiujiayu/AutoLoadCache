@@ -6,6 +6,7 @@ import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.to.AutoLoadConfig;
+import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
@@ -20,15 +21,23 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     }
 
     @Override
-    public void setCache(String cacheKey, CacheWrapper<Serializable> result, int expire) {
+    public void setCache(CacheKeyTO cacheKey, CacheWrapper<Serializable> result) {
         result.setLastLoadTime(System.currentTimeMillis());
-        memcachedClient.set(cacheKey, expire, result);
+        String hfield=cacheKey.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
+        memcachedClient.set(cacheKey.getCacheKey(), result.getExpire(), result);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(String cacheKey) {
-        return (CacheWrapper<Serializable>)memcachedClient.get(cacheKey);
+    public CacheWrapper<Serializable> get(CacheKeyTO cacheKey) {
+        String hfield=cacheKey.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
+        return (CacheWrapper<Serializable>)memcachedClient.get(cacheKey.getCacheKey());
     }
 
     /**
@@ -36,12 +45,16 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
      * @param cacheKey 缓存Key
      */
     @Override
-    public void delete(String cacheKey) {
+    public void delete(CacheKeyTO cacheKey) {
         if(null == memcachedClient || null == cacheKey) {
             return;
         }
+        String hfield=cacheKey.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
         try {
-            memcachedClient.delete(cacheKey);
+            memcachedClient.delete(cacheKey.getCacheKey());
             this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKey);
         } catch(Exception e) {
         }

@@ -20,12 +20,18 @@ public class CacheWrapper<T> implements Serializable {
      */
     private long lastLoadTime;
 
+    /**
+     * 过期时间
+     */
+    private int expire;
+
     public CacheWrapper() {
     }
 
-    public CacheWrapper(T cacheObject) {
+    public CacheWrapper(T cacheObject, int expire) {
         this.cacheObject=cacheObject;
         this.lastLoadTime=System.currentTimeMillis();
+        this.expire=expire;
     }
 
     public long getLastLoadTime() {
@@ -42,6 +48,25 @@ public class CacheWrapper<T> implements Serializable {
 
     public void setCacheObject(T cacheObject) {
         this.cacheObject=cacheObject;
+    }
+
+    public int getExpire() {
+        return expire;
+    }
+
+    public void setExpire(int expire) {
+        this.expire=expire;
+    }
+
+    /**
+     * 判断缓存是否已经过期
+     * @return
+     */
+    public boolean isExpired() {
+        if(expire > 0) {
+            return (System.currentTimeMillis() - lastLoadTime) > expire * 1000;
+        }
+        return false;
     }
 
 }

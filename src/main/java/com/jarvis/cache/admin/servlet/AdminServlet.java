@@ -15,8 +15,10 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -65,7 +67,7 @@ public class AdminServlet extends HttpServlet {
 
             ApplicationContext ctx=
                 WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
-            ICacheManager<?> cacheManager=(ICacheManager<?>)ctx.getBean(cacheManagerName);
+            AbstractCacheManager<?> cacheManager=(AbstractCacheManager<?>)ctx.getBean(cacheManagerName);
             if(null == cacheManager) {
                 String errMsg=cacheManagerName + " is not exists!";
                 throw new Exception(errMsg);
@@ -108,20 +110,27 @@ public class AdminServlet extends HttpServlet {
         printCloseHtml(resp);
     }
 
-    private void doServices(HttpServletRequest req, HttpServletResponse resp, ICacheManager<?> cacheManager) throws Exception {
+    private void doServices(HttpServletRequest req, HttpServletResponse resp, AbstractCacheManager<?> cacheManager)
+        throws Exception {
         String act=req.getParameter("act");
         String cacheKey=req.getParameter("cacheKey");
+        String hfield=req.getParameter("hfield");
+        CacheKeyTO to=new CacheKeyTO();
+
+        to.setNamespace(cacheManager.getNamespace());
+        to.setHfield(hfield);
+        to.setKey(cacheKey);
         if("removeCache".equals(act)) {
-            cacheManager.delete(cacheKey);
+            cacheManager.delete(to);
             resp.getWriter().println("处理成功！");
         } else if("removeAutoloadTO".equals(act)) {
-            cacheManager.getAutoLoadHandler().removeAutoLoadTO(cacheKey);
+            cacheManager.getAutoLoadHandler().removeAutoLoadTO(to);
             resp.getWriter().println("处理成功！");
         } else if("resetLastLoadTime".equals(act)) {
-            cacheManager.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKey);
+            cacheManager.getAutoLoadHandler().resetAutoLoadLastLoadTime(to);
             resp.getWriter().println("处理成功！");
         } else if("showArgs".equals(act)) {
-            AutoLoadTO tmpTO=cacheManager.getAutoLoadHandler().getAutoLoadTO(cacheKey);
+            AutoLoadTO tmpTO=cacheManager.getAutoLoadHandler().getAutoLoadTO(to);
             if(null != tmpTO && null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
                 Object[] args=tmpTO.getArgs();
                 int len=args.length;
@@ -150,26 +159,29 @@ public class AdminServlet extends HttpServlet {
         html.append("</style>");
         html.append("<script type=\"text/javascript\">");
         html.append("var cacheManagerName=\"" + cacheManagerName + "\";");
-        html.append("function removeCache(cacheKey){if(!cacheKey){return;}");
+        html.append("function removeCache(cacheKey, hfield){if(!cacheKey){return;}");
         html.append("  if(confirm(\"确定要删除缓存?\")){");
         html.append("    document.getElementById(\"act\").value=\"removeCache\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
+        html.append("    document.getElementById(\"hfield\").value=hfield;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
         html.append("    document.getElementById(\"updateCacheForm\").submit();");
         html.append("}}");
 
-        html.append("function removeAutoloadTO(cacheKey){");
+        html.append("function removeAutoloadTO(cacheKey, hfield){");
         html.append("  if(confirm(\"确定要删除?\")){");
         html.append("    document.getElementById(\"act\").value=\"removeAutoloadTO\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
+        html.append("    document.getElementById(\"hfield\").value=hfield;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
         html.append("    document.getElementById(\"updateCacheForm\").submit();");
         html.append("}}");
 
-        html.append("function resetLastLoadTime(cacheKey){");
+        html.append("function resetLastLoadTime(cacheKey, hfield){");
         html.append("  if(confirm(\"确定要重置?\")){");
         html.append("    document.getElementById(\"act\").value=\"resetLastLoadTime\";");
         html.append("    document.getElementById(\"cacheKey\").value=cacheKey;");
+        html.append("    document.getElementById(\"hfield\").value=hfield;");
         html.append("    document.getElementById(\"cacheManagerName\").value=cacheManagerName;");
         html.append("    document.getElementById(\"updateCacheForm\").submit();");
         html.append("}}");
@@ -207,6 +219,7 @@ public class AdminServlet extends HttpServlet {
         html.append("<form id=\"updateCacheForm\" action=\"\" method=\"get\" target=\"_blank\">");
         html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheKey\" name=\"cacheKey\" value=\"\" />");
+        html.append("<input type=\"hidden\" id=\"hfield\" name=\"hfield\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheManagerName\" name=\"cacheManagerName\" value=\"\" />");
         html.append("</form>");
         resp.getWriter().println(html.toString());
@@ -222,7 +235,9 @@ public class AdminServlet extends HttpServlet {
         StringBuilder html=new StringBuilder();
         html.append("<table cellpadding=\"0\" cellspacing=\"0\">");
         html.append("  <tr>");
-        html.append("    <th>CacheKey </th>");
+        html.append("    <th>namespace </th>");
+        html.append("    <th>key </th>");
+        html.append("    <th>hash field </th>");
         html.append("    <th>className.method </th>");
         html.append("    <th>last request time </th>");
         html.append("    <th>first request time </th>");
@@ -242,8 +257,16 @@ public class AdminServlet extends HttpServlet {
             ProceedingJoinPoint pjp=tmpTO.getJoinPoint();
             String className=pjp.getTarget().getClass().getName();
             String methodName=pjp.getSignature().getName();
+            CacheKeyTO cacheKeyTO=tmpTO.getCacheKey();
+            String _key=cacheKeyTO.getKey();
+            String _hfield=cacheKeyTO.getHfield();
+            if(null == _hfield) {
+                _hfield="";
+            }
             html.append("  <tr>");
-            html.append("    <td>" + tmpTO.getCacheKey() + "</td>");
+            html.append("    <td>" + cacheKeyTO.getNamespace() + "</td>");
+            html.append("    <td>" + _key + "</td>");
+            html.append("    <td>" + _hfield + "</td>");
             html.append("    <td>" + className + "." + methodName + "</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime()) + "</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getFirstRequestTime()) + "</td>");
@@ -255,16 +278,16 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime()) + "</td>");
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
             html.append("    <td>" + tmpTO.getAverageUseTime() + "毫秒</td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeCache('" + tmpTO.getCacheKey()
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeCache('" + _key + "','" + _hfield
                 + "')\">删除缓存</a></td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeAutoloadTO('" + tmpTO.getCacheKey()
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeAutoloadTO('" + _key + "','" + _hfield
                 + "')\">移除 AutoloadTO</a></td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + tmpTO.getCacheKey()
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + _key + "','" + _hfield
                 + "')\">重置最后加载时间</a></td>");
             html.append("<td>");
             if(null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
                 html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName="
-                    + cacheManagerName + "&cacheKey=" + tmpTO.getCacheKey() + "\" target=\"_blank\">show args values</a>");
+                    + cacheManagerName + "&cacheKey=" + _key + "&hfield=" + _hfield + "\" target=\"_blank\">show args values</a>");
             }
             html.append("</td>");
             html.append("  </tr>");

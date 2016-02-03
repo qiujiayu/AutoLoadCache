@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>2.13</version>
+      <version>3.0-SNAPSHOT</version>
     </dependency>
 
 
@@ -534,6 +534,9 @@ web.xml配置：
 应用程序监听zookeeper的配置变化，并使用 ***一致性哈希***算法来分配缓存。
 
 ## 更新日志
+
+* ####3.0-SNAPSHOT 此版本做了大调整，有些功能已经不兼容老版本 
+
 
 * ####2.13 优化多线程并发等机制, 代码调整如下：
 

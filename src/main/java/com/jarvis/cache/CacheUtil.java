@@ -147,24 +147,7 @@ public class CacheUtil {
      */
     public static String getDefaultCacheKey(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
-        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, null));
-        if(null != arguments && arguments.length > 0) {
-            sb.append(getUniqueHashStr(arguments));
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 生成缓存Key
-     * @param className 类名称
-     * @param method 方法名称
-     * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
-     * @return CacheKey 缓存Key
-     */
-    public static String getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL) {
-        StringBuilder sb=new StringBuilder();
-        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL));
+        sb.append(getDefaultCacheKeyPrefix(className, method, arguments));
         if(null != arguments && arguments.length > 0) {
             sb.append(getUniqueHashStr(arguments));
         }
@@ -176,20 +159,13 @@ public class CacheUtil {
      * @param className 类名称
      * @param method 方法名称
      * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return CacheKey 缓存Key
      */
-    public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
+    public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
         sb.append(className);
         if(null != method && method.length() > 0) {
             sb.append(".").append(method);
-            if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
-                String subKey=getElValue(subKeySpEL, arguments, String.class);
-                if(null != subKey && subKey.trim().length() > 0) {
-                    sb.append(".").append(subKey);
-                }
-            }
         }
         return sb.toString();
     }

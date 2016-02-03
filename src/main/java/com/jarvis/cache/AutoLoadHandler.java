@@ -10,6 +10,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
@@ -23,7 +24,7 @@ public class AutoLoadHandler<T> {
     /**
      * 自动加载队列
      */
-    private Map<String, AutoLoadTO> autoLoadMap;
+    private Map<CacheKeyTO, AutoLoadTO> autoLoadMap;
 
     private ICacheManager<T> cacheManager;
 
@@ -58,7 +59,7 @@ public class AutoLoadHandler<T> {
         this.config=config;
         this.running=true;
         this.threads=new Thread[this.config.getThreadCnt()];
-        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.config.getMaxElement());
+        this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
         this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
         this.sortThread=new Thread(new SortRunnable());
         this.sortThread.start();
@@ -79,14 +80,14 @@ public class AutoLoadHandler<T> {
         return -1;
     }
 
-    public AutoLoadTO getAutoLoadTO(String cacheKey) {
+    public AutoLoadTO getAutoLoadTO(CacheKeyTO cacheKey) {
         if(null == autoLoadMap) {
             return null;
         }
         return autoLoadMap.get(cacheKey);
     }
 
-    public void removeAutoLoadTO(String cacheKey) {
+    public void removeAutoLoadTO(CacheKeyTO cacheKey) {
         if(null == autoLoadMap) {
             return;
         }
@@ -97,7 +98,7 @@ public class AutoLoadHandler<T> {
      * 重置自动加载时间
      * @param cacheKey 缓存Key
      */
-    public void resetAutoLoadLastLoadTime(String cacheKey) {
+    public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
         AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
         if(null != autoLoadTO && !autoLoadTO.isLoading()) {
             autoLoadTO.setLastLoadTime(1L);
@@ -207,17 +208,21 @@ public class AutoLoadHandler<T> {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
-            int diff;
-            if(autoLoadTO.getExpire() >= 600) {
-                diff=120;
-            } else {
-                diff=60;
+            if(autoLoadTO.isLoading()) {
+                return;
             }
-            if(!autoLoadTO.isLoading() && (now - autoLoadTO.getLastLoadTime()) >= (autoLoadTO.getExpire() - diff) * 1000) {
+            long timeout;
+            if(autoLoadTO.getExpire() >= 600) {
+                timeout=(autoLoadTO.getExpire() - 120) * 1000;
+            } else {
+                timeout=(autoLoadTO.getExpire() - 60) * 1000;;
+            }
+
+            if((now - autoLoadTO.getLastLoadTime()) >= timeout) {
                 if(config.isCheckFromCacheBeforeLoad()) {
                     CacheWrapper<T> result=cacheManager.get(autoLoadTO.getCacheKey());
                     if(null != result && result.getLastLoadTime() > autoLoadTO.getLastLoadTime()
-                        && (now - result.getLastLoadTime()) < (autoLoadTO.getExpire() - diff) * 1000) {
+                        && (now - result.getLastLoadTime()) < timeout) {// 如果已经被别的服务器更新了，则不需要再次更新
                         autoLoadTO.setLastLoadTime(result.getLastLoadTime());
                         return;
                     }
@@ -234,10 +239,8 @@ public class AutoLoadHandler<T> {
                     if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                         logger.error(className + "." + methodName + ", use time:" + useTime + "ms");
                     }
-                    CacheWrapper<T> tmp=new CacheWrapper<T>();
-                    tmp.setCacheObject(result);
-                    tmp.setLastLoadTime(System.currentTimeMillis());
-                    cacheManager.setCache(autoLoadTO.getCacheKey(), tmp, autoLoadTO.getExpire());
+                    CacheWrapper<T> tmp=new CacheWrapper<T>(result, autoLoadTO.getExpire());
+                    cacheManager.setCache(autoLoadTO.getCacheKey(), tmp);
                     autoLoadTO.setLastLoadTime(System.currentTimeMillis());
                     autoLoadTO.addUseTotalTime(useTime);
                 } catch(Exception e) {
