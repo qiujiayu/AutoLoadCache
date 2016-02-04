@@ -43,7 +43,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         String cacheKey=cacheKeyTO.getCacheKey();
-        if(null == cacheKey) {
+        if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
@@ -52,18 +52,17 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         ShardedJedis shardedJedis=null;
         try {
             int expire=result.getExpire();
-            result.setLastLoadTime(System.currentTimeMillis());
             shardedJedis=shardedJedisPool.getResource();
             Jedis jedis=shardedJedis.getShard(cacheKey);
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
+                jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+            } else {
                 if(expire == 0) {
                     jedis.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
                 } else {
                     jedis.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
-            } else {
-                jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
             }
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -79,7 +78,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return null;
         }
         String cacheKey=cacheKeyTO.getCacheKey();
-        if(null == cacheKey) {
+        if(null == cacheKey || cacheKey.length() == 0) {
             return null;
         }
         CacheWrapper<Serializable> res=null;
@@ -113,7 +112,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         String cacheKey=cacheKeyTO.getCacheKey();
-        if(null == cacheKey) {
+        if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
         logger.debug("delete cache:" + cacheKey);

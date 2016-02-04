@@ -112,13 +112,14 @@ public class AutoLoadHandler<T> {
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
-    public void setAutoLoadTO(AutoLoadTO autoLoadTO) {
+    public AutoLoadTO putIfAbsent(AutoLoadTO autoLoadTO) {
         if(null == autoLoadMap) {
-            return;
+            return null;
         }
         if(autoLoadTO.getExpire() >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
-            autoLoadMap.put(autoLoadTO.getCacheKey(), autoLoadTO);
+            return autoLoadMap.putIfAbsent(autoLoadTO.getCacheKey(), autoLoadTO);
         }
+        return null;
     }
 
     /**

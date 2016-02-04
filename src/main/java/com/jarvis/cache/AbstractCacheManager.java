@@ -202,7 +202,10 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
                 if(null == autoLoadTO) {
                     arguments=(Object[])BeanUtil.deepClone(arguments, this.serializer);// 进行深度复制
                     autoLoadTO=new AutoLoadTO(cacheKey, pjp, arguments, expire, cache.requestTimeout());
-                    autoLoadHandler.setAutoLoadTO(autoLoadTO);
+                    AutoLoadTO tmp=autoLoadHandler.putIfAbsent(autoLoadTO);
+                    if(null != tmp) {
+                        autoLoadTO=tmp;
+                    }
                 }
                 autoLoadTO.setLastRequestTime(System.currentTimeMillis());
             } catch(Exception ex) {
@@ -243,7 +246,13 @@ public abstract class AbstractCacheManager<T> implements ICacheManager<T> {
      * @throws Exception
      */
     private T loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Exception {
-        Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        Boolean isProcessing=processing.get(cacheKey);
+        if(null == isProcessing) {
+            Boolean _isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+            if(null != _isProcessing) {
+                isProcessing=_isProcessing;
+            }
+        }
         int expire=cache.expire();
         Object target=pjp.getTarget();
         T result=null;
