@@ -217,6 +217,13 @@ AOP 配置：
         int waitTimeOut() default 500;
     }
 
+###@CacheDelete
+
+    public @interface CacheDelete {
+
+        CacheDeleteKey[] value();// 支持删除多个缓存
+    }
+
 ###@CacheDeleteKey
 
     public @interface CacheDeleteKey {
@@ -273,13 +280,21 @@ AOP 配置：
     import ... ...
     public class GoodsCommentDAO{
         @Cache(expire=600, key="'goods_comment_list_'+#args[0]", hfield = "#args[1]+'_'+#args[2]", autoload=true, requestTimeout=18000)
+        // goodsId=1, pageNo=2, pageSize=3 时相当于Redis命令：HSET goods_comment_list_1 2_3  List
         public List<CommentTO> getCommentListByGoodsId(Long goodsId, int pageNo, int pageSize) {
             ... ...
         }
 
         @CacheDelete({@CacheDeleteKey(value="'goods_comment_list_'+#args[0].goodsId")}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        // #args[0].goodsId = 1时，相当于Redis命令: DEL goods_comment_list_1
         public void addComment(Comment comment) {
             ... ...// 省略添加评论代码
+        }
+
+        @CacheDelete({@CacheDeleteKey(value="'goods_comment_list_'+#args[0]", hfield = "#args[1]+'_'+#args[2]")}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        // goodsId=1, pageNo=2, pageSize=3 时相当于Redis命令：DEL goods_comment_list_1 2_3 
+        public void removeCache(Long goodsId, int pageNo, int pageSize) {
+            ... ...// 使用空方法来删除缓存
         }
     }
 
