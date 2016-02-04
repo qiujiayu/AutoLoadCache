@@ -46,5 +46,17 @@ public class CacheKeyTO implements Serializable {
         }
         return this.key;
     }
+    
+    public String getAutoloadKey(){
+        StringBuilder b=new StringBuilder();
+        if(null != this.namespace && this.namespace.length() > 0) {
+            b.append(this.namespace).append(":");
+        }
+        b.append(this.key);
+        if(null != this.hfield && this.hfield.length() > 0) {
+            b.append(":").append(this.hfield);
+        }
+        return b.toString();
+    }
 
 }

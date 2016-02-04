@@ -24,7 +24,7 @@ public class AutoLoadHandler<T> {
     /**
      * 自动加载队列
      */
-    private Map<CacheKeyTO, AutoLoadTO> autoLoadMap;
+    private Map<String, AutoLoadTO> autoLoadMap;
 
     private ICacheManager<T> cacheManager;
 
@@ -59,7 +59,7 @@ public class AutoLoadHandler<T> {
         this.config=config;
         this.running=true;
         this.threads=new Thread[this.config.getThreadCnt()];
-        this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
+        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.config.getMaxElement());
         this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
         this.sortThread=new Thread(new SortRunnable());
         this.sortThread.start();
@@ -84,14 +84,14 @@ public class AutoLoadHandler<T> {
         if(null == autoLoadMap) {
             return null;
         }
-        return autoLoadMap.get(cacheKey);
+        return autoLoadMap.get(cacheKey.getAutoloadKey());
     }
 
     public void removeAutoLoadTO(CacheKeyTO cacheKey) {
         if(null == autoLoadMap) {
             return;
         }
-        autoLoadMap.remove(cacheKey);
+        autoLoadMap.remove(cacheKey.getAutoloadKey());
     }
 
     /**
@@ -99,7 +99,7 @@ public class AutoLoadHandler<T> {
      * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
-        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
+        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey.getAutoloadKey());
         if(null != autoLoadTO && !autoLoadTO.isLoading()) {
             autoLoadTO.setLastLoadTime(1L);
         }
@@ -117,7 +117,7 @@ public class AutoLoadHandler<T> {
             return null;
         }
         if(autoLoadTO.getExpire() >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
-            return autoLoadMap.putIfAbsent(autoLoadTO.getCacheKey(), autoLoadTO);
+            return autoLoadMap.putIfAbsent(autoLoadTO.getCacheKey().getAutoloadKey(), autoLoadTO);
         }
         return null;
     }
@@ -194,11 +194,11 @@ public class AutoLoadHandler<T> {
             }
             if(autoLoadTO.getRequestTimeout() > 0
                 && (now - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
-                autoLoadMap.remove(autoLoadTO.getCacheKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey().getAutoloadKey());
                 return;
             }
             if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {// 如果效率比较高的请求，就没必要使用自动加载了。
-                autoLoadMap.remove(autoLoadTO.getCacheKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey().getAutoloadKey());
                 return;
             }
             // 对于使用频率很低的数据，也可以考虑不用自动加载
@@ -206,7 +206,7 @@ public class AutoLoadHandler<T> {
             long oneHourSecs=3600000L;
             if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000
                 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
-                autoLoadMap.remove(autoLoadTO.getCacheKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey().getAutoloadKey());
                 return;
             }
             if(autoLoadTO.isLoading()) {

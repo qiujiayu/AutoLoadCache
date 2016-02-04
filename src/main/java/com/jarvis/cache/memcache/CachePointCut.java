@@ -55,7 +55,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
 
     /**
      * 通过组成Key直接删除
-     * @param cacheKey 缓存Key
+     * @param cacheKeyTO 缓存Key
      */
     @Override
     public void delete(CacheKeyTO cacheKeyTO) {

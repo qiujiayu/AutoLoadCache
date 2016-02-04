@@ -169,7 +169,7 @@ AOP 配置：
         int expire();
 
         /**
-         * 自定义缓存Key (注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
+         * 自定义缓存Key，支持Spring EL表达式
          * @return String 自定义缓存Key
          */
         String key() default "";
@@ -250,7 +250,7 @@ AOP 配置：
 
 ##缓存Key的生成
 
-1. 在@Cache中设置key，可以是字符串或Spring EL表达式:
+ 在@Cache中设置key，可以是字符串或Spring EL表达式:
 
     例如： 
 
@@ -266,10 +266,6 @@ AOP 配置：
     生成的缓存Key为"GOODS.getGoods:xxx",xxx为args，的转在的字符串。
 
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
-
-
-2. 当@Cache中不设置key时，会使用默认缓存key。注意：使用@CacheDeleteKey删除缓存时，不支持默认缓存key。
-
 
 
 ###数据实时性
@@ -291,7 +287,7 @@ AOP 配置：
             ... ...// 省略添加评论代码
         }
 
-        @CacheDelete({@CacheDeleteKey(value="'goods_comment_list_'+#args[0]", hfield = "#args[1]+'_'+#args[2]")}) // 删除当前所属商品的所有评论，不删除其它商品评论
+        @CacheDelete({@CacheDeleteKey(value="'goods_comment_list_'+#args[0]", hfield = "#args[1]+'_'+#args[2]")}) 
         // goodsId=1, pageNo=2, pageSize=3 时相当于Redis命令：DEL goods_comment_list_1 2_3 
         public void removeCache(Long goodsId, int pageNo, int pageSize) {
             ... ...// 使用空方法来删除缓存

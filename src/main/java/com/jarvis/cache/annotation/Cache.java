@@ -1,6 +1,8 @@
 package com.jarvis.cache.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -9,6 +11,8 @@ import com.jarvis.cache.type.CacheOpType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Inherited
+@Documented
 public @interface Cache {
 
     /**
@@ -18,10 +22,10 @@ public @interface Cache {
     int expire();
 
     /**
-     * 自定义缓存Key (注：如果不设置则会自动生成缓存Key)，支持Spring EL表达式
+     * 自定义缓存Key，支持Spring EL表达式
      * @return String 自定义缓存Key
      */
-    String key() default "";
+    String key();
 
     /**
      * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
