@@ -133,10 +133,10 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
         }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
+            return (CacheWrapper<Object>)obj;
+        } else {
             ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)obj;
             return hash.get(hfield);
-        } else {
-            return (CacheWrapper<Object>)obj;
         }
     }
 
