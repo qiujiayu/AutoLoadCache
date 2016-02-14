@@ -1,6 +1,9 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Map;
 
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -26,9 +29,12 @@ public class CacheUtil {
     private static final ExpressionParser parser=new SpelExpressionParser();
 
     private static Method hash=null;
+
+    private static Method empty=null;
     static {
         try {
             hash=CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class});
+            empty=CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class});
         } catch(NoSuchMethodException e) {
             e.printStackTrace();
         } catch(SecurityException e) {
@@ -36,6 +42,30 @@ public class CacheUtil {
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static boolean isEmpty(Object obj) {
+        if(null == obj) {
+            return true;
+        }
+        if(obj instanceof String) {
+            return ((String)obj).length() == 0;
+        }
+        Class cl=obj.getClass();
+        if(cl.isArray()) {
+            int len=Array.getLength(obj);
+            return len == 0;
+        }
+        if(obj instanceof Collection) {
+            Collection tempCol=(Collection)obj;
+            return tempCol.isEmpty();
+        }
+        if(obj instanceof Map) {
+            Map tempMap=(Map)obj;
+            return tempMap.isEmpty();
+        }
+        return false;
     }
 
     /**
@@ -111,6 +141,7 @@ public class CacheUtil {
         StandardEvaluationContext context=new StandardEvaluationContext();
 
         context.registerFunction(HASH, hash);
+        context.registerFunction("empty", empty);
         context.setVariable(ARGS, arguments);
         context.setVariable(RET_VAL, retVal);
         return parser.parseExpression(keySpEL).getValue(context, valueType);

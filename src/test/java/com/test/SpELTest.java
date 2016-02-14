@@ -10,6 +10,8 @@ public class SpELTest {
 
         String res=CacheUtil.getDefinedCacheKey(keySpEL, arguments, null);
         System.out.println(res);
+        Boolean rv=CacheUtil.getElValue("#empty(#args)", arguments, Boolean.class);
+        System.out.println(rv);
     }
 
 }
