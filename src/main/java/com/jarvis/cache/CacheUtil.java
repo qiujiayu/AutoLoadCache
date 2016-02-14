@@ -21,6 +21,8 @@ public class CacheUtil {
 
     private static final String RET_VAL="retVal";
 
+    private static final String HASH="hash";
+
     private static final ExpressionParser parser=new SpelExpressionParser();
 
     private static Method hash=null;
@@ -108,7 +110,7 @@ public class CacheUtil {
     public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
         StandardEvaluationContext context=new StandardEvaluationContext();
 
-        context.registerFunction("hash", hash);
+        context.registerFunction(HASH, hash);
         context.setVariable(ARGS, arguments);
         context.setVariable(RET_VAL, retVal);
         return parser.parseExpression(keySpEL).getValue(context, valueType);
@@ -122,6 +124,9 @@ public class CacheUtil {
      * @return CacheKey 缓存Key
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
+        if(keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {
+            return keySpEL;
+        }
         return getElValue(keySpEL, arguments, retVal, String.class);
     }
 

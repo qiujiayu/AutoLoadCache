@@ -5,7 +5,7 @@ import com.jarvis.cache.CacheUtil;
 public class SpELTest {
 
     public static void main(String[] args) {
-        String keySpEL="'test.'+#hash(#args)";
+        String keySpEL="test";
         Object[] arguments=new Object[]{"1111", "2222"};
 
         String res=CacheUtil.getDefinedCacheKey(keySpEL, arguments, null);
