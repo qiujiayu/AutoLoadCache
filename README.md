@@ -34,7 +34,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>3.0-SNAPSHOT</version>
+      <version>3.0</version>
     </dependency>
 
 
@@ -125,6 +125,7 @@ Memcache 配置：
       <property name="namespace" value="test" />
     </bean>
 
+如果需要使用本地内存来缓存数据，可以使用： com.jarvis.cache.map.CachePointCut 
 
 AOP 配置：
 
@@ -142,6 +143,7 @@ AOP 配置：
 
 通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
 
+***注意*** 如果需要在MyBatis Mapper中使用，则需要使用com.jarvis.cache.mybatis.CachePointCutProxy 来处理。
 
 ###3. 将需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解（Redis为例子）
 
@@ -235,7 +237,7 @@ AOP 配置：
         String condition() default "";
 
         /**
-         * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key（不支持通过默认缓存key删除）。
+         * 删除缓存的Key，支持使用SpEL表达式, 当value有值时，是自定义缓存key。
          * @return String
          */
         String value();
@@ -257,16 +259,14 @@ AOP 配置：
         @Cache(expire=600, key="'goods.getGoodsById'+#args[0]")
         public GoodsTO getGoodsById(Long id){...}
 
-    注意：Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。 所以对于复杂的参数，我们可以在Spring EL 表达式中使用："T(com.jarvis.cache.CacheUtil).objectToHashStr(#args)"，会生成一个比较短的Hash字符串。
-
-    为了使用方便，在Spring EL表达式，"$hash(...)"会被替换为："T(com.jarvis.cache.CacheUtil).getUniqueHashStr(...)",例如：
+    为了使用方便，调用hash 函数可以将任何Object转为字符串，使用方法如下：
      
-        @Cache(expire=720, key="'GOODS.getGoods:'+$hash(#args)")
+        @Cache(expire=720, key="'GOODS.getGoods:'+#hash(#args)")
         public List<GoodsTO> getGoods(GoodsCriteriaTO goodsCriteria){...}
     生成的缓存Key为"GOODS.getGoods:xxx",xxx为args，的转在的字符串。
 
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
-
+  Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。
 
 ###数据实时性
 
@@ -341,7 +341,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 ###4. 自动加载缓存时，不能在缓存方法内叠加查询参数值;
 例如：
 
-        @Cache(expire=600, autoload=true)
+        @Cache(expire=600, autoload=true, key="'myKey'+#hash(#args[0])")
         public List<AccountTO> getDistinctAccountByPlayerGet(AccountCriteriaTO criteria) {
             List<AccountTO> list;
             int count=criteria.getPaging().getThreshold() ;
@@ -352,17 +352,10 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
 因为自动加载时，AutoLoadHandler 缓存了查询参数，执行自动加载时，每次执行时 threshold 都会乘以10，这样threshold的值就会越来越大。
 
-###5. 当方法返回值类型改变了怎么办？
 
-在代码重构时，可能会出现改方法返回值类型的情况，而参数不变的情况，那上线部署时，可能会从缓存中取到旧数据类型的数据，可以通过以下方法处理：
+###5. 对于一些比较耗时的方法尽量使用自动加载。
 
-* 上线后，快速清理缓存中的数据；
-* 在ICacheManager的实现类中统一加个version；
-* 在@Cache中加version（未实现）。
-
-###6. 对于一些比较耗时的方法尽量使用自动加载。
-
-###7. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
+###6. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
 比如，根据用户输入的关键字进行搜索数据的方法，不建议使用自动加载。
 
 ##在事务环境中，如何减少“脏读”
@@ -380,8 +373,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 1. 将调接口或数据库中取数据，**封装在DAO层**，不能什么地方都有调接口的方法。
 2. 自动加载缓存时，**不能**在缓存方法内**叠加（或减）**查询条件值，但允许设置值。
 3. DAO层内部，没使用@Cache的方法，不能调用加了@Cache的方法，避免AOP失效。
-4. 因缓存Key是方法参数转为字符串获得的，为了避免生成的Key不同，**尽量只设置必要的参数及属性**，也便于**反向定位**。
-5. 对于比较大的系统，要进行**模块化设计**，这样可以将自动加载，均分到各个模块中。
+4. 对于比较大的系统，要进行**模块化设计**，这样可以将自动加载，均分到各个模块中。
 
 ##为什么要使用自动加载机制？
 
@@ -401,7 +393,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 ##可扩展性及维护性
 
 1. 通过AOP实现缓存与业务逻辑的解耦。
-2. 非常方便更换缓存服务器或缓存实现（比如：从Memcache换成Redis）；
+2. 非常方便更换缓存服务器或缓存实现（比如：从Memcache换成Redis,或使用hashmap）；
 3. 非常方便增减缓存服务器（如：增加Redis的节点数）；
 4. 非常方便增加或去除缓存，方便测试期间排查问题；
 5. 通过Spring配置，能很简单方便使用，也很容易修改维护；支持配置多种缓存实现；
@@ -437,8 +429,15 @@ web.xml配置：
 
 ## 更新日志
 
-* ####3.0-SNAPSHOT 此版本做了大调整，有些功能已经不兼容老版本 
+* ####3.0 此版本做了大调整，有些功能已经不兼容老版本 
 
+    不再使用默认缓存Key，所有的缓存都必须自定义缓存Key；原来使用$hash()来调用hash函数，改为使用#hash()进行调用。
+
+    之前版本中使用通配符（?和*）进行批量删除缓存，这种方法性能比较差，需要多次与Redis进行交互，而且随着缓存Key的数量的增加，性能也会下降，如果有多个Reids实例的话，还需要遍历每个实例。为了解决这个问题，我们使用hash表保存需要批量删除的缓存，要批量删除缓存时，只要把hash表删除就可以了。
+
+    如果在开发阶段不想使用Redis来缓存数据，可以使用com.jarvis.cache.map.CachePointCut，把数据缓存到本地内存中，虽然它不支持使用通配符进行批量删除缓存，但同样支持使用hash表进行批量删除缓存。所以转用Redis缓存数据是没有任务问题的。
+
+    如果需要在MyBatis Mapper中使用@Cache和@CacheDelete，则需要使用com.jarvis.cache.mybatis.CachePointCutProxy 来处理。
 
 * ####2.13 优化多线程并发等机制, 代码调整如下：
 

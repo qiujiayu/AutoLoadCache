@@ -7,21 +7,21 @@ import com.jarvis.cache.to.CacheWrapper;
  * 缓存管理
  * @author jiayu.qiu
  */
-public interface ICacheManager<T> {
+public interface ICacheManager {
 
     /**
      * 往缓存写数据
      * @param cacheKey 缓存Key
      * @param result 缓存数据
      */
-    void setCache(CacheKeyTO cacheKey, CacheWrapper<T> result);
+    void setCache(CacheKeyTO cacheKey, CacheWrapper result);
 
     /**
      * 根据缓存Key获得缓存中的数据
      * @param key 缓存key
      * @return 缓存数据
      */
-    CacheWrapper<T> get(CacheKeyTO key);
+    CacheWrapper get(CacheKeyTO key);
 
     /**
      * 删除缓存
@@ -33,7 +33,7 @@ public interface ICacheManager<T> {
      * 获取自动加载处理器
      * @return 自动加载处理器
      */
-    AutoLoadHandler<T> getAutoLoadHandler();
+    AutoLoadHandler getAutoLoadHandler();
 
     /**
      * 销毁：关闭线程

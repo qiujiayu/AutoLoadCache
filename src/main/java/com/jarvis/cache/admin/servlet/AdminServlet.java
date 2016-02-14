@@ -40,11 +40,11 @@ public class AdminServlet extends HttpServlet {
         String tmpNames=servletConfig.getInitParameter("cacheManagerNames");
         cacheManagerNames=tmpNames.split(",");
         String _user=servletConfig.getInitParameter("user");
-        if(null != _user) {
+        if(null != _user && _user.length() > 0) {
             user=_user;
         }
         String _password=servletConfig.getInitParameter("password");
-        if(null != _password) {
+        if(null != _password && _password.length() > 0) {
             password=_password;
         }
     }
@@ -67,7 +67,7 @@ public class AdminServlet extends HttpServlet {
 
             ApplicationContext ctx=
                 WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
-            AbstractCacheManager<?> cacheManager=(AbstractCacheManager<?>)ctx.getBean(cacheManagerName);
+            AbstractCacheManager cacheManager=(AbstractCacheManager)ctx.getBean(cacheManagerName);
             if(null == cacheManager) {
                 String errMsg=cacheManagerName + " is not exists!";
                 throw new Exception(errMsg);
@@ -110,8 +110,7 @@ public class AdminServlet extends HttpServlet {
         printCloseHtml(resp);
     }
 
-    private void doServices(HttpServletRequest req, HttpServletResponse resp, AbstractCacheManager<?> cacheManager)
-        throws Exception {
+    private void doServices(HttpServletRequest req, HttpServletResponse resp, AbstractCacheManager cacheManager) throws Exception {
         String act=req.getParameter("act");
         String cacheKey=req.getParameter("cacheKey");
         String hfield=req.getParameter("hfield");
@@ -225,7 +224,7 @@ public class AdminServlet extends HttpServlet {
         resp.getWriter().println(html.toString());
     }
 
-    private void printList(HttpServletRequest req, HttpServletResponse resp, ICacheManager<?> cacheManager, String cacheManagerName)
+    private void printList(HttpServletRequest req, HttpServletResponse resp, ICacheManager cacheManager, String cacheManagerName)
         throws IOException {
         AutoLoadTO queue[]=cacheManager.getAutoLoadHandler().getAutoLoadQueue();
         if(null == queue || queue.length == 0) {

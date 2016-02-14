@@ -12,19 +12,19 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 
 /**
- * 如果要在Mybatis 的mapper上使用@Cache 及@CacheDelete 注解时，需要使用些类获取注解实例 弊端：mapper中的所有方法都会进入此切面
- * <aop:config proxy-target-class="false"> 配置中 proxy-target-class 必须设置为false
+ * 如果要在Mybatis 的mapper上使用@Cache 及@CacheDelete 注解时，需要使用些类获取注解实例 弊端：mapper中的所有方法都会进入此切面 &lt;aop:config proxy-target-class="false"&gt;
+ * 配置中 proxy-target-class 必须设置为false
  * @author jiayu.qiu
  */
 public class CachePointCutProxy {
 
-    private AbstractCacheManager<Object> cacheManager;
+    private AbstractCacheManager cacheManager;
 
-    public AbstractCacheManager<Object> getCacheManager() {
+    public AbstractCacheManager getCacheManager() {
         return cacheManager;
     }
 
-    public void setCacheManager(AbstractCacheManager<Object> cacheManager) {
+    public void setCacheManager(AbstractCacheManager cacheManager) {
         this.cacheManager=cacheManager;
     }
 

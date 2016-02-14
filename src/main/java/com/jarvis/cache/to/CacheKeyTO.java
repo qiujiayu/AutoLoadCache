@@ -46,8 +46,8 @@ public class CacheKeyTO implements Serializable {
         }
         return this.key;
     }
-    
-    public String getAutoloadKey(){
+
+    public String getFullKey() {
         StringBuilder b=new StringBuilder();
         if(null != this.namespace && this.namespace.length() > 0) {
             b.append(this.namespace).append(":");

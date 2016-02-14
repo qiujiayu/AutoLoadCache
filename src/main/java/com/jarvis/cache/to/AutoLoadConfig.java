@@ -105,6 +105,9 @@ public class AutoLoadConfig {
     }
 
     public void setAutoLoadPeriod(int autoLoadPeriod) {
+        if(autoLoadPeriod < 5) {
+            return;
+        }
         this.autoLoadPeriod=autoLoadPeriod;
     }
 

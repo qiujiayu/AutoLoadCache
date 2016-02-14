@@ -13,7 +13,7 @@ public class JdkSerializerTest {
 
     public static void main(String[] args) throws Exception {
         long start=System.currentTimeMillis();
-        CacheWrapper<Simple> wrapper=new CacheWrapper<Simple>();
+        CacheWrapper wrapper=new CacheWrapper();
         wrapper.setCacheObject(Simple.getSimple());
 
         BeanUtil.deepClone(wrapper, new JdkSerializer());
@@ -45,8 +45,7 @@ public class JdkSerializerTest {
     private static void read(byte[] data) throws Exception {
         ByteArrayInputStream inputStream=new ByteArrayInputStream(data);
         ObjectInputStream input=new ObjectInputStream(inputStream);
-        @SuppressWarnings("unchecked")
-        CacheWrapper<Simple> someObject=(CacheWrapper<Simple>)input.readObject();
+        CacheWrapper someObject=(CacheWrapper)input.readObject();
         input.close();
         // System.out.println(someObject.getCacheObject());
     }

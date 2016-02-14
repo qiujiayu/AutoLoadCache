@@ -1,7 +1,5 @@
 package com.jarvis.cache.memcache;
 
-import java.io.Serializable;
-
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
@@ -12,7 +10,7 @@ import com.jarvis.cache.to.CacheWrapper;
 /**
  * 缓存切面，用于拦截数据并调用memcache进行缓存
  */
-public class CachePointCut extends AbstractCacheManager<Serializable> {
+public class CachePointCut extends AbstractCacheManager {
 
     private MemcachedClient memcachedClient;
 
@@ -21,7 +19,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Serializable> result) {
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
         if(null == cacheKeyTO) {
             return;
         }
@@ -36,9 +34,8 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
         memcachedClient.set(cacheKey, result.getExpire(), result);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -50,7 +47,7 @@ public class CachePointCut extends AbstractCacheManager<Serializable> {
         if(null != hfield && hfield.length() > 0) {
             throw new RuntimeException("memcached does not support hash cache.");
         }
-        return (CacheWrapper<Serializable>)memcachedClient.get(cacheKey);
+        return (CacheWrapper)memcachedClient.get(cacheKey);
     }
 
     /**

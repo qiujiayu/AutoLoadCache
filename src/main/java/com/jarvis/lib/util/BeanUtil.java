@@ -21,7 +21,7 @@ import com.jarvis.cache.serializer.ISerializer;
 public class BeanUtil {
 
     @SuppressWarnings("rawtypes")
-    private static final Map<Class, Field[]> fieldsCahce=new ConcurrentHashMap<Class, Field[]>();
+    private static final ConcurrentHashMap<Class, Field[]> fieldsCahce=new ConcurrentHashMap<Class, Field[]>();
 
     /**
      * 是否为基础数据类型

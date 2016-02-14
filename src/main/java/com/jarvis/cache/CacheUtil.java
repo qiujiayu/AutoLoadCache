@@ -1,9 +1,7 @@
 package com.jarvis.cache;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.lang.reflect.Method;
 
-import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -25,7 +23,18 @@ public class CacheUtil {
 
     private static final ExpressionParser parser=new SpelExpressionParser();
 
-    private static final Pattern pattern_hash=Pattern.compile("(\\+?)\\$hash\\((.[^)]*)\\)");
+    private static Method hash=null;
+    static {
+        try {
+            hash=CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class});
+        } catch(NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch(SecurityException e) {
+            e.printStackTrace();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * 生成字符串的HashCode
@@ -97,30 +106,12 @@ public class CacheUtil {
      * @param <T> 泛型
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
-        Matcher m=pattern_hash.matcher(keySpEL);
-        StringBuffer sb=new StringBuffer();
-        while(m.find()) {
-            m.appendReplacement(sb, "$1T(com.jarvis.cache.CacheUtil).getUniqueHashStr($2)");
-        }
-        m.appendTail(sb);
-        EvaluationContext context=new StandardEvaluationContext();
+        StandardEvaluationContext context=new StandardEvaluationContext();
+
+        context.registerFunction("hash", hash);
         context.setVariable(ARGS, arguments);
         context.setVariable(RET_VAL, retVal);
-        return parser.parseExpression(sb.toString()).getValue(context, valueType);
-    }
-
-    /**
-     * 生成自定义缓存Key
-     * @param keySpEL 生成缓存Key的Spring el表达式
-     * @param arguments 参数
-     * @return cacheKey 生成的缓存Key
-     */
-    public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
-        if(keySpEL.indexOf("#" + ARGS) != -1) {
-            return getElValue(keySpEL, arguments, String.class);
-        } else {
-            return keySpEL;
-        }
+        return parser.parseExpression(keySpEL).getValue(context, valueType);
     }
 
     /**
@@ -131,11 +122,7 @@ public class CacheUtil {
      * @return CacheKey 缓存Key
      */
     public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
-        if(keySpEL.indexOf("#" + ARGS) != -1 || keySpEL.indexOf("#" + RET_VAL) != -1) {
-            return getElValue(keySpEL, arguments, retVal, String.class);
-        } else {
-            return keySpEL;
-        }
+        return getElValue(keySpEL, arguments, retVal, String.class);
     }
 
     /**
@@ -228,4 +215,5 @@ public class CacheUtil {
         }
         return rv;
     }
+
 }

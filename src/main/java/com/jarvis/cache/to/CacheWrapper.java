@@ -6,14 +6,14 @@ import java.io.Serializable;
  * 对缓存数据进行封装
  * @author jiayu.qiu
  */
-public class CacheWrapper<T> implements Serializable {
+public class CacheWrapper implements Serializable {
 
     private static final long serialVersionUID=1L;
 
     /**
      * 缓存数据
      */
-    private T cacheObject;
+    private Object cacheObject;
 
     /**
      * 最后加载时间
@@ -21,14 +21,14 @@ public class CacheWrapper<T> implements Serializable {
     private long lastLoadTime;
 
     /**
-     * 过期时间
+     * 缓存时长
      */
     private int expire;
 
     public CacheWrapper() {
     }
 
-    public CacheWrapper(T cacheObject, int expire) {
+    public CacheWrapper(Object cacheObject, int expire) {
         this.cacheObject=cacheObject;
         this.lastLoadTime=System.currentTimeMillis();
         this.expire=expire;
@@ -42,11 +42,11 @@ public class CacheWrapper<T> implements Serializable {
         this.lastLoadTime=lastLoadTime;
     }
 
-    public T getCacheObject() {
+    public Object getCacheObject() {
         return cacheObject;
     }
 
-    public void setCacheObject(T cacheObject) {
+    public void setCacheObject(Object cacheObject) {
         this.cacheObject=cacheObject;
     }
 

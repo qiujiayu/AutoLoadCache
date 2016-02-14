@@ -11,7 +11,7 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-public class CachePointCut extends AbstractCacheManager<Object> implements Runnable {
+public class CachePointCut extends AbstractCacheManager implements Runnable {
 
     private static final Logger logger=Logger.getLogger(CachePointCut.class);
 
@@ -61,15 +61,15 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
         while(iterator.hasNext()) {
             Object value=iterator.next().getValue();
             if(value instanceof CacheWrapper) {
-                CacheWrapper<Object> tmp=(CacheWrapper<Object>)value;
+                CacheWrapper tmp=(CacheWrapper)value;
                 if(tmp.isExpired()) {
                     iterator.remove();
                 }
             } else {
-                ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)value;
-                Iterator<Entry<String, CacheWrapper<Object>>> iterator2=hash.entrySet().iterator();
+                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
+                Iterator<Entry<String, CacheWrapper>> iterator2=hash.entrySet().iterator();
                 while(iterator2.hasNext()) {
-                    CacheWrapper<Object> tmp=iterator2.next().getValue();
+                    CacheWrapper tmp=iterator2.next().getValue();
                     if(tmp.isExpired()) {
                         iterator2.remove();
                     }
@@ -90,7 +90,7 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) {
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
         if(null == cacheKeyTO) {
             return;
         }
@@ -102,12 +102,11 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
         if(null == hfield || hfield.length() == 0) {
             cache.put(cacheKey, result);
         } else {
-            ConcurrentHashMap<String, CacheWrapper<Object>> hash=
-                (ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
+            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null == hash) {
-                hash=new ConcurrentHashMap<String, CacheWrapper<Object>>();
-                ConcurrentHashMap<String, CacheWrapper<Object>> _hash=
-                    (ConcurrentHashMap<String, CacheWrapper<Object>>)cache.putIfAbsent(cacheKey, hash);
+                hash=new ConcurrentHashMap<String, CacheWrapper>();
+                ConcurrentHashMap<String, CacheWrapper> _hash=
+                    (ConcurrentHashMap<String, CacheWrapper>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
                 }
@@ -119,7 +118,7 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -133,9 +132,9 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
         }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            return (CacheWrapper<Object>)obj;
+            return (CacheWrapper)obj;
         } else {
-            ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)obj;
+            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)obj;
             return hash.get(hfield);
         }
     }
@@ -150,12 +149,14 @@ public class CachePointCut extends AbstractCacheManager<Object> implements Runna
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
+        if("*".equals(cacheKey)) {
+            cache.clear();
+        }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
             cache.remove(cacheKey);
         } else {
-            ConcurrentHashMap<String, CacheWrapper<Object>> hash=
-                (ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
+            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null == hash) {
                 return;
             }

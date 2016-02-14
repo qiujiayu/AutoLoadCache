@@ -1,6 +1,5 @@
 package com.jarvis.cache.redis;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,7 +20,7 @@ import com.jarvis.cache.to.CacheWrapper;
  * 缓存切面，用于拦截数据并调用Redis进行缓存
  * @author jiayu.qiu
  */
-public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
+public class ShardedCachePointCut extends AbstractCacheManager {
 
     private static final Logger logger=Logger.getLogger(ShardedCachePointCut.class);
 
@@ -38,7 +37,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper<Serializable> result) {
+    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper result) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
         }
@@ -71,9 +70,8 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }
@@ -81,7 +79,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
         if(null == cacheKey || cacheKey.length() == 0) {
             return null;
         }
-        CacheWrapper<Serializable> res=null;
+        CacheWrapper res=null;
         ShardedJedis shardedJedis=null;
         try {
             shardedJedis=shardedJedisPool.getResource();
@@ -93,7 +91,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            res=(CacheWrapper<Serializable>)getSerializer().deserialize(bytes);
+            res=(CacheWrapper)getSerializer().deserialize(bytes);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
@@ -116,7 +114,7 @@ public class ShardedCachePointCut extends AbstractCacheManager<Serializable> {
             return;
         }
         logger.debug("delete cache:" + cacheKey);
-        final AutoLoadHandler<Serializable> autoLoadHandler=this.getAutoLoadHandler();
+        final AutoLoadHandler autoLoadHandler=this.getAutoLoadHandler();
         ShardedJedis shardedJedis=null;
         if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。
             try {
