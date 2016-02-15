@@ -33,7 +33,7 @@ public class CachePointCutProxy {
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
         if(method.isAnnotationPresent(Cache.class)) {
-            Cache cache=method.getAnnotationsByType(Cache.class)[0];
+            Cache cache=method.getAnnotation(Cache.class);//method.getAnnotationsByType(Cache.class)[0];
             return cacheManager.proceed(pjp, cache);
         }
 
@@ -49,7 +49,7 @@ public class CachePointCutProxy {
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
         if(method.isAnnotationPresent(CacheDelete.class)) {
-            CacheDelete cacheDelete=method.getAnnotationsByType(CacheDelete.class)[0];
+            CacheDelete cacheDelete=method.getAnnotation(CacheDelete.class);
             cacheManager.deleteCache(jp, cacheDelete, retVal);
         }
     }
