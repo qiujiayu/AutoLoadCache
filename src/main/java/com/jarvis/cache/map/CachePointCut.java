@@ -74,6 +74,9 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
                         iterator2.remove();
                     }
                 }
+                if(hash.isEmpty()) {
+                    iterator.remove();
+                }
             }
         }
     }

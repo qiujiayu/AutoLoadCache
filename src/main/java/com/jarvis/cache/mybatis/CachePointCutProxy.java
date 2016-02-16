@@ -33,7 +33,7 @@ public class CachePointCutProxy {
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
         if(method.isAnnotationPresent(Cache.class)) {
-            Cache cache=method.getAnnotation(Cache.class);//method.getAnnotationsByType(Cache.class)[0];
+            Cache cache=method.getAnnotation(Cache.class);// method.getAnnotationsByType(Cache.class)[0];
             return cacheManager.proceed(pjp, cache);
         }
 

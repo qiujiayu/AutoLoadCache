@@ -122,17 +122,17 @@ public class AutoLoadHandler {
             Object[] arguments=joinPoint.getArgs();
             try {
                 arguments=(Object[])BeanUtil.deepClone(arguments, serializer); // 进行深度复制
-                AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, expire, requestTimeout);
-                AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
-                if(null == tmp) {
-                    return autoLoadTO;
-                } else {
-                    return tmp;
-                }
             } catch(Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
+                return null;
             }
-
+            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, expire, requestTimeout);
+            AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
+            if(null == tmp) {
+                return autoLoadTO;
+            } else {
+                return tmp;
+            }
         }
         return null;
     }

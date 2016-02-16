@@ -68,7 +68,11 @@ public class CachePointCut extends AbstractCacheManager {
             throw new RuntimeException("memcached does not support hash cache.");
         }
         try {
-            memcachedClient.delete(cacheKey);
+            if("*".equals(cacheKey)) {
+                memcachedClient.flush();
+            } else {
+                memcachedClient.delete(cacheKey);
+            }
             this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
         } catch(Exception e) {
         }

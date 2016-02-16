@@ -1,7 +1,11 @@
 package com.jarvis.cache.redis;
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
@@ -28,6 +32,16 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     private ShardedJedisPool shardedJedisPool;
 
+    /**
+     * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。
+     */
+    private int hashExpire=0;
+
+    /**
+     * 是否通过脚本来设置 Hash的缓存时长
+     */
+    private boolean hashExpireByScript=false;
+
     public ShardedCachePointCut(AutoLoadConfig config) {
         super(config);
     }
@@ -45,9 +59,6 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
-        if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {
-            throw new java.lang.RuntimeException("cacheKey:" + cacheKey + "; has '*' or '?'");
-        }
         ShardedJedis shardedJedis=null;
         try {
             int expire=result.getExpire();
@@ -61,12 +72,60 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     jedis.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
             } else {
-                jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+                hashSet(jedis, cacheKey, hfield, result);
             }
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
             returnResource(shardedJedis);
+        }
+    }
+
+    private static byte[] hashSetScript;
+    static {
+        try {
+            String tmpScript="redis.call('HSET', KEYS[1], KEYS[2], ARGV[1]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]));";
+            hashSetScript=tmpScript.getBytes("UTF-8");
+        } catch(UnsupportedEncodingException ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    private static final Map<Jedis, byte[]> hashSetScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
+
+    private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper result) throws Exception {
+        if(hashExpire == 0) {
+            jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+        } else {
+            if(hashExpireByScript) {
+                byte[] sha=hashSetScriptSha.get(jedis);
+                if(null == sha) {
+                    sha=jedis.scriptLoad(hashSetScript);
+                    hashSetScriptSha.put(jedis, sha);
+                }
+                List<byte[]> keys=new ArrayList<byte[]>();
+                keys.add(keySerializer.serialize(cacheKey));
+                keys.add(keySerializer.serialize(hfield));
+
+                List<byte[]> args=new ArrayList<byte[]>();
+                args.add(getSerializer().serialize(result));
+                args.add(keySerializer.serialize(String.valueOf(hashExpire)));
+                try {
+                    jedis.evalsha(sha, keys, args);
+                } catch(Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                    try {
+                        sha=jedis.scriptLoad(hashSetScript);
+                        hashSetScriptSha.put(jedis, sha);
+                        jedis.evalsha(sha, keys, args);
+                    } catch(Exception ex1) {
+                        logger.error(ex1.getMessage(), ex1);
+                    }
+                }
+            } else {
+                jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+                jedis.expire(keySerializer.serialize(cacheKey), hashExpire);
+            }
         }
     }
 
@@ -116,35 +175,16 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         logger.debug("delete cache:" + cacheKey);
         final AutoLoadHandler autoLoadHandler=this.getAutoLoadHandler();
         ShardedJedis shardedJedis=null;
-        if(cacheKey.indexOf("*") != -1 || cacheKey.indexOf("?") != -1) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。
-            try {
-                shardedJedis=shardedJedisPool.getResource();
+        try {
+            shardedJedis=shardedJedisPool.getResource();
+            if("*".equals(cacheKey)) {
                 Collection<Jedis> list=shardedJedis.getAllShards();
-                StringBuilder script=new StringBuilder();
-                script.append("local keys = redis.call('keys', KEYS[1]);\n");
-                script.append("if(not keys or #keys == 0) then \n return nil; \n end \n");
-                script.append("redis.call('del', unpack(keys)); \n return keys;");
                 for(Jedis jedis: list) {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<String> keys=(List<String>)jedis.eval(script.toString(), 1, cacheKey);
-                        if(null != keys && keys.size() > 0) {
-                            /*
-                             * for(String tmpKey: keys) { autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey); }
-                             */
-                        }
-                    } catch(Exception ex) {
-                        logger.error(ex.getMessage(), ex);
-                    }
+                    jedis.flushDB();
                 }
-            } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
-            } finally {
-                returnResource(shardedJedis);
-            }
-        } else {
-            try {
-                shardedJedis=shardedJedisPool.getResource();
+            } else if(cacheKey.indexOf("*") != -1) {
+                batchDel(shardedJedis, cacheKey);
+            } else {
                 Jedis jedis=shardedJedis.getShard(cacheKey);
                 String hfield=cacheKeyTO.getHfield();
                 if(null == hfield || hfield.length() == 0) {
@@ -153,10 +193,61 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     jedis.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
                 }
                 autoLoadHandler.resetAutoLoadLastLoadTime(cacheKeyTO);
+            }
+        } catch(Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        } finally {
+            returnResource(shardedJedis);
+        }
+    }
+
+    private static byte[] delScript;
+    static {
+        StringBuilder tmp=new StringBuilder();
+        tmp.append("local keys = redis.call('keys', KEYS[1]);\n");
+        tmp.append("if(not keys or #keys == 0) then \n return nil; \n end \n");
+        tmp.append("redis.call('del', unpack(keys)); \n return keys;");
+        try {
+            delScript=tmp.toString().getBytes("UTF-8");
+        } catch(UnsupportedEncodingException ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+    }
+
+    private static final Map<Jedis, byte[]> delScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
+
+    private void batchDel(ShardedJedis shardedJedis, String cacheKey) throws Exception {
+        Collection<Jedis> list=shardedJedis.getAllShards();
+        for(Jedis jedis: list) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。
+            byte[] sha=delScriptSha.get(jedis);
+            byte[] key=keySerializer.serialize(cacheKey);
+            if(null == sha) {
+                sha=jedis.scriptLoad(delScript);
+                delScriptSha.put(jedis, sha);
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                List<String> keys=(List<String>)jedis.evalsha(sha, 1, key);
+                if(null != keys && keys.size() > 0) {
+                    /*
+                     * for(String tmpKey: keys) { autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey); }
+                     */
+                }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
-            } finally {
-                returnResource(shardedJedis);
+                try {
+                    sha=jedis.scriptLoad(delScript);
+                    delScriptSha.put(jedis, sha);
+                    @SuppressWarnings("unchecked")
+                    List<String> keys=(List<String>)jedis.evalsha(sha, 1, key);
+                    if(null != keys && keys.size() > 0) {
+                        /*
+                         * for(String tmpKey: keys) { autoLoadHandler.resetAutoLoadLastLoadTime(tmpKey); }
+                         */
+                    }
+                } catch(Exception ex1) {
+                    logger.error(ex1.getMessage(), ex1);
+                }
             }
         }
     }
@@ -167,6 +258,25 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     public void setShardedJedisPool(ShardedJedisPool shardedJedisPool) {
         this.shardedJedisPool=shardedJedisPool;
+    }
+
+    public int getHashExpire() {
+        return hashExpire;
+    }
+
+    public void setHashExpire(int hashExpire) {
+        if(hashExpire < 0) {
+            return;
+        }
+        this.hashExpire=hashExpire;
+    }
+
+    public boolean isHashExpireByScript() {
+        return hashExpireByScript;
+    }
+
+    public void setHashExpireByScript(boolean hashExpireByScript) {
+        this.hashExpireByScript=hashExpireByScript;
     }
 
 }

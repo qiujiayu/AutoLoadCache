@@ -176,18 +176,14 @@ public abstract class AbstractCacheManager implements ICacheManager {
         }
         AutoLoadTO autoLoadTO=null;
         if(CacheUtil.isAutoload(cache, arguments)) {
-            try {
-                autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
-                if(null == autoLoadTO) {
-                    AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, expire, cache.requestTimeout(), serializer);
-                    if(null != tmp) {
-                        autoLoadTO=tmp;
-                    }
+            autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
+            if(null == autoLoadTO) {
+                AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, expire, cache.requestTimeout(), serializer);
+                if(null != tmp) {
+                    autoLoadTO=tmp;
                 }
-                autoLoadTO.setLastRequestTime(System.currentTimeMillis());
-            } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
             }
+            autoLoadTO.setLastRequestTime(System.currentTimeMillis());
         }
         CacheWrapper cacheWrapper=this.get(cacheKey);
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
