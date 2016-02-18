@@ -1,0 +1,9 @@
+language: java
+
+install: echo "I trust Maven."
+
+script: mvn install -DskipTests=true
+
+jdk:
+  - oraclejdk7
+  - oraclejdk8
