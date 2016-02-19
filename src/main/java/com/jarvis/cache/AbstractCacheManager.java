@@ -15,6 +15,7 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.cache.to.ProcessingTO;
 import com.jarvis.cache.type.CacheOpType;
 
 /**
@@ -26,7 +27,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
-    private final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
+    private final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
 
     private AutoLoadHandler autoLoadHandler;
 
@@ -201,12 +202,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheKey 缓存Key
      * @param expire 缓存时间
      */
-    private void writeCache(Object result, CacheKeyTO cacheKey, int expire) {
+    private CacheWrapper writeCache(Object result, CacheKeyTO cacheKey, int expire) {
         if(null == cacheKey) {
-            return;
+            return null;
         }
         CacheWrapper tmp=new CacheWrapper(result, expire);
         this.setCache(cacheKey, tmp);
+        return tmp;
     }
 
     /**
@@ -219,32 +221,46 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception
      */
     private Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Exception {
-        Boolean isProcessing=processing.get(cacheKey);
+        String fullKey=cacheKey.getFullKey();
+        ProcessingTO isProcessing=processing.get(fullKey);
+        ProcessingTO processingTO=null;
         if(null == isProcessing) {
-            Boolean _isProcessing=processing.putIfAbsent(cacheKey.getFullKey(), Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+            processingTO=new ProcessingTO();
+            ProcessingTO _isProcessing=processing.putIfAbsent(fullKey, processingTO);// 为发减少数据层的并发，增加等待机制。
             if(null != _isProcessing) {
-                isProcessing=_isProcessing;
+                isProcessing=_isProcessing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
             }
         }
         int expire=cache.expire();
-        Object target=pjp.getTarget();
+        Object lock=pjp.getTarget();
         Object result=null;
         try {
+            // String tname=Thread.currentThread().getName();
             if(null == isProcessing) {
+                // System.out.println(tname + " first thread!");
                 result=getData(pjp, autoLoadTO);
+                CacheWrapper cacheWrapper=writeCache(result, cacheKey, expire);
+                processingTO.setCache(cacheWrapper);// 本地缓存
             } else {
+                isProcessing.getCounter().incrementAndGet();
                 long startWait=System.currentTimeMillis();
+                CacheWrapper cacheWrapper=null;
                 while(System.currentTimeMillis() - startWait < cache.waitTimeOut()) {// 等待
-                    if(null == processing.get(cacheKey)) {// 防止频繁去缓存取数据，造成缓存服务器压力过大
-                        CacheWrapper cacheWrapper=this.get(cacheKey);
-                        if(cacheWrapper != null && !cacheWrapper.isExpired()) {
+                    if(null == isProcessing) {
+                        break;
+                    }
+                    if(isProcessing.isFirstFinished()) {
+                        // System.out.println(tname + " FirstFinished");
+                        cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                        if(null != cacheWrapper) {
+                            // System.out.println(tname + " do 222" + " is null :" + (null == cacheWrapper));
                             return cacheWrapper.getCacheObject();
                         }
-                        break;// 如果上个请求已经出异常，则需要跳出
                     } else {
-                        synchronized(target) {
+                        synchronized(lock) {
+                            // System.out.println(tname + " do 333");
                             try {
-                                target.wait(10);
+                                lock.wait(50);
                             } catch(InterruptedException ex) {
                                 logger.error(ex.getMessage(), ex);
                             }
@@ -252,18 +268,29 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     }
                 }
                 result=getData(pjp, autoLoadTO);
+                writeCache(result, cacheKey, expire);
             }
         } catch(Exception e) {
             throw e;
         } catch(Throwable e) {
             throw new Exception(e);
         } finally {
-            processing.remove(cacheKey);
-            synchronized(target) {
-                target.notifyAll();
+            if(null != processingTO) {
+                processingTO.setFirstFinished(true);
+            }
+            isProcessing=processing.get(fullKey);
+            if(null == isProcessing) {
+                processing.remove(fullKey);
+            } else {
+                int cnt=isProcessing.getCounter().decrementAndGet();
+                if(cnt == 0) {
+                    processing.remove(fullKey);
+                }
+            }
+            synchronized(lock) {
+                lock.notifyAll();
             }
         }
-        writeCache(result, cacheKey, expire);
         return result;
     }
 
