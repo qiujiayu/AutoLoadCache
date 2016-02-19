@@ -260,7 +260,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                         synchronized(lock) {
                             // System.out.println(tname + " do 333");
                             try {
-                                lock.wait(50);
+                                lock.wait(50);// 测试lock对象是否有效，wait的时候去掉就可以
                             } catch(InterruptedException ex) {
                                 logger.error(ex.getMessage(), ex);
                             }

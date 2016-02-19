@@ -39,7 +39,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
       <artifactId>autoload-cache</artifactId>
-      <version>3.0</version>
+      <version>${version}</version>
     </dependency>
 
 
@@ -439,7 +439,7 @@ web.xml配置：
 
     “拿来主义”机制指的是，当有多个请求去获取同一个数据时，我们先让其中一个请求先去DAO中获取数据，并放到缓存中，其它请求则等它完成后，直接去缓存中获取数据，通过这种方式减轻DAO中的并发。
 
-    但经测试发现，刚往Reids中放的数据，立即去取是获取不到数据的（无法命中），测试代码已经放到[cache-example](https://github.com/qiujiayu/cache-example) 中。优化后的方案是，不从远程服务器获取，而是从本地缓存中获取第一个请求返回的数据。减少并发的同时，还能减轻网络压力。
+    但经测试发现，刚往Reids中放的数据，立即去取是获取不到数据的（无法命中），测试代码已经放到[cache-example](https://github.com/qiujiayu/cache-example) 中。优化后的方案是，不从远程服务器获取，而是从本地内存中获取第一个请求返回的数据。减少并发的同时，还能减轻网络压力。
 
 * ####3.0 此版本做了大调整，有些功能已经不兼容老版本 
 
