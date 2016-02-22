@@ -28,7 +28,7 @@ public class CachePointCutProxy {
         this.cacheManager=cacheManager;
     }
 
-    public Object proceed(ProceedingJoinPoint pjp) throws Exception {
+    public Object proceed(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature=pjp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();

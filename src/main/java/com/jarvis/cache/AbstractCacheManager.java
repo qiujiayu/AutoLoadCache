@@ -153,7 +153,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return T 返回值
      * @throws Exception 异常
      */
-    public Object proceed(ProceedingJoinPoint pjp, Cache cache) throws Exception {
+    public Object proceed(ProceedingJoinPoint pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         // Signature signature=pjp.getSignature();
         // MethodSignature methodSignature=(MethodSignature)signature;
@@ -220,7 +220,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return 返回值
      * @throws Exception
      */
-    private Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Exception {
+    private Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
         String fullKey=cacheKey.getFullKey();
         ProcessingTO isProcessing=processing.get(fullKey);
         ProcessingTO processingTO=null;
@@ -232,69 +232,74 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
         }
         int expire=cache.expire();
-        Object lock=pjp.getTarget();
+        Object lock=null;
         Object result=null;
-        try {
-            // String tname=Thread.currentThread().getName();
-            if(null == isProcessing) {
+
+        // String tname=Thread.currentThread().getName();
+        if(null == isProcessing) {
+            lock=processingTO;
+            try {
                 // System.out.println(tname + " first thread!");
                 result=getData(pjp, autoLoadTO);
                 CacheWrapper cacheWrapper=writeCache(result, cacheKey, expire);
                 processingTO.setCache(cacheWrapper);// 本地缓存
-            } else {
-                isProcessing.getCounter().incrementAndGet();
-                long startWait=System.currentTimeMillis();
-                CacheWrapper cacheWrapper=null;
-                while(System.currentTimeMillis() - startWait < cache.waitTimeOut()) {// 等待
-                    if(null == isProcessing) {
-                        break;
+            } catch(Throwable e) {
+                processingTO.setError(e);
+                throw e;
+            } finally {
+                processingTO.setFirstFinished(true);
+                processing.remove(fullKey);
+                synchronized(lock) {
+                    lock.notifyAll();
+                }
+            }
+        } else {
+            lock=isProcessing;
+            long startWait=isProcessing.getStartTime();
+            CacheWrapper cacheWrapper=null;
+            do {// 等待
+                if(null == isProcessing) {
+                    break;
+                }
+                if(isProcessing.isFirstFinished()) {
+                    // System.out.println(tname + " FirstFinished");
+                    cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                    if(null != cacheWrapper) {
+                        // System.out.println(tname + " do 222" + " is null :" + (null == cacheWrapper));
+                        return cacheWrapper.getCacheObject();
                     }
-                    if(isProcessing.isFirstFinished()) {
-                        // System.out.println(tname + " FirstFinished");
-                        cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                        if(null != cacheWrapper) {
-                            // System.out.println(tname + " do 222" + " is null :" + (null == cacheWrapper));
-                            return cacheWrapper.getCacheObject();
-                        }
-                    } else {
-                        synchronized(lock) {
-                            // System.out.println(tname + " do 333");
-                            try {
-                                lock.wait(50);// 测试lock对象是否有效，wait的时候去掉就可以
-                            } catch(InterruptedException ex) {
-                                logger.error(ex.getMessage(), ex);
-                            }
+                    Throwable error=isProcessing.getError();
+                    if(null != error) {// 当DAO出错时，直接抛异常
+                        throw error;
+                    }
+                    break;
+                } else {
+                    synchronized(lock) {
+                        // System.out.println(tname + " do 333");
+                        try {
+                            lock.wait(50);// 如果要测试lock对象是否有效，wait时间去掉就可以
+                        } catch(InterruptedException ex) {
+                            logger.error(ex.getMessage(), ex);
                         }
                     }
                 }
+            } while(System.currentTimeMillis() - startWait < cache.waitTimeOut());
+            try {
                 result=getData(pjp, autoLoadTO);
                 writeCache(result, cacheKey, expire);
-            }
-        } catch(Exception e) {
-            throw e;
-        } catch(Throwable e) {
-            throw new Exception(e);
-        } finally {
-            if(null != processingTO) {
-                processingTO.setFirstFinished(true);
-            }
-            isProcessing=processing.get(fullKey);
-            if(null == isProcessing) {
-                processing.remove(fullKey);
-            } else {
-                int cnt=isProcessing.getCounter().decrementAndGet();
-                if(cnt == 0) {
-                    processing.remove(fullKey);
+            } catch(Throwable e) {
+                throw e;
+            } finally {
+                synchronized(lock) {
+                    lock.notifyAll();
                 }
             }
-            synchronized(lock) {
-                lock.notifyAll();
-            }
         }
+
         return result;
     }
 
-    private Object getData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO) throws Exception {
+    private Object getData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO) throws Throwable {
         try {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(true);
@@ -312,10 +317,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 autoLoadTO.addUseTotalTime(useTime);
             }
             return result;
-        } catch(Exception e) {
-            throw e;
         } catch(Throwable e) {
-            throw new Exception(e);
+            throw e;
         } finally {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(false);

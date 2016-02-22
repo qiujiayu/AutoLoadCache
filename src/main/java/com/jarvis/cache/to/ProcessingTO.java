@@ -1,21 +1,17 @@
 package com.jarvis.cache.to;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class ProcessingTO {
 
-    private AtomicInteger counter=new AtomicInteger(0);
+    private long startTime;
 
     private CacheWrapper cache;
 
     private boolean firstFinished=false;
 
-    public AtomicInteger getCounter() {
-        return counter;
-    }
+    private Throwable error;
 
-    public void setCounter(AtomicInteger counter) {
-        this.counter=counter;
+    public ProcessingTO() {
+        startTime=System.currentTimeMillis();
     }
 
     public CacheWrapper getCache() {
@@ -32,6 +28,22 @@ public class ProcessingTO {
 
     public void setFirstFinished(boolean firstFinished) {
         this.firstFinished=firstFinished;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime=startTime;
+    }
+
+    public Throwable getError() {
+        return error;
+    }
+
+    public void setError(Throwable error) {
+        this.error=error;
     }
 
 }
