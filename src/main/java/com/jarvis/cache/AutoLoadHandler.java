@@ -44,7 +44,7 @@ public class AutoLoadHandler {
      */
     private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
 
-    private boolean running=false;
+    private volatile boolean running=false;
 
     /**
      * 自动加载配置
