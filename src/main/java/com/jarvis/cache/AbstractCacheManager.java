@@ -262,20 +262,20 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     break;
                 }
                 if(isProcessing.isFirstFinished()) {
-                    // System.out.println(tname + " FirstFinished");
                     cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                    // System.out.println(tname + " do FirstFinished" + " is null :" + (null == cacheWrapper));
                     if(null != cacheWrapper) {
-                        // System.out.println(tname + " do 222" + " is null :" + (null == cacheWrapper));
                         return cacheWrapper.getCacheObject();
                     }
                     Throwable error=isProcessing.getError();
                     if(null != error) {// 当DAO出错时，直接抛异常
+                        // System.out.println(tname + " do error");
                         throw error;
                     }
                     break;
                 } else {
                     synchronized(lock) {
-                        // System.out.println(tname + " do 333");
+                        // System.out.println(tname + " do wait");
                         try {
                             lock.wait(50);// 如果要测试lock对象是否有效，wait时间去掉就可以
                         } catch(InterruptedException ex) {

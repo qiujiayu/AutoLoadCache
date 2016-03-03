@@ -14,7 +14,6 @@ import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
 import com.jarvis.cache.AbstractCacheManager;
-import com.jarvis.cache.AutoLoadHandler;
 import com.jarvis.cache.serializer.StringSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -173,7 +172,6 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             return;
         }
         logger.debug("delete cache:" + cacheKey);
-        final AutoLoadHandler autoLoadHandler=this.getAutoLoadHandler();
         ShardedJedis shardedJedis=null;
         try {
             shardedJedis=shardedJedisPool.getResource();
@@ -192,7 +190,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                 } else {
                     jedis.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
                 }
-                autoLoadHandler.resetAutoLoadLastLoadTime(cacheKeyTO);
+                this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
             }
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
