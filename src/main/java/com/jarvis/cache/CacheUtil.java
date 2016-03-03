@@ -4,7 +4,9 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -27,6 +29,8 @@ public class CacheUtil {
     private static final String HASH="hash";
 
     private static final ExpressionParser parser=new SpelExpressionParser();
+
+    private static final Map<String, Expression> expCache=new ConcurrentHashMap<String, Expression>(64);
 
     private static Method hash=null;
 
@@ -144,7 +148,12 @@ public class CacheUtil {
         context.registerFunction("empty", empty);
         context.setVariable(ARGS, arguments);
         context.setVariable(RET_VAL, retVal);
-        return parser.parseExpression(keySpEL).getValue(context, valueType);
+        Expression expression=expCache.get(keySpEL);
+        if(null == expression) {
+            expression=parser.parseExpression(keySpEL);
+            expCache.put(keySpEL, expression);
+        }
+        return expression.getValue(context, valueType);
     }
 
     /**
