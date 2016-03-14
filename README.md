@@ -434,7 +434,7 @@ web.xml配置：
 
 ## 更新日志
 
-* ####3.3  增加 Sping EL 表达式（Expression）缓存。
+* ####3.3  增加 Spring EL 表达式（Expression）缓存。
 
 
 * ####3.2 进一步优化“拿来主义”机制

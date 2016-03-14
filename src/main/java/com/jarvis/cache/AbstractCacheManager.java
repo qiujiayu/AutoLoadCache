@@ -186,14 +186,14 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
             autoLoadTO.setLastRequestTime(System.currentTimeMillis());
         }
-        CacheWrapper cacheWrapper=this.get(cacheKey);
+        CacheWrapper cacheWrapper=this.get(cacheKey);// 从缓存中获取数据
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             if(null != autoLoadTO && cacheWrapper.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {// 同步最后加载时间
                 autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
             }
             return cacheWrapper.getCacheObject();
         }
-        return loadData(pjp, autoLoadTO, cacheKey, cache);
+        return loadData(pjp, autoLoadTO, cacheKey, cache);// 从DAO加载数据
     }
 
     /**
