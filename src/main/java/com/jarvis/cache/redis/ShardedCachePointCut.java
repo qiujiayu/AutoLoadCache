@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
@@ -122,8 +123,10 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     }
                 }
             } else {
-                jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
-                jedis.expire(keySerializer.serialize(cacheKey), hashExpire);
+                Pipeline p = jedis.pipelined();
+                p.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+                p.expire(keySerializer.serialize(cacheKey), hashExpire);
+                p.sync();
             }
         }
     }
