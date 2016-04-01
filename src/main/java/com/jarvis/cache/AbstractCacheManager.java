@@ -9,6 +9,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -130,6 +131,22 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 生成缓存 Key
+     * @param pjp
+     * @param cache
+     * @param result 执行结果值
+     * @return 缓存Key
+     */
+    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, ExCache cache, Object result) {
+        String className=pjp.getTarget().getClass().getName();
+        String methodName=pjp.getSignature().getName();
+        Object[] arguments=pjp.getArgs();
+        String _key=cache.key();
+        String _hfield=cache.hfield();
+        return getCacheKey(className, methodName, arguments, _key, _hfield, result);
+    }
+
+    /**
+     * 生成缓存 Key
      * @param jp
      * @param cacheDeleteKey
      * @param retVal 执行结果值
@@ -234,7 +251,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
         int expire=cache.expire();
         Object lock=null;
         Object result=null;
-
+        ExCache[] exCaches=cache.exCache();
+        Object[] arguments=pjp.getArgs();
         // String tname=Thread.currentThread().getName();
         if(null == isProcessing) {
             lock=processingTO;
@@ -243,6 +261,21 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 result=getData(pjp, autoLoadTO);
                 CacheWrapper cacheWrapper=writeCache(result, cacheKey, expire);
                 processingTO.setCache(cacheWrapper);// 本地缓存
+                if(null != exCaches && exCaches.length > 0) {
+                    for(ExCache exCache: exCaches) {
+                        if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                            continue;
+                        }
+                        CacheKeyTO cacheKey1=getCacheKey(pjp, exCache, result);
+                        Object result1=null;
+                        if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                            result1=result;
+                        } else {
+                            result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                        }
+                        writeCache(result1, cacheKey1, exCache.expire());
+                    }
+                }
             } catch(Throwable e) {
                 processingTO.setError(e);
                 throw e;
@@ -287,6 +320,21 @@ public abstract class AbstractCacheManager implements ICacheManager {
             try {
                 result=getData(pjp, autoLoadTO);
                 writeCache(result, cacheKey, expire);
+                if(null != exCaches && exCaches.length > 0) {
+                    for(ExCache exCache: exCaches) {
+                        if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                            continue;
+                        }
+                        CacheKeyTO cacheKey1=getCacheKey(pjp, exCache, result);
+                        Object result1=null;
+                        if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                            result1=result;
+                        } else {
+                            result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                        }
+                        writeCache(result1, cacheKey1, exCache.expire());
+                    }
+                }
             } catch(Throwable e) {
                 throw e;
             } finally {

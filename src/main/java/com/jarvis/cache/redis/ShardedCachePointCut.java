@@ -33,7 +33,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private ShardedJedisPool shardedJedisPool;
 
     /**
-     * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。
+     * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。如果hashExpire 小于0则使用@Cache中设置的expire值。
      */
     private int hashExpire=0;
 
@@ -94,8 +94,17 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private static final Map<Jedis, byte[]> hashSetScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
 
     private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper result) throws Exception {
-        if(hashExpire == 0) {
-            jedis.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
+        byte[] key=keySerializer.serialize(cacheKey);
+        byte[] field=keySerializer.serialize(hfield);
+        byte[] val=getSerializer().serialize(result);
+        int hExpire;
+        if(hashExpire < 0) {
+            hExpire=result.getExpire();
+        } else {
+            hExpire=hashExpire;
+        }
+        if(hExpire == 0) {
+            jedis.hset(key, field, val);
         } else {
             if(hashExpireByScript) {
                 byte[] sha=hashSetScriptSha.get(jedis);
@@ -104,12 +113,12 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     hashSetScriptSha.put(jedis, sha);
                 }
                 List<byte[]> keys=new ArrayList<byte[]>();
-                keys.add(keySerializer.serialize(cacheKey));
-                keys.add(keySerializer.serialize(hfield));
+                keys.add(key);
+                keys.add(field);
 
                 List<byte[]> args=new ArrayList<byte[]>();
-                args.add(getSerializer().serialize(result));
-                args.add(keySerializer.serialize(String.valueOf(hashExpire)));
+                args.add(val);
+                args.add(keySerializer.serialize(String.valueOf(hExpire)));
                 try {
                     jedis.evalsha(sha, keys, args);
                 } catch(Exception ex) {
@@ -123,9 +132,9 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     }
                 }
             } else {
-                Pipeline p = jedis.pipelined();
-                p.hset(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield), getSerializer().serialize(result));
-                p.expire(keySerializer.serialize(cacheKey), hashExpire);
+                Pipeline p=jedis.pipelined();
+                p.hset(key, field, val);
+                p.expire(key, hExpire);
                 p.sync();
             }
         }
@@ -279,5 +288,4 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     public void setHashExpireByScript(boolean hashExpireByScript) {
         this.hashExpireByScript=hashExpireByScript;
     }
-
 }

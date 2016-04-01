@@ -3,6 +3,7 @@ package com.jarvis.cache;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +14,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -30,7 +32,9 @@ public class CacheUtil {
 
     private static final ExpressionParser parser=new SpelExpressionParser();
 
-    private static final Map<String, Expression> expCache=new ConcurrentHashMap<String, Expression>(64);
+    private static final ConcurrentHashMap<String, Expression> expCache=new ConcurrentHashMap<String, Expression>(64);
+
+    private static final ConcurrentHashMap<String, Method> funcs=new ConcurrentHashMap<String, Method>(64);
 
     private static Method hash=null;
 
@@ -46,6 +50,10 @@ public class CacheUtil {
         } catch(Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void addFunction(String name, Method method) {
+        funcs.put(name, method);
     }
 
     @SuppressWarnings("rawtypes")
@@ -146,6 +154,11 @@ public class CacheUtil {
 
         context.registerFunction(HASH, hash);
         context.registerFunction("empty", empty);
+        Iterator<Map.Entry<String, Method>> it=funcs.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry<String, Method> entry=it.next();
+            context.registerFunction(entry.getKey(), entry.getValue());
+        }
         context.setVariable(ARGS, arguments);
         context.setVariable(RET_VAL, retVal);
         Expression expression=expCache.get(keySpEL);
@@ -225,7 +238,25 @@ public class CacheUtil {
      */
     public static boolean isCacheable(Cache cache, Object[] arguments, Object result) {
         boolean rv=true;
-        if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
+        if(null != cache.condition() && cache.condition().length() > 0) {
+            rv=getElValue(cache.condition(), arguments, result, Boolean.class);
+        }
+        return rv;
+    }
+
+    /**
+     * 是否可以缓存
+     * @param cache ExCache
+     * @param arguments 参数
+     * @param result 执行结果
+     * @return cacheAble 是否可以进行缓存
+     */
+    public static boolean isCacheable(ExCache cache, Object[] arguments, Object result) {
+        if(null == cache || cache.expire() < 0 || cache.key().length() == 0) {
+            return false;
+        }
+        boolean rv=true;
+        if(null != cache.condition() && cache.condition().length() > 0) {
             rv=getElValue(cache.condition(), arguments, result, Boolean.class);
         }
         return rv;

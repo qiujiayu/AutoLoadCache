@@ -436,6 +436,12 @@ web.xml配置：
 
 ## 更新日志
 
+* ####3.5  增加如下几个功能：
+
+    * 注册自定义Spring EL表达式函数
+    * 如果ShardedCachePointCut 中的 hashExpire 小于0则使用@Cache中设置的expire值。
+    * 增加@ExCache，用于增强@Cache 设置缓存功能。
+
 * ####3.4  使用管道来操作Redis 的哈希表，减少与Redis的交互次数。
 
 * ####3.3  增加 Spring EL 表达式（Expression）缓存。

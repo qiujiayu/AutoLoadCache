@@ -68,4 +68,10 @@ public @interface Cache {
      * @return 时间
      */
     int waitTimeOut() default 500;
+
+    /**
+     * 扩展缓存
+     * @return
+     */
+    ExCache[] exCache() default @ExCache(expire=-1, key="");
 }

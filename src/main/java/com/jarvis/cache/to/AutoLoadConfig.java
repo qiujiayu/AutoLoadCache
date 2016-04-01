@@ -1,5 +1,10 @@
 package com.jarvis.cache.to;
 
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.Map;
+
+import com.jarvis.cache.CacheUtil;
 import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
@@ -109,6 +114,29 @@ public class AutoLoadConfig {
             return;
         }
         this.autoLoadPeriod=autoLoadPeriod;
+    }
+
+    /**
+     * 为Spring EL注册自定义函数
+     * @param funcs
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void setFunctions(Map<String, String> funcs) {
+        if(null == funcs || funcs.isEmpty()) {
+            return;
+        }
+        Iterator<Map.Entry<String, String>> it=funcs.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry<String, String> entry=it.next();
+            try {
+                String name=entry.getKey();
+                Class cls=Class.forName(entry.getValue());
+                Method method=cls.getDeclaredMethod(name, new Class[]{Object.class});
+                CacheUtil.addFunction(name, method);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
