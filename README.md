@@ -439,8 +439,9 @@ web.xml配置：
 * ####3.5  增加如下几个功能：
 
     * 注册自定义Spring EL表达式函数
-    * 如果ShardedCachePointCut 中的 hashExpire 小于0则使用@Cache中设置的expire值。
-    * 增加@ExCache，用于增强@Cache 设置缓存功能。
+    * 如果ShardedCachePointCut 中的 hashExpire 小于0则使用@Cache中设置的expire值，替换hashExpire值。
+    * 增加@ExCache，用于增强@Cache 设置缓存功能。应用场景举例：我们使用getUserByName时，返回User的对象，其实也可以设置给getUserById的缓存中的，反过也是同样的道理，通过getUserById方法返回的数据，也可以设置给getUserByName的缓存中​，这样可以减少与DAO的交互了。
+
 
 * ####3.4  使用管道来操作Redis 的哈希表，减少与Redis的交互次数。
 
