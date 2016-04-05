@@ -163,6 +163,26 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     }
 
+    private void writeExCache(ProceedingJoinPoint pjp, Cache cache, Object result) {
+        ExCache[] exCaches=cache.exCache();
+        if(null != exCaches && exCaches.length > 0) {
+            Object[] arguments=pjp.getArgs();
+            for(ExCache exCache: exCaches) {
+                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                    continue;
+                }
+                CacheKeyTO cacheKey1=getCacheKey(pjp, exCache, result);
+                Object result1=null;
+                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                    result1=result;
+                } else {
+                    result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                }
+                writeCache(result1, cacheKey1, exCache.expire());
+            }
+        }
+    }
+
     /**
      * 处理@Cache 拦截
      * @param pjp 切面
@@ -182,6 +202,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             if(CacheUtil.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
                 writeCache(result, cacheKey, expire);
+                writeExCache(pjp, cache, result);
             }
             return result;
         }
@@ -251,8 +272,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
         int expire=cache.expire();
         Object lock=null;
         Object result=null;
-        ExCache[] exCaches=cache.exCache();
-        Object[] arguments=pjp.getArgs();
         // String tname=Thread.currentThread().getName();
         if(null == isProcessing) {
             lock=processingTO;
@@ -261,21 +280,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 result=getData(pjp, autoLoadTO);
                 CacheWrapper cacheWrapper=writeCache(result, cacheKey, expire);
                 processingTO.setCache(cacheWrapper);// 本地缓存
-                if(null != exCaches && exCaches.length > 0) {
-                    for(ExCache exCache: exCaches) {
-                        if(!CacheUtil.isCacheable(exCache, arguments, result)) {
-                            continue;
-                        }
-                        CacheKeyTO cacheKey1=getCacheKey(pjp, exCache, result);
-                        Object result1=null;
-                        if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                            result1=result;
-                        } else {
-                            result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
-                        }
-                        writeCache(result1, cacheKey1, exCache.expire());
-                    }
-                }
+                writeExCache(pjp, cache, result);
             } catch(Throwable e) {
                 processingTO.setError(e);
                 throw e;
@@ -320,21 +325,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             try {
                 result=getData(pjp, autoLoadTO);
                 writeCache(result, cacheKey, expire);
-                if(null != exCaches && exCaches.length > 0) {
-                    for(ExCache exCache: exCaches) {
-                        if(!CacheUtil.isCacheable(exCache, arguments, result)) {
-                            continue;
-                        }
-                        CacheKeyTO cacheKey1=getCacheKey(pjp, exCache, result);
-                        Object result1=null;
-                        if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                            result1=result;
-                        } else {
-                            result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
-                        }
-                        writeCache(result1, cacheKey1, exCache.expire());
-                    }
-                }
+                writeExCache(pjp, cache, result);
             } catch(Throwable e) {
                 throw e;
             } finally {
