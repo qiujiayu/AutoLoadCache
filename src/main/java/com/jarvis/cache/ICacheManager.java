@@ -1,5 +1,9 @@
 package com.jarvis.cache;
 
+import org.aspectj.lang.ProceedingJoinPoint;
+
+import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -39,4 +43,15 @@ public interface ICacheManager {
      * 销毁：关闭线程
      */
     void destroy();
+
+    /**
+     * 加载数据
+     * @param pjp
+     * @param autoLoadTO
+     * @param cacheKey
+     * @param cache
+     * @return
+     * @throws Throwable
+     */
+    Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;
 }

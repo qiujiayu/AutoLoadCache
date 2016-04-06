@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import com.jarvis.cache.annotation.Cache;
+
 /**
  * 用于处理自动加载数据到缓存
  * @author jiayu.qiu
@@ -15,6 +17,11 @@ public class AutoLoadTO implements Serializable {
     private ProceedingJoinPoint joinPoint;
 
     private Object args[];
+
+    /**
+     * 缓存注解
+     */
+    private Cache cache;
 
     /**
      * 缓存Key
@@ -41,14 +48,7 @@ public class AutoLoadTO implements Serializable {
      */
     private long requestTimes=0L;
 
-    /**
-     * 缓存过期时间
-     */
-    private int expire;
-
-    private long requestTimeout=7200L;// 缓存数据在 requestTimeout 秒之内没有使用了，就不进行自动加载数据
-
-    private boolean loading=false;
+    private volatile boolean loading=false;
 
     /**
      * 加载次数
@@ -60,12 +60,11 @@ public class AutoLoadTO implements Serializable {
      */
     private long useTotalTime=0L;
 
-    public AutoLoadTO(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Object args[], int expire, long requestTimeout) {
+    public AutoLoadTO(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Object args[], Cache cache) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
         this.args=args;
-        this.expire=expire;
-        this.requestTimeout=requestTimeout;
+        this.cache=cache;
     }
 
     public ProceedingJoinPoint getJoinPoint() {
@@ -94,8 +93,8 @@ public class AutoLoadTO implements Serializable {
         return requestTimes;
     }
 
-    public int getExpire() {
-        return expire;
+    public Cache getCache() {
+        return cache;
     }
 
     public long getLastLoadTime() {
@@ -108,10 +107,6 @@ public class AutoLoadTO implements Serializable {
 
     public CacheKeyTO getCacheKey() {
         return cacheKey;
-    }
-
-    public long getRequestTimeout() {
-        return requestTimeout;
     }
 
     public boolean isLoading() {

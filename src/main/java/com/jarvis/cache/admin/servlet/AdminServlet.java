@@ -270,10 +270,10 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime()) + "</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getFirstRequestTime()) + "</td>");
             html.append("    <td>" + tmpTO.getRequestTimes() + "次</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getExpire() * 1000) + "(" + tmpTO.getExpire()
-                + "秒)</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getRequestTimeout() * 1000) + "("
-                + tmpTO.getRequestTimeout() + "秒)</td>");
+            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getCache().expire() * 1000) + "("
+                + tmpTO.getCache().expire() + "秒)</td>");
+            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getCache().requestTimeout() * 1000) + "("
+                + tmpTO.getCache().requestTimeout() + "秒)</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime()) + "</td>");
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
             html.append("    <td>" + tmpTO.getAverageUseTime() + "毫秒</td>");

@@ -2,13 +2,13 @@ package com.jarvis.cache.to;
 
 public class ProcessingTO {
 
-    private long startTime;
+    private volatile long startTime;
 
-    private CacheWrapper cache;
+    private volatile CacheWrapper cache;
 
-    private boolean firstFinished=false;
+    private volatile boolean firstFinished=false;
 
-    private Throwable error;
+    private volatile Throwable error;
 
     public ProcessingTO() {
         startTime=System.currentTimeMillis();

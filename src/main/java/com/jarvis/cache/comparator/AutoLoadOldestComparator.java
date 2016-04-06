@@ -21,8 +21,8 @@ public class AutoLoadOldestComparator implements Comparator<AutoLoadTO> {
             return 0;
         }
         long now=System.currentTimeMillis();
-        long dif1=now - autoLoadTO1.getLastLoadTime() - autoLoadTO1.getExpire() * 1000;
-        long dif2=now - autoLoadTO2.getLastLoadTime() - autoLoadTO2.getExpire() * 1000;
+        long dif1=now - autoLoadTO1.getLastLoadTime() - autoLoadTO1.getCache().expire() * 1000;
+        long dif2=now - autoLoadTO2.getLastLoadTime() - autoLoadTO2.getCache().expire() * 1000;
         if(dif1 > dif2) {
             return -1;
         } else if(dif1 < dif2) {

@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 
+import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
@@ -113,12 +114,12 @@ public class AutoLoadHandler {
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
-    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, int expire, long requestTimeout,
-        ISerializer<Object> serializer) {
+    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Cache cache, ISerializer<Object> serializer) {
         if(null == autoLoadMap) {
             return null;
         }
-        if(expire >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
+
+        if(cache.expire() >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
                 arguments=(Object[])BeanUtil.deepClone(arguments, serializer); // 进行深度复制
@@ -126,7 +127,7 @@ public class AutoLoadHandler {
                 logger.error(e.getMessage(), e);
                 return null;
             }
-            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, expire, requestTimeout);
+            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache);
             AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
             if(null == tmp) {
                 return autoLoadTO;
@@ -207,8 +208,10 @@ public class AutoLoadHandler {
             if(autoLoadTO.getLastRequestTime() <= 0 || autoLoadTO.getLastLoadTime() <= 0) {
                 return;
             }
-            if(autoLoadTO.getRequestTimeout() > 0
-                && (now - autoLoadTO.getLastRequestTime()) >= autoLoadTO.getRequestTimeout() * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
+            Cache cache=autoLoadTO.getCache();
+            long requestTimeout=cache.requestTimeout();
+            int expire=cache.expire();
+            if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
                 autoLoadMap.remove(autoLoadTO.getCacheKey().getFullKey());
                 return;
             }
@@ -228,10 +231,10 @@ public class AutoLoadHandler {
                 return;
             }
             long timeout;
-            if(autoLoadTO.getExpire() >= 600) {
-                timeout=(autoLoadTO.getExpire() - 120) * 1000;
+            if(expire >= 600) {
+                timeout=(expire - 120) * 1000;
             } else {
-                timeout=(autoLoadTO.getExpire() - 60) * 1000;;
+                timeout=(expire - 60) * 1000;;
             }
 
             if((now - autoLoadTO.getLastLoadTime()) >= timeout) {
@@ -244,26 +247,10 @@ public class AutoLoadHandler {
                     }
                 }
                 try {
-                    autoLoadTO.setLoading(true);
                     ProceedingJoinPoint pjp=autoLoadTO.getJoinPoint();
-                    String className=pjp.getTarget().getClass().getName();
-                    String methodName=pjp.getSignature().getName();
-                    long startTime=System.currentTimeMillis();
-                    Object result=pjp.proceed(autoLoadTO.getArgs());
-                    long useTime=System.currentTimeMillis() - startTime;
-                    if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
-                        logger.error(className + "." + methodName + ", use time:" + useTime + "ms");
-                    }
-                    CacheWrapper tmp=new CacheWrapper(result, autoLoadTO.getExpire());
-                    cacheManager.setCache(autoLoadTO.getCacheKey(), tmp);
-                    autoLoadTO.setLastLoadTime(System.currentTimeMillis());
-                    autoLoadTO.addUseTotalTime(useTime);
-                } catch(Exception e) {
-                    logger.error(e.getMessage(), e);
+                    cacheManager.loadData(pjp, autoLoadTO, autoLoadTO.getCacheKey(), autoLoadTO.getCache());
                 } catch(Throwable e) {
                     logger.error(e.getMessage(), e);
-                } finally {
-                    autoLoadTO.setLoading(false);
                 }
             }
         }
