@@ -164,29 +164,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     }
 
-    private void writeExCache(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, Cache cache, Object result) {
-        ExCache[] exCaches=cache.exCache();
-        if(null != exCaches && exCaches.length > 0) {
-            Object[] arguments=pjp.getArgs();
-            if(null != autoLoadTO) {
-                arguments=autoLoadTO.getArgs();
-            }
-            for(ExCache exCache: exCaches) {
-                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
-                    continue;
-                }
-                CacheKeyTO cacheKey1=getCacheKey(pjp, autoLoadTO, exCache, result);
-                Object result1=null;
-                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                    result1=result;
-                } else {
-                    result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
-                }
-                writeCache(result1, cacheKey1, exCache.expire());
-            }
-        }
-    }
-
     /**
      * 处理@Cache 拦截
      * @param pjp 切面
@@ -200,13 +177,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
         // MethodSignature methodSignature=(MethodSignature)signature;
         // Class returnType=methodSignature.getReturnType(); // 获取返回值类型
         // System.out.println("returnType:" + returnType.getName());
-        int expire=cache.expire();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             Object result=getData(pjp, null);
             if(CacheUtil.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
-                writeCache(result, cacheKey, expire);
-                writeExCache(pjp, null, cache, result);
+                writeCache(pjp, null, cache, cacheKey, result);
             }
             return result;
         }
@@ -240,17 +215,41 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 写缓存
-     * @param result 缓存数据
-     * @param cacheKey 缓存Key
-     * @param expire 缓存时间
+     * @param pjp ProceedingJoinPoint
+     * @param autoLoadTO AutoLoadTO
+     * @param cache Cache annotation
+     * @param cacheKey Cache Key
+     * @param result cache data
+     * @return CacheWrapper
      */
-    private CacheWrapper writeCache(Object result, CacheKeyTO cacheKey, int expire) {
+    private CacheWrapper writeCache(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey, Object result) {
         if(null == cacheKey) {
             return null;
         }
-        CacheWrapper tmp=new CacheWrapper(result, expire);
-        this.setCache(cacheKey, tmp);
-        return tmp;
+        CacheWrapper cacheWrapper=new CacheWrapper(result, cache.expire());
+        this.setCache(cacheKey, cacheWrapper);
+        ExCache[] exCaches=cache.exCache();
+        if(null != exCaches && exCaches.length > 0) {
+            Object[] arguments=pjp.getArgs();
+            if(null != autoLoadTO) {
+                arguments=autoLoadTO.getArgs();
+            }
+            for(ExCache exCache: exCaches) {
+                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                    continue;
+                }
+                CacheKeyTO cacheKey1=getCacheKey(pjp, autoLoadTO, exCache, result);
+                Object result1=null;
+                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                    result1=result;
+                } else {
+                    result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                }
+                CacheWrapper cacheWrapper1=new CacheWrapper(result1, exCache.expire());
+                this.setCache(cacheKey1, cacheWrapper1);
+            }
+        }
+        return cacheWrapper;
     }
 
     /**
@@ -274,7 +273,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 isProcessing=_isProcessing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
             }
         }
-        int expire=cache.expire();
         Object lock=null;
         Object result=null;
         // String tname=Thread.currentThread().getName();
@@ -283,9 +281,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
             try {
                 // System.out.println(tname + " first thread!");
                 result=getData(pjp, autoLoadTO);
-                CacheWrapper cacheWrapper=writeCache(result, cacheKey, expire);
+                CacheWrapper cacheWrapper=writeCache(pjp, autoLoadTO, cache, cacheKey, result);
                 processingTO.setCache(cacheWrapper);// 本地缓存
-                writeExCache(pjp, autoLoadTO, cache, result);
             } catch(Throwable e) {
                 processingTO.setError(e);
                 throw e;
@@ -329,8 +326,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             } while(System.currentTimeMillis() - startWait < cache.waitTimeOut());
             try {
                 result=getData(pjp, autoLoadTO);
-                writeCache(result, cacheKey, expire);
-                writeExCache(pjp, autoLoadTO, cache, result);
+                writeCache(pjp, autoLoadTO, cache, cacheKey, result);
             } catch(Throwable e) {
                 throw e;
             } finally {
@@ -346,8 +342,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private Object getData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO) throws Throwable {
         try {
             long startTime=System.currentTimeMillis();
-            Object[] arguments=pjp.getArgs();
-            if(null != autoLoadTO) {
+            Object[] arguments;
+            if(null == autoLoadTO) {
+                arguments=pjp.getArgs();
+            } else {
                 arguments=autoLoadTO.getArgs();
             }
             Object result=pjp.proceed(arguments);
