@@ -239,6 +239,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     continue;
                 }
                 CacheKeyTO cacheKey1=getCacheKey(pjp, autoLoadTO, exCache, result);
+                if(null == cacheKey1) {
+                    continue;
+                }
                 Object result1=null;
                 if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
                     result1=result;
