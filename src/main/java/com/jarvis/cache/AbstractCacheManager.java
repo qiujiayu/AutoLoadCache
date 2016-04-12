@@ -238,18 +238,18 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 if(!CacheUtil.isCacheable(exCache, arguments, result)) {
                     continue;
                 }
-                CacheKeyTO cacheKey1=getCacheKey(pjp, autoLoadTO, exCache, result);
-                if(null == cacheKey1) {
+                CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
+                if(null == exCacheKey) {
                     continue;
                 }
-                Object result1=null;
+                Object exResult=null;
                 if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                    result1=result;
+                    exResult=result;
                 } else {
-                    result1=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
                 }
-                CacheWrapper cacheWrapper1=new CacheWrapper(result1, exCache.expire());
-                this.setCache(cacheKey1, cacheWrapper1);
+                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCache.expire());
+                this.setCache(exCacheKey, exCacheWrapper);
             }
         }
         return cacheWrapper;
