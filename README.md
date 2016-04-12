@@ -315,16 +315,18 @@ AOP 配置：
   Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。
 
 ###提供的SpEL上下文数据
-    | 名字 | 描述 | 示例 |
-    | ------------- | ------------- | ------------- |
-    | args | 当前被调用的方法的参数列表 | #args[0] |
-    | retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),@ExCache() | #retVal |
+
+| 名字 | 描述 | 示例 |
+| ------------- | ------------- | ------------- |
+| args | 当前被调用的方法的参数列表 | #args[0] |
+| retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),@ExCache() | #retVal |
 
 ###提供的SpEL函数
-    | 名字 | 描述 | 示例 |
-    | ------------- | ------------- | ------------- |
-    | hash | 将Object 对象转换为唯一的Hash字符串 | #hash(#args) |
-    | empty | 判断Object对象是否为空 | #empty(#args[0]) |
+
+| 名字 | 描述 | 示例 |
+| ------------- | ------------- | ------------- |
+| hash | 将Object 对象转换为唯一的Hash字符串 | #hash(#args) |
+| empty | 判断Object对象是否为空 | #empty(#args[0]) |
 
 ###自定义SpEL函数
 通过AutoLoadConfig 的functions 注册自定义函数，例如：
