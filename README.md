@@ -222,6 +222,47 @@ AOP 配置：
          * @return 时间
          */
         int waitTimeOut() default 500;
+        /**
+         * 扩展缓存
+         * @return
+        */
+        ExCache[] exCache() default @ExCache(expire=-1, key="");
+    }
+
+###@ExCache
+
+    public @interface ExCache {
+
+        /**
+         * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
+         * @return 时间
+         */
+        int expire();
+
+        /**
+         * 自定义缓存Key，支持Spring EL表达式
+         * @return String 自定义缓存Key
+        */
+        String key();
+
+        /**
+         * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
+         * @return String
+        */
+        String hfield() default "";
+
+        /**
+         * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+         * @return String
+        */
+        String condition() default "";
+
+        /**
+         * 通过SpringEL表达式获取需要缓存的数据，如果没有设置，则默认使用 #retVal
+         * @return
+        */
+        String cacheObject() default "";
+ 
     }
 
 ###@CacheDelete
@@ -272,6 +313,30 @@ AOP 配置：
 
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
   Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。
+
+###提供的SpEL上下文数据
+    | 名字 | 描述 | 示例 |
+    | - | - | - |
+    | args | 当前被调用的方法的参数列表 | #args[0] |
+    | retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),@ExCache() | #retVal |
+
+###提供的SpEL函数
+    | 名字 | 描述 | 示例 |
+    | - | - | - |
+    | hash | 将Object 对象转换为唯一的Hash字符串 | #hash(#args) |
+    | empty | 判断Object对象是否为空 | #empty(#args[0]) |
+
+###自定义SpEL函数
+通过AutoLoadConfig 的functions 注册自定义函数，例如：
+
+    <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+      <property name="functions">
+        <map>
+          <entry key="isEmpty" value="com.jarvis.cache.CacheUtil" />
+          <!--#isEmpty(#args[0]) 表示调com.jarvis.cache.CacheUtil中的isEmpty方法-->
+        </map>
+      </property>
+    </bean>
 
 ###数据实时性
 
