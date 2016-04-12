@@ -19,7 +19,7 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
 
     private int period=2 * 60 * 1000; // 2Minutes
 
-    private boolean running=false;
+    private volatile boolean running=false;
 
     private Thread thread=null;
 
@@ -32,8 +32,9 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
             thread.start();
         }
     }
-
-    public void shutDown() {
+    @Override
+    public void destroy() {
+        super.destroy();
         this.running=false;
     }
 
