@@ -62,7 +62,7 @@ public class AutoLoadHandler {
         this.running=true;
         this.threads=new Thread[this.config.getThreadCnt()];
         this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.config.getMaxElement());
-        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>();
+        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
         this.sortThread=new Thread(new SortRunnable());
         this.sortThread.start();
         for(int i=0; i < this.config.getThreadCnt(); i++) {

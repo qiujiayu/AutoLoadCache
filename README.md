@@ -17,7 +17,7 @@ AOP拦截到请求后：
 >1. 根据请求参数生成Key，后面我们会对生成Key的规则，进一步说明；
 >2. 如果是AutoLoad的，则请求相关参数，封装到AutoLoadTO中，并放到AutoLoadHandler中。
 >3. 根据Key去缓存服务器中取数据，如果取到数据，则返回数据，如果没有取到数据，则执行DAO中的方法，获取数据，同时将数据放到缓存中。如果是AutoLoad的，则把最后加载时间，更新到AutoLoadTO中，最后返回数据；如是AutoLoad的请求，每次请求时，都会更新AutoLoadTO中的 最后请求时间。
->4. 为了减少并发，增加等待机制：如果多个用户同时取一个数据，那么先让第一个用户去DAO取数据，其它用户则等待其返回后，去缓存中获取，尝试一定次数后，如果还没获取到，再去DAO中取数据。
+>4. 为了减少并发，增加等待机制（***拿来主义机制***）：如果多个用户同时取一个数据，那么先让第一个请求去DAO取数据，其它请求则等待其返回后，直接从内存中获取，等待一定时间后，如果还没获取到，则会去DAO中取数据。
 
 AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将过期时，去执行DAO的方法，获取数据，并将数据放到缓存中。为了防止自动加载队列过大，设置了容量限制；同时会将超过一定时间没有用户请求的也会从自动加载队列中移除，把服务器资源释放出来，给真正需要的请求。
 
@@ -46,7 +46,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 ###2. Spring AOP配置
 
 
-从0.4版本开始增加了Redis及Memcache的PointCut 的实现，直接在Spring 中用<aop:config>就可以使用。
+已经实现了Redis、Memcache以及ConcurrentHashMap 缓存的PointCut，直接在Spring 中用<aop:config>就可以使用。
 
 Redis 配置:
 
@@ -130,9 +130,12 @@ Memcache 配置：
       <property name="namespace" value="test" />
     </bean>
 
-如果需要使用本地内存来缓存数据，可以使用： com.jarvis.cache.map.CachePointCut 
+如果需要使用***本地内存来缓存数据***，可以使用： ***com.jarvis.cache.map.CachePointCut*** 
+###优化序列化
 
-AOP 配置：
+  使用Hessian2来代替JDK自到的序列化和反序列化，一方面提升了序列化和反序列化的效率，二是压缩了序列化后的数据大小，也减轻了网络带宽压力。
+
+###AOP 配置：
 
     <aop:config proxy-target-class="true">
       <aop:aspect ref="cachePointCut">
@@ -163,6 +166,7 @@ AOP 配置：
 * sortType 自动加载队列排序算法, **0**：按在Map中存储的顺序（即无序）；**1** ：越接近过期时间，越耗时的排在最前；**2**：根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。更详细的说明，请查看代码com.jarvis.cache.type.AutoLoadQueueSortType
 * checkFromCacheBeforeLoad 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序部署的服务器数量比较少，设置为false, 如果部署的服务器比较多，可以考虑设置为true
 * autoLoadPeriod 单个线程中执行自动加载的时间间隔, 此值越小，遍历自动加载队列频率起高，对CPU会越消耗CPU
+* functions 注册自定义SpEL函数
 
 
 ###@Cache
