@@ -75,13 +75,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return CacheKeyTO
      */
     private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
-        Object result) {
+        Object result, boolean hasRetVal) {
         String key=null;
         String hfield=null;
         if(null != _key && _key.trim().length() > 0) {
-            key=CacheUtil.getDefinedCacheKey(_key, arguments, result);
+            key=CacheUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
             if(null != _hfield && _hfield.trim().length() > 0) {
-                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result);
+                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
             }
         } else {
             key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
@@ -109,7 +109,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, null);
+        return getCacheKey(className, methodName, arguments, _key, _hfield, null, false);
     }
 
     /**
@@ -125,7 +125,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, result);
+        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
     }
 
     /**
@@ -143,8 +143,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
             arguments=autoLoadTO.getArgs();
         }
         String _key=cache.key();
+        if(null == _key || _key.trim().length() == 0) {
+            return null;
+        }
         String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, result);
+        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
     }
 
     /**
@@ -160,7 +163,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         Object[] arguments=jp.getArgs();
         String _key=cacheDeleteKey.value();
         String _hfield=cacheDeleteKey.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, retVal);
+        return getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
 
     }
 

@@ -177,13 +177,14 @@ public class CacheUtil {
      * @param keySpEL 生成缓存Key的Spring el表达式
      * @param arguments 参数
      * @param retVal 结果值
+     * @param hasRetVal 是否有retVal
      * @return CacheKey 缓存Key
      */
-    public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
+    public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal) {
         if(keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {
             return keySpEL;
         }
-        return getElValue(keySpEL, arguments, retVal, true, String.class);
+        return getElValue(keySpEL, arguments, retVal, hasRetVal, String.class);
     }
 
     /**
