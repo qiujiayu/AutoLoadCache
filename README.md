@@ -130,7 +130,7 @@ Memcache 配置：
       <property name="namespace" value="test" />
     </bean>
 
-如果需要使用***本地内存来缓存数据***，可以使用： ***com.jarvis.cache.map.CachePointCut*** 
+如果需要使用***本机ConcurrentHashMap来缓存数据***，可以使用： ***com.jarvis.cache.map.CachePointCut*** 
 ###优化序列化
 
   使用Hessian2来代替JDK自到的序列化和反序列化，一方面提升了序列化和反序列化的效率，二是压缩了序列化后的数据大小，也减轻了网络带宽压力。
@@ -234,6 +234,17 @@ Memcache 配置：
     }
 
 ###@ExCache
+
+  使用场景举例：如果系统中用getUserById和getUserByName,两种方法来获取用户信息，我们可以在getUserById 时把 getUserByName 的缓存也生成。反过来getUserByName 时，也可以把getUserById 的缓存生成：
+
+    @Cache(expire=600, key="'USER.getUserById'+#args[0]", exCache={@ExCache(expire=600, key="'USER.getUserByName'+#retVal.name")})
+    public User getUserById(Long id){... ...}
+    
+    @Cache(expire=600, key="'USER.getUserByName'+#args[0]", exCache={@ExCache(expire=600, key="'USER.getUserById'+#retVal.id")})
+    public User getUserByName(Long id){... ...}
+    
+    
+  @ExCache 详细参数：
 
     public @interface ExCache {
 
@@ -344,9 +355,9 @@ Memcache 配置：
       </property>
     </bean>
 
-###数据实时性
+###通过删除缓存，实现数据实时性
 
-下面商品评论的例子中，如果用户发表了评论，要立即显示该如何来处理？
+下面商品评论的例子中，如果用户发表了评论，要所有涉及到的前端页面立即显示该如何来处理？
 
     package com.jarvis.example.dao;
     import ... ...
@@ -369,6 +380,18 @@ Memcache 配置：
             ... ...// 使用空方法来删除缓存
         }
     }
+
+###批量删除缓存
+
+  在一些用户交互比较多的系统中，使用程序删除缓存是非常常见的事情，当我们遇到一些查询条件比较复杂的查询时，我们没有办法通过程序，反向生成缓存key,也就无法精确定位需要删除的缓存，但我们又不希望把不相关的缓存给误删除时。这时就可以使用下面介绍的批量删除缓存功能。
+
+  注意：批量删除缓存功能，现在只有Reids 和 ConcurrentHashMap两种缓存方式支持。Memcache无法支持。
+
+  批量删除缓存，主要和存缓存的方式有关，我们把需要批量删除的缓存，放到对应的hash表中，需要批量删除时，把这个hash表删除就可以了，实现非常简单（因为Memcache不支持hash表，所以无法实现这种方式的批量删除缓存功能）。所以批量删除缓存，是因缓存缓存数据的方式改变了，才得以实现的。
+
+  使用方法，参照上面删除商品评论的代码。在@Cache中加入hfield。
+
+  另外Reids还支持使用通配符进行批最删除缓存，但不建议使用。
 
 
 ##注意事项
