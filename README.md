@@ -530,6 +530,12 @@ web.xml配置：
 
 ## 更新日志
 
+* ####3.7 细节优化：
+
+    * 调整 写缓存（writeCache）代码结构。
+    * 将ShardedCachePointCut中hashExpire默认值设置为-1；
+    * 解析SpEL表达式时，增加判断是否有返回值，避免在不能使用#retVal的地方，使用了#retVal
+
 * ####3.6  对@ExCache相关代码进行调整，自动加载时也对@ExCache进行处理。对一些变量增加volatile 修饰符，以便于其它线程的读取到最新的值。
 
 * ####3.5  增加如下几个功能：
