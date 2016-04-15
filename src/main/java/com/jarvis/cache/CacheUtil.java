@@ -137,19 +137,20 @@ public class CacheUtil {
      * @param <T> 泛型
      */
     public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
-        return getElValue(keySpEL, arguments, null, valueType);
+        return getElValue(keySpEL, arguments, null, false, valueType);
     }
 
     /**
      * 将Spring EL 表达式转换期望的值
      * @param keySpEL 生成缓存Key的Spring el表达式
      * @param arguments 参数
-     * @param valueType 值类型
      * @param retVal 结果值
+     * @param hasRetVal retVal 参数
+     * @param valueType 值类型
      * @return T value 返回值
      * @param <T> 泛型
      */
-    public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
+    public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) {
         StandardEvaluationContext context=new StandardEvaluationContext();
 
         context.registerFunction(HASH, hash);
@@ -160,7 +161,9 @@ public class CacheUtil {
             context.registerFunction(entry.getKey(), entry.getValue());
         }
         context.setVariable(ARGS, arguments);
-        context.setVariable(RET_VAL, retVal);
+        if(hasRetVal) {
+            context.setVariable(RET_VAL, retVal);
+        }
         Expression expression=expCache.get(keySpEL);
         if(null == expression) {
             expression=parser.parseExpression(keySpEL);
@@ -180,7 +183,7 @@ public class CacheUtil {
         if(keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {
             return keySpEL;
         }
-        return getElValue(keySpEL, arguments, retVal, String.class);
+        return getElValue(keySpEL, arguments, retVal, true, String.class);
     }
 
     /**
@@ -239,7 +242,7 @@ public class CacheUtil {
     public static boolean isCacheable(Cache cache, Object[] arguments, Object result) {
         boolean rv=true;
         if(null != cache.condition() && cache.condition().length() > 0) {
-            rv=getElValue(cache.condition(), arguments, result, Boolean.class);
+            rv=getElValue(cache.condition(), arguments, result, true, Boolean.class);
         }
         return rv;
     }
@@ -257,7 +260,7 @@ public class CacheUtil {
         }
         boolean rv=true;
         if(null != cache.condition() && cache.condition().length() > 0) {
-            rv=getElValue(cache.condition(), arguments, result, Boolean.class);
+            rv=getElValue(cache.condition(), arguments, result, true, Boolean.class);
         }
         return rv;
     }
@@ -287,7 +290,7 @@ public class CacheUtil {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition()
             && cacheDeleteKey.condition().length() > 0) {
-            rv=getElValue(cacheDeleteKey.condition(), arguments, retVal, Boolean.class);
+            rv=getElValue(cacheDeleteKey.condition(), arguments, retVal, true, Boolean.class);
         }
         return rv;
     }

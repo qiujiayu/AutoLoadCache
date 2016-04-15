@@ -35,7 +35,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     /**
      * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。如果hashExpire 小于0则使用@Cache中设置的expire值。
      */
-    private int hashExpire=0;
+    private int hashExpire=-1;
 
     /**
      * 是否通过脚本来设置 Hash的缓存时长

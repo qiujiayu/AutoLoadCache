@@ -246,7 +246,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
                     exResult=result;
                 } else {
-                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, Object.class);
+                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
                 }
                 CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCache.expire());
                 this.setCache(exCacheKey, exCacheWrapper);

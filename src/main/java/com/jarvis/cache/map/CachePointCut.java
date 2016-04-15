@@ -32,6 +32,7 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
             thread.start();
         }
     }
+
     @Override
     public void destroy() {
         super.destroy();
@@ -168,5 +169,4 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
         }
 
     }
-
 }
