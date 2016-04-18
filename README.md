@@ -535,6 +535,7 @@ web.xml配置：
     * 调整 写缓存（writeCache）代码结构。
     * 将ShardedCachePointCut中hashExpire默认值设置为-1；
     * 解析SpEL表达式时，增加判断是否有返回值，避免在不能使用#retVal的地方，使用了#retVal
+    * 将com.jarvis.cache.map.CachePointCut.shutDown() 改成  destroy()
 
 * ####3.6  对@ExCache相关代码进行调整，自动加载时也对@ExCache进行处理。对一些变量增加volatile 修饰符，以便于其它线程的读取到最新的值。
 
