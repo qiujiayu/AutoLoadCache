@@ -50,57 +50,63 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
 Redis 配置:
 
-    <!-- Jedis 连接池配置 -->
-    <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
-      <property name="maxTotal" value="2000" />
-      <property name="maxIdle" value="100" />
-      <property name="minIdle" value="50" />
-      <property name="maxWaitMillis" value="2000" />
-      <property name="testOnBorrow" value="false" />
-      <property name="testOnReturn" value="false" />
-      <property name="testWhileIdle" value="false" />
-    </bean>
-    <bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool">
-      <constructor-arg ref="jedisPoolConfig" />
-      <constructor-arg>
-        <list>
-          <bean class="redis.clients.jedis.JedisShardInfo">
-          <constructor-arg value="${redis1.host}" />
-          <constructor-arg type="int" value="${redis1.port}" />
-          <constructor-arg value="instance:01" />
-        </bean>
-        <bean class="redis.clients.jedis.JedisShardInfo">
-          <constructor-arg value="${redis2.host}" />
-          <constructor-arg type="int" value="${redis2.port}" />
-          <constructor-arg value="instance:02" />
-        </bean>
-        <bean class="redis.clients.jedis.JedisShardInfo">
-          <constructor-arg value="${redis3.host}" />
-          <constructor-arg type="int" value="${redis3.port}" />
-          <constructor-arg value="instance:03" />
-        </bean>
-        </list>
-      </constructor-arg>
-    </bean>
-    
-    <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
-      <property name="threadCnt" value="10" />
-      <property name="maxElement" value="20000" />
-      <property name="printSlowLog" value="true" />
-      <property name="slowLoadTime" value="500" />
-      <property name="sortType" value="1" />
-      <property name="checkFromCacheBeforeLoad" value="true" />
-      <property name="autoLoadPeriod" value="50" />
-    </bean>
-    <!-- 可以通过implements com.jarvis.cache.serializer.ISerializer<Object> 实现 Kryo 和 FST Serializer 工具，框架的核对不在这里，所以不提供过多的实现 -->
-    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
-
-    <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
-      <constructor-arg ref="autoLoadConfig" />
-      <property name="serializer" ref="hessianSerializer" />
-      <property name="shardedJedisPool" ref="shardedJedisPool" />
-      <property name="namespace" value="test_hessian" />
-    </bean>
+   var ioc = {
+	jedisPoolConfig : {
+		type : "redis.clients.jedis.JedisPoolConfig",
+		fields : {
+			testWhileIdle : true,
+			maxTotal : 100
+		}
+	},
+	jedisPool : {
+		type : "redis.clients.jedis.JedisPool",
+		args : [
+		        {refer : "jedisPoolConfig"},
+		        {java : "$conf.get('redis.host', 'localhost')"}, 
+		        {java : "$conf.getInt('redis.port', 6379)"}, 
+		        {java : "$conf.getInt('redis.timeout', 2000)"}, 
+		        {java : "$conf.get('redis.password')"}, 
+		        {java : "$conf.getInt('redis.database', 0)"}
+		        ],
+		fields : {},
+		events : {
+			depose : "destroy" 
+		}
+	},
+	autoLoadConfig : {
+		type : "com.jarvis.cache.to.AutoLoadConfig",
+		fields : {
+			threadCnt : 10,
+			maxElement : 20000,
+			printSlowLog : true,
+			slowLoadTime : 500,
+			sortType : 1,
+			checkFromCacheBeforeLoad : true,
+			autoLoadPeriod : 50
+		}
+	},
+	hessianSerializer : {
+		type : "com.jarvis.cache.serializer.HessianSerializer"
+	},
+	cachePointCut : {
+		type : "com.jarvis.cache.redis.ShardedCachePointCut",
+		args : [ {
+			refer : "autoLoadConfig"
+		} ],
+		fields : {
+			serializer : {
+				refer : "hessianSerializer"
+			},
+			shardedJedisPool : {
+				refer : "jedisPool"
+			},
+			namespace : 'test_hessian'
+		},
+		events : {
+			depose : "destroy"
+		}
+	}
+};
 
 Memcache 配置：
 
@@ -137,16 +143,7 @@ Memcache 配置：
 
 ###AOP 配置：
 
-    <aop:config proxy-target-class="true">
-      <aop:aspect ref="cachePointCut">
-        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
-        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
-      </aop:aspect>
-      <aop:aspect ref="cachePointCut" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
-        <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
-        <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
-      </aop:aspect>
-    </aop:config>
+    扫描com.jarvis.cache.aop包
 
 
 通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
