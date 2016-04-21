@@ -50,6 +50,7 @@ AutoLoadHandler（自动加载处理器）主要做的事情：当缓存即将�
 
 Redis 配置:
 
+```
    var ioc = {
 	jedisPoolConfig : {
 		type : "redis.clients.jedis.JedisPoolConfig",
@@ -107,6 +108,8 @@ Redis 配置:
 		}
 	}
 };
+
+```
 
 Memcache 配置：
 
