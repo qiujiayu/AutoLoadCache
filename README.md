@@ -95,7 +95,7 @@ Redis 配置:
     <!-- 可以通过implements com.jarvis.cache.serializer.ISerializer<Object> 实现 Kryo 和 FST Serializer 工具，框架的核对不在这里，所以不提供过多的实现 -->
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
 
-    <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
+    <bean id="cacheManager" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
       <property name="serializer" ref="hessianSerializer" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
@@ -123,7 +123,7 @@ Memcache 配置：
     </bean>
 
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
-    <bean id="cachePointCut" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
+    <bean id="cacheManager" class="com.jarvis.cache.memcache.CachePointCut" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
       <property name="serializer" ref="hessianSerializer" />
       <property name="memcachedClient", ref="memcachedClient" />
@@ -137,12 +137,15 @@ Memcache 配置：
 
 ###AOP 配置：
 
+    <bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
+      <property name="cacheManager" ref="cacheManager" />
+    </bean>
     <aop:config proxy-target-class="true">
-      <aop:aspect ref="cachePointCut">
+      <aop:aspect ref="cacheInterceptor">
         <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
         <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
       </aop:aspect>
-      <aop:aspect ref="cachePointCut" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
+      <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
         <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
         <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
       </aop:aspect>
@@ -151,7 +154,20 @@ Memcache 配置：
 
 通过Spring配置，能更好地支持，不同的数据使用不同的缓存服务器的情况。
 
-***注意*** 如果需要在MyBatis Mapper中使用，则需要使用com.jarvis.cache.mybatis.CachePointCutProxy 来处理。
+***注意*** 如果需要在MyBatis Mapper中使用，则需按如下配置：
+
+    <!-- proxy-target-class=false为jdk代理，为true的话，会导致拦截不了mybatis的mapper -->
+    <aop:config proxy-target-class="false">
+      <!-- 拦截mybatis的mapper -->
+      <aop:aspect ref="cacheInterceptor">
+        <aop:pointcut id="daoCachePointcut1" expression="execution(public !void com.jarvis.cache_example.common.mapper..*.*(..))" />
+        <aop:around pointcut-ref="daoCachePointcut1" method="checkAndProceed" />
+      </aop:aspect>
+      <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
+        <aop:pointcut id="deleteCachePointcut1" expression="execution(* com.jarvis.cache_example.common.mapper..*.*(..))" />
+        <aop:after-returning pointcut-ref="deleteCachePointcut1" method="checkAndDeleteCache" returning="retVal" />
+      </aop:aspect>
+    </aop:config>
 
 ###3. 将需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解（Redis为例子）
 
@@ -530,7 +546,13 @@ web.xml配置：
 
 ## 更新日志
 
-* ####4.0 对AOP实现可扩展 
+* ####4.0 实现AOP的可扩展
+
+    受网友Rekoe 将AutoLoadCache 和 nutz整合的启发([https://github.com/Rekoe/AutoLoadCache](https://github.com/Rekoe/AutoLoadCache))，将AutoLoadCache 中的AOP相关功能进行抽取，以达到可扩展
+
+    * 把AOP拦截方法从AbstractCacheManager中抽取出来，并使用CacheAopProxyChain 和 DeleteCacheAopProxyChain 两个代理类进行封装拦截到的请求。
+    * 实现了使用Aspectj进行AOP拦截：com.jarvis.cache.aop.aspectj.AspectjAopInterceptor
+    * 升级时一定要注意配置文件的变化，可以参考[cache-example](https://github.com/qiujiayu/cache-example) 中的配置
 
 * ####3.7 细节优化：
 

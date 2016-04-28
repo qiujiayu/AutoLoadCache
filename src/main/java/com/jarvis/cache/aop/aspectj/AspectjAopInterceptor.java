@@ -13,13 +13,14 @@ import com.jarvis.cache.annotation.CacheDelete;
 
 /**
  * 使用Aspectj 实现AOP挂载
+ * 注意：拦截器不能有相同名字的Method
  * @author jiayu.qiu
  */
 public class AspectjAopInterceptor {
 
     private AbstractCacheManager cacheManager;
 
-    public Object proceed1(ProceedingJoinPoint pjp) throws Throwable {
+    public Object checkAndProceed(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature=pjp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
@@ -35,7 +36,7 @@ public class AspectjAopInterceptor {
         }
     }
 
-    public void deleteCache1(JoinPoint jp, Object retVal) {
+    public void checkAndDeleteCache(JoinPoint jp, Object retVal) {
         Signature signature=jp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
