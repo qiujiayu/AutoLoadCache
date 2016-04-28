@@ -3,13 +3,14 @@ package com.jarvis.cache;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
+import com.jarvis.cache.aop.AopInterceptor;
+import com.jarvis.cache.aop.CacheAopProxyChain;
+import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -23,7 +24,7 @@ import com.jarvis.cache.type.CacheOpType;
  * 缓存管理抽象类
  * @author jiayu.qiu
  */
-public abstract class AbstractCacheManager implements ICacheManager {
+public abstract class AbstractCacheManager implements ICacheManager, AopInterceptor<CacheAopProxyChain, DeleteCacheAopProxyChain> {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
@@ -103,9 +104,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cache
      * @return String 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
@@ -119,9 +120,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param result 执行结果值
      * @return 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache, Object result) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
@@ -135,9 +136,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param result 执行结果值
      * @return 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         if(null != autoLoadTO) {
             arguments=autoLoadTO.getArgs();
@@ -157,9 +158,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param retVal 执行结果值
      * @return 缓存Key
      */
-    private CacheKeyTO getCacheKey(JoinPoint jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
-        String className=jp.getTarget().getClass().getName();
-        String methodName=jp.getSignature().getName();
+    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+        String className=jp.getTargetClass().getName();
+        String methodName=jp.getMethod().getName();
         Object[] arguments=jp.getArgs();
         String _key=cacheDeleteKey.value();
         String _hfield=cacheDeleteKey.hfield();
@@ -174,7 +175,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return T 返回值
      * @throws Exception 异常
      */
-    public Object proceed(ProceedingJoinPoint pjp, Cache cache) throws Throwable {
+    public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         // Signature signature=pjp.getSignature();
         // MethodSignature methodSignature=(MethodSignature)signature;
@@ -218,14 +219,14 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 写缓存
-     * @param pjp ProceedingJoinPoint
+     * @param pjp CacheAopProxyChain
      * @param autoLoadTO AutoLoadTO
      * @param cache Cache annotation
      * @param cacheKey Cache Key
      * @param result cache data
      * @return CacheWrapper
      */
-    private CacheWrapper writeCache(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey, Object result) {
+    private CacheWrapper writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey, Object result) {
         if(null == cacheKey) {
             return null;
         }
@@ -259,7 +260,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     }
 
     /**
-     * 通过ProceedingJoinPoint加载数据
+     * 通过CacheAopProxyChain加载数据
      * @param pjp
      * @param autoLoadTO
      * @param cacheKey
@@ -268,7 +269,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception
      */
     @Override
-    public Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
+    public Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
         String fullKey=cacheKey.getFullKey();
         ProcessingTO isProcessing=processing.get(fullKey);
         ProcessingTO processingTO=null;
@@ -345,7 +346,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         return result;
     }
 
-    private Object getData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO) throws Throwable {
+    private Object getData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO) throws Throwable {
         try {
             long startTime=System.currentTimeMillis();
             Object[] arguments;
@@ -354,12 +355,12 @@ public abstract class AbstractCacheManager implements ICacheManager {
             } else {
                 arguments=autoLoadTO.getArgs();
             }
-            Object result=pjp.proceed(arguments);
+            Object result=pjp.doProxyChain(arguments);
             long useTime=System.currentTimeMillis() - startTime;
             AutoLoadConfig config=autoLoadHandler.getConfig();
             if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
-                String className=pjp.getTarget().getClass().getName();
-                logger.error(className + "." + pjp.getSignature().getName() + ", use time:" + useTime + "ms");
+                String className=pjp.getTargetClass().getName();
+                logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
             }
             if(null != autoLoadTO) {
                 autoLoadTO.setLastLoadTime(startTime);
@@ -377,7 +378,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheDelete 拦截到的注解
      * @param retVal 返回值
      */
-    public void deleteCache(JoinPoint jp, CacheDelete cacheDelete, Object retVal) {
+    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) {
         Object[] arguments=jp.getArgs();
         CacheDeleteKey[] keys=cacheDelete.value();
         if(null == keys || keys.length == 0) {

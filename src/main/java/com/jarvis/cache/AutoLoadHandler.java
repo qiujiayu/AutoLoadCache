@@ -5,9 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
-import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
@@ -114,7 +114,7 @@ public class AutoLoadHandler {
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
-    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Cache cache, ISerializer<Object> serializer) {
+    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, ISerializer<Object> serializer) {
         if(null == autoLoadMap) {
             return null;
         }
@@ -247,7 +247,7 @@ public class AutoLoadHandler {
                     }
                 }
                 try {
-                    ProceedingJoinPoint pjp=autoLoadTO.getJoinPoint();
+                    CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
                     cacheManager.loadData(pjp, autoLoadTO, autoLoadTO.getCacheKey(), autoLoadTO.getCache());
                 } catch(Throwable e) {
                     logger.error(e.getMessage(), e);

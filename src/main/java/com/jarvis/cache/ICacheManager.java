@@ -1,8 +1,7 @@
 package com.jarvis.cache;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -53,5 +52,5 @@ public interface ICacheManager {
      * @return
      * @throws Throwable
      */
-    Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;
+    Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;
 }

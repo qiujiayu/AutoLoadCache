@@ -2,9 +2,8 @@ package com.jarvis.cache.to;
 
 import java.io.Serializable;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 
 /**
  * 用于处理自动加载数据到缓存
@@ -14,7 +13,7 @@ public class AutoLoadTO implements Serializable {
 
     private static final long serialVersionUID=1L;
 
-    private ProceedingJoinPoint joinPoint;
+    private CacheAopProxyChain joinPoint;
 
     private Object args[];
 
@@ -60,14 +59,14 @@ public class AutoLoadTO implements Serializable {
      */
     private long useTotalTime=0L;
 
-    public AutoLoadTO(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Object args[], Cache cache) {
+    public AutoLoadTO(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Object args[], Cache cache) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
         this.args=args;
         this.cache=cache;
     }
 
-    public ProceedingJoinPoint getJoinPoint() {
+    public CacheAopProxyChain getJoinPoint() {
         return joinPoint;
     }
 

@@ -11,12 +11,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.lib.util.BeanUtil;
@@ -253,9 +253,9 @@ public class AdminServlet extends HttpServlet {
         html.append("  </tr>");
 
         for(AutoLoadTO tmpTO: queue) {
-            ProceedingJoinPoint pjp=tmpTO.getJoinPoint();
-            String className=pjp.getTarget().getClass().getName();
-            String methodName=pjp.getSignature().getName();
+            CacheAopProxyChain pjp=tmpTO.getJoinPoint();
+            String className=pjp.getTargetClass().getName();
+            String methodName=pjp.getMethod().getName();
             CacheKeyTO cacheKeyTO=tmpTO.getCacheKey();
             String _key=cacheKeyTO.getKey();
             String _hfield=cacheKeyTO.getHfield();
