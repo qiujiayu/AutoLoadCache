@@ -8,7 +8,6 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
-import com.jarvis.cache.aop.AopInterceptor;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.serializer.HessianSerializer;
@@ -24,7 +23,7 @@ import com.jarvis.cache.type.CacheOpType;
  * 缓存管理抽象类
  * @author jiayu.qiu
  */
-public abstract class AbstractCacheManager implements ICacheManager, AopInterceptor<CacheAopProxyChain, DeleteCacheAopProxyChain> {
+public abstract class AbstractCacheManager implements ICacheManager {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 

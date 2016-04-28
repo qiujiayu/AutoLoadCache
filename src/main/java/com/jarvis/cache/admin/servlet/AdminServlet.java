@@ -29,16 +29,12 @@ public class AdminServlet extends HttpServlet {
 
     private static final long serialVersionUID=252742830396906514L;
 
-    private String cacheManagerNames[]=null;
-
     private String user="admin";
 
     private String password="admin";
 
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
-        String tmpNames=servletConfig.getInitParameter("cacheManagerNames");
-        cacheManagerNames=tmpNames.split(",");
         String _user=servletConfig.getInitParameter("user");
         if(null != _user && _user.length() > 0) {
             user=_user;
@@ -53,21 +49,23 @@ public class AdminServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html");
-        String cacheManagerName=req.getParameter("cacheManagerName");
-        if(null == cacheManagerNames || cacheManagerNames.length == 0) {
-            String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
-            resp.getWriter().println(errMsg);
-            return;
-        }
-        if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
-            cacheManagerName=cacheManagerNames[0];
-        }
-        printHtmlHead(resp, cacheManagerName);
         try {
-
+            String cacheManagerName=req.getParameter("cacheManagerName");
             ApplicationContext ctx=
                 WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
+
+            String cacheManagerNames[]=ctx.getBeanNamesForType(AbstractCacheManager.class);
+            if(null == cacheManagerNames || cacheManagerNames.length == 0) {
+                String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
+                resp.getWriter().println(errMsg);
+                return;
+            }
+            if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
+                cacheManagerName=cacheManagerNames[0];
+            }
             AbstractCacheManager cacheManager=(AbstractCacheManager)ctx.getBean(cacheManagerName);
+            printHtmlHead(resp, cacheManagerName);
+
             if(null == cacheManager) {
                 String errMsg=cacheManagerName + " is not exists!";
                 throw new Exception(errMsg);
@@ -98,7 +96,7 @@ public class AdminServlet extends HttpServlet {
                 if(null != act) {
                     doServices(req, resp, cacheManager);
                 } else {
-                    printForm(resp, cacheManagerName);
+                    printForm(resp, cacheManagerName, cacheManagerNames);
                     printList(req, resp, cacheManager, cacheManagerName);
                 }
             }
@@ -202,7 +200,7 @@ public class AdminServlet extends HttpServlet {
         resp.getWriter().println(html.toString());
     }
 
-    private void printForm(HttpServletResponse resp, String cacheManagerName) throws IOException {
+    private void printForm(HttpServletResponse resp, String cacheManagerName, String cacheManagerNames[]) throws IOException {
         StringBuilder html=new StringBuilder();
         html.append("<form  action=\"\" method=\"get\">");
         html.append("cache manager bean name:");

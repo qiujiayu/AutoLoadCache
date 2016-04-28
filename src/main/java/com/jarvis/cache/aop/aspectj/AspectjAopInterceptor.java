@@ -10,17 +10,16 @@ import org.aspectj.lang.reflect.MethodSignature;
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
-import com.jarvis.cache.aop.AopInterceptor;
 
 /**
  * 使用Aspectj 实现AOP挂载
  * @author jiayu.qiu
  */
-public class AspectjAopInterceptor implements AopInterceptor<ProceedingJoinPoint, JoinPoint> {
+public class AspectjAopInterceptor {
 
     private AbstractCacheManager cacheManager;
 
-    public Object proceed(ProceedingJoinPoint pjp) throws Throwable {
+    public Object proceed1(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature=pjp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
@@ -36,7 +35,7 @@ public class AspectjAopInterceptor implements AopInterceptor<ProceedingJoinPoint
         }
     }
 
-    public void deleteCache(JoinPoint jp, Object retVal) {
+    public void deleteCache1(JoinPoint jp, Object retVal) {
         Signature signature=jp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
@@ -46,12 +45,10 @@ public class AspectjAopInterceptor implements AopInterceptor<ProceedingJoinPoint
         }
     }
 
-    @Override
     public Object proceed(ProceedingJoinPoint aopProxyChain, Cache cache) throws Throwable {
         return cacheManager.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
     }
 
-    @Override
     public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) {
         cacheManager.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
     }
