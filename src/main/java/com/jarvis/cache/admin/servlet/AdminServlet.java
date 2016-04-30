@@ -11,9 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
-
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -33,6 +30,10 @@ public class AdminServlet extends HttpServlet {
 
     private String password="admin";
 
+    private String _cacheManagerConfig;
+
+    private CacheManagerConfig cacheManagerConfig;
+
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
         String _user=servletConfig.getInitParameter("user");
@@ -43,6 +44,14 @@ public class AdminServlet extends HttpServlet {
         if(null != _password && _password.length() > 0) {
             password=_password;
         }
+        _cacheManagerConfig=servletConfig.getInitParameter("cacheManagerConfig");
+        if(null != _cacheManagerConfig && _cacheManagerConfig.length() > 0) {
+            try {
+                cacheManagerConfig=(CacheManagerConfig)Class.forName(_cacheManagerConfig).newInstance();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -50,11 +59,14 @@ public class AdminServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html");
         try {
+            if(null == cacheManagerConfig) {
+                String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
+                resp.getWriter().println(errMsg);
+                return;
+            }
             String cacheManagerName=req.getParameter("cacheManagerName");
-            ApplicationContext ctx=
-                WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
 
-            String cacheManagerNames[]=ctx.getBeanNamesForType(AbstractCacheManager.class);
+            String cacheManagerNames[]=cacheManagerConfig.getCacheManagerNames(req);
             if(null == cacheManagerNames || cacheManagerNames.length == 0) {
                 String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
                 resp.getWriter().println(errMsg);
@@ -63,7 +75,7 @@ public class AdminServlet extends HttpServlet {
             if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
                 cacheManagerName=cacheManagerNames[0];
             }
-            AbstractCacheManager cacheManager=(AbstractCacheManager)ctx.getBean(cacheManagerName);
+            AbstractCacheManager cacheManager=cacheManagerConfig.getCacheManagerByName(req, cacheManagerName);
             printHtmlHead(resp, cacheManagerName);
 
             if(null == cacheManager) {
