@@ -60,7 +60,7 @@ public class AdminServlet extends HttpServlet {
         resp.setContentType("text/html");
         try {
             if(null == cacheManagerConfig) {
-                String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
+                String errMsg="the \"cacheManagerConfig\" is null!";
                 resp.getWriter().println(errMsg);
                 return;
             }
@@ -68,7 +68,7 @@ public class AdminServlet extends HttpServlet {
 
             String cacheManagerNames[]=cacheManagerConfig.getCacheManagerNames(req);
             if(null == cacheManagerNames || cacheManagerNames.length == 0) {
-                String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
+                String errMsg="get \"cacheManagerNames\" is empty!";
                 resp.getWriter().println(errMsg);
                 return;
             }
@@ -76,12 +76,13 @@ public class AdminServlet extends HttpServlet {
                 cacheManagerName=cacheManagerNames[0];
             }
             AbstractCacheManager cacheManager=cacheManagerConfig.getCacheManagerByName(req, cacheManagerName);
+            if(null == cacheManager) {
+                String errMsg="get cacheManager by '" + cacheManagerName + "' is null!";
+                resp.getWriter().println(errMsg);
+                return;
+            }
             printHtmlHead(resp, cacheManagerName);
 
-            if(null == cacheManager) {
-                String errMsg=cacheManagerName + " is not exists!";
-                throw new Exception(errMsg);
-            }
             HttpSession session=req.getSession();
             String logined=(String)session.getAttribute("LOGINED");
             String act=req.getParameter("act");
