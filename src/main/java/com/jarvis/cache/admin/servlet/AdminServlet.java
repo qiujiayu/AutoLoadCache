@@ -51,6 +51,9 @@ public class AdminServlet extends HttpServlet {
             } catch(Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            cacheManagerConfig=new SpringCacheManagerConfig();
+            _cacheManagerConfig=SpringCacheManagerConfig.class.getName();
         }
     }
 
