@@ -277,7 +277,7 @@ public class CacheUtil {
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
             autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
         }
-        return autoload && cache.expire() > 120;
+        return autoload && cache.expire() >= AutoLoadHandler.AUTO_LOAD_MIN_EXPIRE;
     }
 
     /**

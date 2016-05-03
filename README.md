@@ -546,6 +546,12 @@ web.xml配置：
 
 ## 更新日志
 
+* ####4.2 改用JDK1.6进行编译
+
+* ####4.1 提升缓存管理页的扩展性
+
+  将获取AOP配置信息功能从 AdminServlet 中抽取出来，并使用CacheManagerConfig接口来获取。
+
 * ####4.0 实现AOP的可扩展
 
     受网友Rekoe 将AutoLoadCache 和 nutz整合的启发([https://github.com/Rekoe/AutoLoadCache](https://github.com/Rekoe/AutoLoadCache))，将AutoLoadCache 中的AOP相关功能进行抽取，以达到可扩展

@@ -22,6 +22,8 @@ import com.jarvis.lib.util.BeanUtil;
 public class AutoLoadHandler {
 
     private static final Logger logger=Logger.getLogger(AutoLoadHandler.class);
+    
+    public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 
     /**
      * 自动加载队列
@@ -119,7 +121,7 @@ public class AutoLoadHandler {
             return null;
         }
 
-        if(cache.expire() >= 120 && autoLoadMap.size() <= this.config.getMaxElement()) {
+        if(cache.expire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
                 arguments=(Object[])BeanUtil.deepClone(arguments, serializer); // 进行深度复制
