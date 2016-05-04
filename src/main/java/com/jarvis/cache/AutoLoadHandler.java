@@ -22,7 +22,7 @@ import com.jarvis.lib.util.BeanUtil;
 public class AutoLoadHandler {
 
     private static final Logger logger=Logger.getLogger(AutoLoadHandler.class);
-    
+
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 
     /**
@@ -161,6 +161,7 @@ public class AutoLoadHandler {
         @Override
         public void run() {
             while(running) {
+                int sleep=100;
                 if(autoLoadMap.isEmpty() || autoLoadQueue.size() > 0) {// 如果没有数据 或 还有线程在处理，则继续等待
                     try {
                         Thread.sleep(1000);
@@ -168,6 +169,15 @@ public class AutoLoadHandler {
                         logger.error(e.getMessage(), e);
                     }
                     continue;
+                } else if(autoLoadMap.size() <= threads.length * 10) {
+                    sleep=1000;
+                } else if(autoLoadMap.size() <= threads.length * 50) {
+                    sleep=300;
+                }
+                try {
+                    Thread.sleep(sleep);
+                } catch(InterruptedException e) {
+                    logger.error(e.getMessage(), e);
                 }
 
                 AutoLoadTO tmpArr[]=getAutoLoadQueue();

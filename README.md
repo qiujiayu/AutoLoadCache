@@ -546,8 +546,10 @@ web.xml配置：
 
 ## 更新日志
 
-* ####4.2 改用JDK1.6进行编译
+* ####4.2 改用JDK1.6进行编译；将isAutoload中的cache.expire() > 120 改为 cache.expire() >= 120；
 
+  AutoLoadHandler中排序线程增加sleep，以节约系统资源
+  
 * ####4.1 提升缓存管理页的扩展性
 
   将获取AOP配置信息功能从 AdminServlet 中抽取出来，并使用CacheManagerConfig接口来获取。
