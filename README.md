@@ -173,6 +173,9 @@ Memcache 配置：
 
 [实例代码](https://github.com/qiujiayu/cache-example)
 
+以上是基于 Spring AOP的配置，如果是使用nutz，请使用 [AutoLoadCache-nutz](https://github.com/qiujiayu/AutoLoadCache-nutz) 
+
+
 ###AutoLoadConfig 配置说明
 
 * threadCnt 处理自动加载队列的线程数量，默认值为：10;
