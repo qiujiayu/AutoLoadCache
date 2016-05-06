@@ -1,96 +1,47 @@
 package com.jarvis.cache.map;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.log4j.Logger;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-public class CachePointCut extends AbstractCacheManager implements Runnable {
-
-    private static final Logger logger=Logger.getLogger(CachePointCut.class);
+public class CachePointCut extends AbstractCacheManager {
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
-    private int period=2 * 60 * 1000; // 2Minutes
-
-    private volatile boolean running=false;
+    /**
+     * 缓存是否被修改过
+     */
+    private volatile boolean cacheChaned=false;
 
     private Thread thread=null;
 
-    public void start() {
+    private CacheTask cacheTask=null;
+
+    /**
+     * 缓存持久化文件
+     */
+    private String persistFile;
+
+    public CachePointCut(AutoLoadConfig config) {
+        super(config);
+    }
+
+    public synchronized void start() {
         if(null == thread) {
-            thread=new Thread(this);
-        }
-        if(!this.running) {
-            this.running=true;
+            cacheTask=new CacheTask(this);
+            thread=new Thread(cacheTask);
+            cacheTask.start();
             thread.start();
         }
     }
 
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         super.destroy();
-        this.running=false;
-    }
-
-    public void run() {
-        while(running) {
-            try {
-                cleanCache();
-            } catch(Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-            try {
-                Thread.sleep(period);
-            } catch(InterruptedException e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
-    }
-
-    /**
-     * 清除过期缓存
-     */
-    @SuppressWarnings("unchecked")
-    private void cleanCache() {
-        Iterator<Entry<String, Object>> iterator=cache.entrySet().iterator();
-        while(iterator.hasNext()) {
-            Object value=iterator.next().getValue();
-            if(value instanceof CacheWrapper) {
-                CacheWrapper tmp=(CacheWrapper)value;
-                if(tmp.isExpired()) {
-                    iterator.remove();
-                }
-            } else {
-                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
-                Iterator<Entry<String, CacheWrapper>> iterator2=hash.entrySet().iterator();
-                while(iterator2.hasNext()) {
-                    CacheWrapper tmp=iterator2.next().getValue();
-                    if(tmp.isExpired()) {
-                        iterator2.remove();
-                    }
-                }
-                if(hash.isEmpty()) {
-                    iterator.remove();
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        this.running=false;
-    }
-
-    public CachePointCut(AutoLoadConfig config) {
-        super(config);
+        cacheTask.destroy();
     }
 
     @SuppressWarnings("unchecked")
@@ -110,15 +61,15 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null == hash) {
                 hash=new ConcurrentHashMap<String, CacheWrapper>();
-                ConcurrentHashMap<String, CacheWrapper> _hash=
-                    (ConcurrentHashMap<String, CacheWrapper>)cache.putIfAbsent(cacheKey, hash);
+                ConcurrentHashMap<String, CacheWrapper> _hash=null;
+                _hash=(ConcurrentHashMap<String, CacheWrapper>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
                 }
             }
             hash.put(hfield, result);
         }
-
+        this.cacheChaned=true;
     }
 
     @SuppressWarnings("unchecked")
@@ -154,19 +105,42 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
-        if("*".equals(cacheKey)) {
-            cache.clear();
-        }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            cache.remove(cacheKey);
+            Object tmp=cache.remove(cacheKey);
+            if(null != tmp) {// 如果删除成功
+                this.cacheChaned=true;
+            }
         } else {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
-            if(null == hash) {
-                return;
+            if(null != hash) {
+                Object tmp=hash.remove(hfield);
+                if(null != tmp) {// 如果删除成功
+                    this.cacheChaned=true;
+                }
             }
-            hash.remove(hfield);
         }
 
     }
+
+    public boolean isCacheChaned() {
+        return cacheChaned;
+    }
+
+    public void setCacheChaned(boolean cacheChaned) {
+        this.cacheChaned=cacheChaned;
+    }
+
+    public ConcurrentHashMap<String, Object> getCache() {
+        return cache;
+    }
+
+    public String getPersistFile() {
+        return persistFile;
+    }
+
+    public void setPersistFile(String persistFile) {
+        this.persistFile=persistFile;
+    }
+
 }

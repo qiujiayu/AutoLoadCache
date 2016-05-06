@@ -549,6 +549,9 @@ web.xml配置：
 
 ## 更新日志
 
+* ####4.3 对 ConcurrentHashMap 缓存增加持久化功能。重启时会从本地磁盘加载缓存数据，避免因刚启动没有缓存数据，造成压力过大。
+
+
 * ####4.2 改用JDK1.6进行编译；将isAutoload中的cache.expire() > 120 改为 cache.expire() >= 120；
 
   AutoLoadHandler中排序线程增加sleep，以节约系统资源
