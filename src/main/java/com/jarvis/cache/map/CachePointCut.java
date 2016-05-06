@@ -25,6 +25,11 @@ public class CachePointCut extends AbstractCacheManager {
      */
     private String persistFile;
 
+    /**
+     * 是否在持久化
+     */
+    private boolean needPersist=false;
+
     public CachePointCut(AutoLoadConfig config) {
         super(config);
     }
@@ -141,6 +146,14 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setPersistFile(String persistFile) {
         this.persistFile=persistFile;
+    }
+
+    public boolean isNeedPersist() {
+        return needPersist;
+    }
+
+    public void setNeedPersist(boolean needPersist) {
+        this.needPersist=needPersist;
     }
 
 }

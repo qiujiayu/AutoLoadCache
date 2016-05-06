@@ -121,6 +121,9 @@ public class CacheTask implements Runnable {
     }
 
     private void persistCache() {
+        if(!cacheManager.isNeedPersist()) {
+            return;
+        }
         if(!cacheManager.isCacheChaned()) {
             return;
         }
