@@ -173,6 +173,7 @@ public class CacheTask implements Runnable {
     private void cleanCache() {
         Iterator<Entry<String, Object>> iterator=cacheManager.getCache().entrySet().iterator();
         boolean cacheChaned=false;
+        int i=0;
         while(iterator.hasNext()) {
             Object value=iterator.next().getValue();
             if(value instanceof CacheWrapper) {
@@ -199,6 +200,15 @@ public class CacheTask implements Runnable {
         }
         if(cacheChaned) {
             cacheManager.setCacheChaned(true);
+        }
+        i++;
+        if(i == 2000) {
+            i=0;
+            try {
+                Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+            } catch(InterruptedException e) {
+                logger.error(e.getMessage(), e);
+            }
         }
     }
 

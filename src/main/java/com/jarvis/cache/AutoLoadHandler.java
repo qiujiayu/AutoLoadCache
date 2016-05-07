@@ -184,10 +184,18 @@ public class AutoLoadHandler {
                 if(null == tmpArr) {
                     continue;
                 }
+                int i=0;
                 for(AutoLoadTO to: tmpArr) {
                     try {
                         autoLoadQueue.put(to);
+                        i++;
+                        if(i == 2000) {
+                            i=0;
+                            Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+                        }
                     } catch(InterruptedException e) {
+                        logger.error(e.getMessage(), e);
+                    } catch(Exception e) {
                         logger.error(e.getMessage(), e);
                     }
                 }
