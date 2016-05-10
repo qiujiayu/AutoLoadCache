@@ -174,7 +174,7 @@ public class CacheTask implements Runnable {
     @SuppressWarnings("unchecked")
     private void cleanCache() {
         Iterator<Entry<String, Object>> iterator=cacheManager.getCache().entrySet().iterator();
-        AtomicInteger cacheChanged=cacheManager.getCacheChanged();
+        int _cacheChanged=0;
         int i=0;
         while(iterator.hasNext()) {
             Object value=iterator.next().getValue();
@@ -182,7 +182,7 @@ public class CacheTask implements Runnable {
                 CacheWrapper tmp=(CacheWrapper)value;
                 if(tmp.isExpired()) {
                     iterator.remove();
-                    cacheChanged.incrementAndGet();
+                    _cacheChanged++;
                 }
             } else {
                 ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
@@ -191,23 +191,26 @@ public class CacheTask implements Runnable {
                     CacheWrapper tmp=iterator2.next().getValue();
                     if(tmp.isExpired()) {
                         iterator2.remove();
-                        cacheChanged.incrementAndGet();
+                        _cacheChanged++;
                     }
                 }
                 if(hash.isEmpty()) {
                     iterator.remove();
-                    cacheChanged.incrementAndGet();
+                }
+            }
+            i++;
+            if(i == 2000) {
+                i=0;
+                try {
+                    Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+                } catch(InterruptedException e) {
+                    logger.error(e.getMessage(), e);
                 }
             }
         }
-        i++;
-        if(i == 2000) {
-            i=0;
-            try {
-                Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
-            } catch(InterruptedException e) {
-                logger.error(e.getMessage(), e);
-            }
+        if(_cacheChanged > 0) {
+            AtomicInteger cacheChanged=cacheManager.getCacheChanged();
+            cacheChanged.addAndGet(_cacheChanged);
         }
     }
 
