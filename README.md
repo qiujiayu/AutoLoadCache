@@ -549,16 +549,25 @@ web.xml配置：
 
 ## 更新日志
 
+* ####4.4 修改说明：
+
+    当遍历次数达到2000时，执行Thread.sleep(0); 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+
+    com.jarvis.cache.map.CachePointCut 做如下修改
+    * 将 boolean cacheChaned 改为 缓存被修改的计数器（AtomicInteger cacheChanged）
+    * 增加属性：int unpersistMaxSize，允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
+    * 增加属性: boolean copyValue;是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+
 * ####4.3 对 ConcurrentHashMap 缓存增加持久化功能。重启时会从本地磁盘加载缓存数据，避免因刚启动没有缓存数据，造成压力过大。
 
 
 * ####4.2 改用JDK1.6进行编译；将isAutoload中的cache.expire() > 120 改为 cache.expire() >= 120；
 
-  AutoLoadHandler中排序线程增加sleep，以节约系统资源
+    AutoLoadHandler中排序线程增加sleep，以节约系统资源
   
 * ####4.1 提升缓存管理页的扩展性
 
-  将获取AOP配置信息功能从 AdminServlet 中抽取出来，并使用CacheManagerConfig接口来获取。
+    将获取AOP配置信息功能从 AdminServlet 中抽取出来，并使用CacheManagerConfig接口来获取。
 
 * ####4.0 实现AOP的可扩展
 

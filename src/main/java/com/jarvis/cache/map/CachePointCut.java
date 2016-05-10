@@ -1,20 +1,27 @@
 package com.jarvis.cache.map;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.lib.util.BeanUtil;
 
 public class CachePointCut extends AbstractCacheManager {
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
     /**
-     * 缓存是否被修改过
+     * 缓存被修改的个数
      */
-    private volatile boolean cacheChaned=false;
+    private AtomicInteger cacheChanged=new AtomicInteger(0);
+
+    /**
+     * 允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
+     */
+    private int unpersistMaxSize=0;
 
     private Thread thread=null;
 
@@ -26,9 +33,14 @@ public class CachePointCut extends AbstractCacheManager {
     private String persistFile;
 
     /**
-     * 是否在持久化
+     * 是否在持久化:为true时，允许持久化，false，不允许持久化
      */
-    private boolean needPersist=false;
+    private boolean needPersist=true;
+
+    /**
+     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     */
+    private boolean copyValue=false;
 
     public CachePointCut(AutoLoadConfig config) {
         super(config);
@@ -59,9 +71,19 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
+        CacheWrapper value=null;
+        if(copyValue) {
+            try {
+                value=(CacheWrapper)BeanUtil.deepClone(value, this.getSerializer());
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            value=result;
+        }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            cache.put(cacheKey, result);
+            cache.put(cacheKey, value);
         } else {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null == hash) {
@@ -72,9 +94,9 @@ public class CachePointCut extends AbstractCacheManager {
                     hash=_hash;
                 }
             }
-            hash.put(hfield, result);
+            hash.put(hfield, value);
         }
-        this.cacheChaned=true;
+        this.cacheChanged.incrementAndGet();
     }
 
     @SuppressWarnings("unchecked")
@@ -92,12 +114,21 @@ public class CachePointCut extends AbstractCacheManager {
             return null;
         }
         String hfield=cacheKeyTO.getHfield();
+        CacheWrapper value=null;
         if(null == hfield || hfield.length() == 0) {
-            return (CacheWrapper)obj;
+            value=(CacheWrapper)obj;
         } else {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)obj;
-            return hash.get(hfield);
+            value=hash.get(hfield);
         }
+        if(copyValue) {
+            try {
+                return (CacheWrapper)BeanUtil.deepClone(value, this.getSerializer());
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return value;
     }
 
     @SuppressWarnings("unchecked")
@@ -114,26 +145,22 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == hfield || hfield.length() == 0) {
             Object tmp=cache.remove(cacheKey);
             if(null != tmp) {// 如果删除成功
-                this.cacheChaned=true;
+                this.cacheChanged.incrementAndGet();
             }
         } else {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null != hash) {
                 Object tmp=hash.remove(hfield);
                 if(null != tmp) {// 如果删除成功
-                    this.cacheChaned=true;
+                    this.cacheChanged.incrementAndGet();
                 }
             }
         }
 
     }
 
-    public boolean isCacheChaned() {
-        return cacheChaned;
-    }
-
-    public void setCacheChaned(boolean cacheChaned) {
-        this.cacheChaned=cacheChaned;
+    public AtomicInteger getCacheChanged() {
+        return this.cacheChanged;
     }
 
     public ConcurrentHashMap<String, Object> getCache() {
@@ -154,6 +181,24 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setNeedPersist(boolean needPersist) {
         this.needPersist=needPersist;
+    }
+
+    public int getUnpersistMaxSize() {
+        return unpersistMaxSize;
+    }
+
+    public void setUnpersistMaxSize(int unpersistMaxSize) {
+        if(unpersistMaxSize > 0) {
+            this.unpersistMaxSize=unpersistMaxSize;
+        }
+    }
+
+    public boolean isCopyValue() {
+        return copyValue;
+    }
+
+    public void setCopyValue(boolean copyValue) {
+        this.copyValue=copyValue;
     }
 
 }

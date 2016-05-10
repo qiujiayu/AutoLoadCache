@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
@@ -124,10 +125,11 @@ public class CacheTask implements Runnable {
         if(!cacheManager.isNeedPersist()) {
             return;
         }
-        if(!cacheManager.isCacheChaned()) {
+        int cnt=cacheManager.getCacheChanged().intValue();
+        if(cnt <= cacheManager.getUnpersistMaxSize()) {
             return;
         }
-        cacheManager.setCacheChaned(false);
+        cacheManager.getCacheChanged().set(0);;
         FileOutputStream fos=null;
         try {
             byte[] data=cacheManager.getSerializer().serialize(cacheManager.getCache());
@@ -135,7 +137,7 @@ public class CacheTask implements Runnable {
             fos=new FileOutputStream(file);
             fos.write(data);
         } catch(Exception ex) {
-            cacheManager.setCacheChaned(true);
+            cacheManager.getCacheChanged().addAndGet(cnt);
             logger.error(ex.getMessage(), ex);
         } finally {
             if(null != fos) {
@@ -172,7 +174,7 @@ public class CacheTask implements Runnable {
     @SuppressWarnings("unchecked")
     private void cleanCache() {
         Iterator<Entry<String, Object>> iterator=cacheManager.getCache().entrySet().iterator();
-        boolean cacheChaned=false;
+        AtomicInteger cacheChanged=cacheManager.getCacheChanged();
         int i=0;
         while(iterator.hasNext()) {
             Object value=iterator.next().getValue();
@@ -180,7 +182,7 @@ public class CacheTask implements Runnable {
                 CacheWrapper tmp=(CacheWrapper)value;
                 if(tmp.isExpired()) {
                     iterator.remove();
-                    cacheChaned=true;
+                    cacheChanged.incrementAndGet();
                 }
             } else {
                 ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
@@ -189,17 +191,14 @@ public class CacheTask implements Runnable {
                     CacheWrapper tmp=iterator2.next().getValue();
                     if(tmp.isExpired()) {
                         iterator2.remove();
-                        cacheChaned=true;
+                        cacheChanged.incrementAndGet();
                     }
                 }
                 if(hash.isEmpty()) {
                     iterator.remove();
-                    cacheChaned=true;
+                    cacheChanged.incrementAndGet();
                 }
             }
-        }
-        if(cacheChaned) {
-            cacheManager.setCacheChaned(true);
         }
         i++;
         if(i == 2000) {
