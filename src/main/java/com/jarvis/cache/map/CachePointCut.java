@@ -1,7 +1,6 @@
 package com.jarvis.cache.map;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -13,10 +12,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
-    /**
-     * 缓存被修改的个数
-     */
-    private AtomicInteger cacheChanged=new AtomicInteger(0);
+    private CacheChangeListener changeListener;
 
     /**
      * 允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
@@ -49,6 +45,7 @@ public class CachePointCut extends AbstractCacheManager {
     public synchronized void start() {
         if(null == thread) {
             cacheTask=new CacheTask(this);
+            changeListener=cacheTask;
             thread=new Thread(cacheTask);
             cacheTask.start();
             thread.start();
@@ -96,7 +93,7 @@ public class CachePointCut extends AbstractCacheManager {
             }
             hash.put(hfield, value);
         }
-        this.cacheChanged.incrementAndGet();
+        this.changeListener.cacheChange();
     }
 
     @SuppressWarnings("unchecked")
@@ -144,23 +141,27 @@ public class CachePointCut extends AbstractCacheManager {
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
             Object tmp=cache.remove(cacheKey);
-            if(null != tmp) {// 如果删除成功
-                this.cacheChanged.incrementAndGet();
+            if(null == tmp) {// 如果删除失败
+                return;
+            }
+            if(tmp instanceof CacheWrapper) {
+                this.changeListener.cacheChange();
+            } else if(tmp instanceof ConcurrentHashMap) {
+                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)tmp;
+                if(hash.size() > 0) {
+                    this.changeListener.cacheChange(hash.size());
+                }
             }
         } else {
             ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
             if(null != hash) {
                 Object tmp=hash.remove(hfield);
                 if(null != tmp) {// 如果删除成功
-                    this.cacheChanged.incrementAndGet();
+                    this.changeListener.cacheChange();
                 }
             }
         }
 
-    }
-
-    public AtomicInteger getCacheChanged() {
-        return this.cacheChanged;
     }
 
     public ConcurrentHashMap<String, Object> getCache() {

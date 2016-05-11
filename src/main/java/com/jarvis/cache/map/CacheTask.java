@@ -16,9 +16,14 @@ import org.apache.log4j.Logger;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.OsUtil;
 
-public class CacheTask implements Runnable {
+public class CacheTask implements Runnable, CacheChangeListener {
 
     private static final Logger logger=Logger.getLogger(CacheTask.class);
+
+    /**
+     * 缓存被修改的个数
+     */
+    private AtomicInteger cacheChanged=new AtomicInteger(0);
 
     private CachePointCut cacheManager;
 
@@ -125,11 +130,11 @@ public class CacheTask implements Runnable {
         if(!cacheManager.isNeedPersist()) {
             return;
         }
-        int cnt=cacheManager.getCacheChanged().intValue();
+        int cnt=cacheChanged.intValue();
         if(cnt <= cacheManager.getUnpersistMaxSize()) {
             return;
         }
-        cacheManager.getCacheChanged().set(0);;
+        cacheChanged.set(0);
         FileOutputStream fos=null;
         try {
             byte[] data=cacheManager.getSerializer().serialize(cacheManager.getCache());
@@ -137,7 +142,7 @@ public class CacheTask implements Runnable {
             fos=new FileOutputStream(file);
             fos.write(data);
         } catch(Exception ex) {
-            cacheManager.getCacheChanged().addAndGet(cnt);
+            cacheChanged.addAndGet(cnt);
             logger.error(ex.getMessage(), ex);
         } finally {
             if(null != fos) {
@@ -209,9 +214,18 @@ public class CacheTask implements Runnable {
             }
         }
         if(_cacheChanged > 0) {
-            AtomicInteger cacheChanged=cacheManager.getCacheChanged();
-            cacheChanged.addAndGet(_cacheChanged);
+            cacheChange(_cacheChanged);
         }
+    }
+
+    @Override
+    public void cacheChange() {
+        cacheChanged.incrementAndGet();
+    }
+
+    @Override
+    public void cacheChange(int cnt) {
+        cacheChanged.addAndGet(cnt);
     }
 
 }
