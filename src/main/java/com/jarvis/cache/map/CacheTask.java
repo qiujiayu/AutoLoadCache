@@ -27,8 +27,6 @@ public class CacheTask implements Runnable, CacheChangeListener {
 
     private CachePointCut cacheManager;
 
-    private int period=60 * 1000; // 1Minutes
-
     private volatile boolean running=false;
 
     private File saveFile;
@@ -166,7 +164,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
                 logger.error(e.getMessage(), e);
             }
             try {
-                Thread.sleep(period);
+                Thread.sleep(cacheManager.getClearAndPersistPeriod());
             } catch(InterruptedException e) {
                 logger.error(e.getMessage(), e);
             }

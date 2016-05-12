@@ -38,6 +38,11 @@ public class CachePointCut extends AbstractCacheManager {
      */
     private boolean copyValue=false;
 
+    /**
+     * 清除和持久化的时间间隔
+     */
+    private int clearAndPersistPeriod=60 * 1000; // 1Minutes
+
     public CachePointCut(AutoLoadConfig config) {
         super(config);
     }
@@ -200,6 +205,14 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setCopyValue(boolean copyValue) {
         this.copyValue=copyValue;
+    }
+
+    public int getClearAndPersistPeriod() {
+        return clearAndPersistPeriod;
+    }
+
+    public void setClearAndPersistPeriod(int clearAndPersistPeriod) {
+        this.clearAndPersistPeriod=clearAndPersistPeriod;
     }
 
 }
