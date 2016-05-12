@@ -44,7 +44,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
     }
 
     public void destroy() {
-        persistCache();
+        persistCache(true);
         this.running=false;
     }
 
@@ -124,12 +124,12 @@ public class CacheTask implements Runnable, CacheChangeListener {
 
     }
 
-    private void persistCache() {
+    private void persistCache(boolean force) {
         if(!cacheManager.isNeedPersist()) {
             return;
         }
         int cnt=cacheChanged.intValue();
-        if(cnt <= cacheManager.getUnpersistMaxSize()) {
+        if(!force && cnt <= cacheManager.getUnpersistMaxSize()) {
             return;
         }
         cacheChanged.set(0);
@@ -159,7 +159,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
         while(running) {
             try {
                 cleanCache();
-                persistCache();
+                persistCache(false);
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
             }
