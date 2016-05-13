@@ -250,11 +250,16 @@ public class AutoLoadHandler {
             if(autoLoadTO.isLoading()) {
                 return;
             }
-            long timeout;
-            if(expire >= 600) {
-                timeout=(expire - 120) * 1000;
-            } else {
-                timeout=(expire - 60) * 1000;;
+            
+            //计算超时时间
+            int alarmTime = autoLoadTO.getCache().alarmTime();
+            long timeout=(expire - alarmTime) * 1000;
+            if(timeout == (expire * 1000)){
+                if(expire >= 600) {
+                    timeout=(expire - 120) * 1000;
+                } else {
+                    timeout=(expire - 60) * 1000;;
+                }
             }
 
             if((now - autoLoadTO.getLastLoadTime()) >= timeout) {

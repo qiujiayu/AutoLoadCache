@@ -20,6 +20,18 @@ public @interface Cache {
      * @return 时间
      */
     int expire();
+    
+    /**
+     * 数据为null时缓存的过期时间，单位：秒，默认10秒
+     * @return 时间
+     */
+    int nullExpireTime() default 10;
+    
+    /**
+     * 预警自动刷新时间(单位：秒)
+     * @return
+     */
+    int alarmTime() default 60;
 
     /**
      * 自定义缓存Key，支持Spring EL表达式

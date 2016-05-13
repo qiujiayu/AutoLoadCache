@@ -229,8 +229,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == cacheKey) {
             return null;
         }
-        CacheWrapper cacheWrapper=new CacheWrapper(result, cache.expire());
+        int expire = (null == result) ? cache.nullExpireTime() : cache.expire();
+        CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
         this.setCache(cacheKey, cacheWrapper);
+        //空值不进行扩展缓存
+        if(expire == cache.nullExpireTime()){
+            return cacheWrapper;
+        }
         ExCache[] exCaches=cache.exCache();
         if(null != exCaches && exCaches.length > 0) {
             Object[] arguments=pjp.getArgs();
