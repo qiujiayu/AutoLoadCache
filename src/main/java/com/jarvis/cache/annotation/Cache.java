@@ -22,16 +22,16 @@ public @interface Cache {
     int expire();
     
     /**
-     * 数据为null时缓存的过期时间，单位：秒，默认10秒
+     * 数据为null时缓存的过期时间，单位：秒，必须大于0才有效
      * @return 时间
      */
-    int nullExpireTime() default 10;
+    int nullExpireTime() default 0;
     
     /**
-     * 预警自动刷新时间(单位：秒)
+     * 预警自动刷新时间(单位：秒)，必须满足  0 < alarmTime < expire才有效
      * @return
      */
-    int alarmTime() default 60;
+    int alarmTime() default 0;
 
     /**
      * 自定义缓存Key，支持Spring EL表达式

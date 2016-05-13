@@ -253,8 +253,8 @@ public class AutoLoadHandler {
             
             //计算超时时间
             int alarmTime = autoLoadTO.getCache().alarmTime();
-            long timeout=(expire - alarmTime) * 1000;
-            if(timeout == (expire * 1000)){
+            long timeout = (alarmTime > 0 && alarmTime < expire) ? (expire - alarmTime) * 1000 : 0;
+            if(timeout == 0){
                 if(expire >= 600) {
                     timeout=(expire - 120) * 1000;
                 } else {
