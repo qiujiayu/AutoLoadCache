@@ -548,7 +548,7 @@ web.xml配置：
 
 ## 更新日志
 
-* ####4.5-SNAPSHOT 修改说明：
+* ####4.5 修改说明：
 
     * 调整CacheTask 中 Thread.sleep(0); 的位置；
     * 增加CacheChangeListener 接口，优化代码结构；
