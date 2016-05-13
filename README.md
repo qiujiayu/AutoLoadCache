@@ -550,8 +550,9 @@ web.xml配置：
 
 * ####4.5-SNAPSHOT 修改说明：
 
-    * 调整CacheTask 中 Thread.sleep(0); 的位置;
-    * 增加CacheChangeListener 接口，优化代码结构;
+    * 调整CacheTask 中 Thread.sleep(0); 的位置；
+    * 增加CacheChangeListener 接口，优化代码结构；
+    * 使用SoftReference 管理Map中的缓存数据；
 
 * ####4.4 修改说明：
 
