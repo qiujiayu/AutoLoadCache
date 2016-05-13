@@ -1,5 +1,6 @@
 package com.jarvis.cache.map;
 
+import java.lang.ref.SoftReference;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jarvis.cache.AbstractCacheManager;
@@ -83,20 +84,22 @@ public class CachePointCut extends AbstractCacheManager {
         } else {
             value=result;
         }
+        SoftReference<CacheWrapper> reference=new SoftReference<CacheWrapper>(value);
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            cache.put(cacheKey, value);
+            cache.put(cacheKey, reference);
         } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
+            ConcurrentHashMap<String, SoftReference<CacheWrapper>> hash=
+                (ConcurrentHashMap<String, SoftReference<CacheWrapper>>)cache.get(cacheKey);
             if(null == hash) {
-                hash=new ConcurrentHashMap<String, CacheWrapper>();
-                ConcurrentHashMap<String, CacheWrapper> _hash=null;
-                _hash=(ConcurrentHashMap<String, CacheWrapper>)cache.putIfAbsent(cacheKey, hash);
+                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper>>();
+                ConcurrentHashMap<String, SoftReference<CacheWrapper>> _hash=null;
+                _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper>>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
                 }
             }
-            hash.put(hfield, value);
+            hash.put(hfield, reference);
         }
         this.changeListener.cacheChange();
     }
@@ -118,10 +121,25 @@ public class CachePointCut extends AbstractCacheManager {
         String hfield=cacheKeyTO.getHfield();
         CacheWrapper value=null;
         if(null == hfield || hfield.length() == 0) {
-            value=(CacheWrapper)obj;
+            if(obj instanceof SoftReference) {
+                SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)obj;
+                if(null != reference) {
+                    value=reference.get();
+                }
+            } else if(obj instanceof CacheWrapper) {// 兼容老版本
+                value=(CacheWrapper)obj;
+            }
         } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)obj;
-            value=hash.get(hfield);
+            ConcurrentHashMap<String, Object> hash=(ConcurrentHashMap<String, Object>)obj;
+            Object tmp=hash.get(hfield);
+            if(tmp instanceof SoftReference) {
+                SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)tmp;
+                if(null != reference) {
+                    value=reference.get();
+                }
+            } else if(tmp instanceof CacheWrapper) {// 兼容老版本
+                value=(CacheWrapper)tmp;
+            }
         }
         if(copyValue) {
             try {

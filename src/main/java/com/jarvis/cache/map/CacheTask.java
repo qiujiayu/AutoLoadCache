@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -174,33 +175,12 @@ public class CacheTask implements Runnable, CacheChangeListener {
     /**
      * 清除过期缓存
      */
-    @SuppressWarnings("unchecked")
     private void cleanCache() {
         Iterator<Entry<String, Object>> iterator=cacheManager.getCache().entrySet().iterator();
         int _cacheChanged=0;
         int i=0;
         while(iterator.hasNext()) {
-            Object value=iterator.next().getValue();
-            if(value instanceof CacheWrapper) {
-                CacheWrapper tmp=(CacheWrapper)value;
-                if(tmp.isExpired()) {
-                    iterator.remove();
-                    _cacheChanged++;
-                }
-            } else {
-                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
-                Iterator<Entry<String, CacheWrapper>> iterator2=hash.entrySet().iterator();
-                while(iterator2.hasNext()) {
-                    CacheWrapper tmp=iterator2.next().getValue();
-                    if(tmp.isExpired()) {
-                        iterator2.remove();
-                        _cacheChanged++;
-                    }
-                }
-                if(hash.isEmpty()) {
-                    iterator.remove();
-                }
-            }
+            _cacheChanged+=removeExpiredItem(iterator);
             i++;
             if(i == 2000) {
                 i=0;
@@ -214,6 +194,60 @@ public class CacheTask implements Runnable, CacheChangeListener {
         if(_cacheChanged > 0) {
             cacheChange(_cacheChanged);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private int removeExpiredItem(Iterator<Entry<String, Object>> iterator) {
+        int _cacheChanged=0;
+        Object value=iterator.next().getValue();
+        if(value instanceof SoftReference) {
+            SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)value;
+            if(null != reference && null != reference.get()) {
+                CacheWrapper tmp=reference.get();
+                if(tmp.isExpired()) {
+                    iterator.remove();
+                    _cacheChanged++;
+                }
+            } else {
+                iterator.remove();
+                _cacheChanged++;
+            }
+        } else if(value instanceof ConcurrentHashMap) {
+            ConcurrentHashMap<String, Object> hash=(ConcurrentHashMap<String, Object>)value;
+            Iterator<Entry<String, Object>> iterator2=hash.entrySet().iterator();
+            while(iterator2.hasNext()) {
+                Object tmpObj=iterator2.next().getValue();
+                if(tmpObj instanceof SoftReference) {
+                    SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)tmpObj;
+                    if(null != reference && null != reference.get()) {
+                        CacheWrapper tmp=reference.get();
+                        if(tmp.isExpired()) {
+                            iterator2.remove();
+                            _cacheChanged++;
+                        }
+                    } else {
+                        iterator2.remove();
+                        _cacheChanged++;
+                    }
+                } else if(tmpObj instanceof CacheWrapper) {// 兼容老版本
+                    CacheWrapper tmp=(CacheWrapper)tmpObj;
+                    if(tmp.isExpired()) {
+                        iterator2.remove();
+                        _cacheChanged++;
+                    }
+                }
+            }
+            if(hash.isEmpty()) {
+                iterator.remove();
+            }
+        } else {
+            CacheWrapper tmp=(CacheWrapper)value;
+            if(tmp.isExpired()) {
+                iterator.remove();
+                _cacheChanged++;
+            }
+        }
+        return _cacheChanged;
     }
 
     @Override
