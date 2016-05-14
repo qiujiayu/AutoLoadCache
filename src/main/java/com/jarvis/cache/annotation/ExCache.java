@@ -23,6 +23,12 @@ public @interface ExCache {
      * @return 时间
      */
     int expire();
+    
+    /**
+     * 动态获取缓存过期时间的Spring EL表达式
+     * @return 时间
+     */
+    String expireExpression() default "";
 
     /**
      * 自定义缓存Key，支持Spring EL表达式

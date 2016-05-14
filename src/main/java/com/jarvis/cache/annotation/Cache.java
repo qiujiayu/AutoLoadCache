@@ -29,7 +29,7 @@ public @interface Cache {
 
     /**
      * 预警自动刷新时间(单位：秒)，必须满足 0 < alarmTime < expire才有效
-     * @return
+     * @return 时间
      */
     int alarmTime() default 0;
 

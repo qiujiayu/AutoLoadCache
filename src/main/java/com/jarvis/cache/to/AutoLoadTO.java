@@ -69,6 +69,7 @@ public class AutoLoadTO implements Serializable {
         this.joinPoint=joinPoint;
         this.args=args;
         this.cache=cache;
+        this.expire = cache.expire();
     }
 
     public CacheAopProxyChain getJoinPoint() {

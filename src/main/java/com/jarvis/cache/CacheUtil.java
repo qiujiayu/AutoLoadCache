@@ -295,5 +295,29 @@ public class CacheUtil {
         }
         return rv;
     }
+    
+    /**
+     * 获取真实的缓存时间值
+     * @param expire 缓存时间
+     * @param expireExpression 缓存时间表达式
+     * @param arguments 方法参数
+     * @param result 方法执行返回结果
+     * @return
+     */
+    public static int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result){
+        Integer tmpExpire=null;
+        if(null != expireExpression && expireExpression.length() > 0) {
+            try {
+                tmpExpire=getElValue(expireExpression, arguments, result, true, Integer.class);
+                if(null != tmpExpire && tmpExpire.intValue() >= 0) {
+                    //返回缓存时间表达式计算的时间
+                    return tmpExpire.intValue();
+                }
+            } catch(Exception ex) {
+
+            }
+        }
+        return expire;
+    }
 
 }

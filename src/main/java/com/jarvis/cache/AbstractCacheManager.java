@@ -233,22 +233,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null != autoLoadTO) {
             arguments=autoLoadTO.getArgs();
         }
-        String expireExpression=cache.expireExpression();
-        Integer tmpExpire=null;
-        if(null != expireExpression && expireExpression.length() > 0) {
-            try {
-                tmpExpire=CacheUtil.getElValue(expireExpression, arguments, result, true, Integer.class);
-            } catch(Exception ex) {
 
-            }
-        }
-
-        int expire=cache.expire();
-        if(null != tmpExpire && tmpExpire.intValue() >= 0) {
-            expire=tmpExpire.intValue();
-        }
+        int expire=CacheUtil.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
         CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
         this.setCache(cacheKey, cacheWrapper);
+        autoLoadTO.setExpire(expire);
 
         ExCache[] exCaches=cache.exCache();
         if(null != exCaches && exCaches.length > 0) {
@@ -267,11 +256,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 } else {
                     exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
                 }
-                AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
+                
+                int exCacheExpire = CacheUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
+                AutoLoadTO tmpAutoLoadTO = this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if(null != tmpAutoLoadTO) {
-                    tmpAutoLoadTO.setExpire(exCache.expire());
+                    tmpAutoLoadTO.setExpire(exCacheExpire);
                 }
-                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCache.expire());
+                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
                 this.setCache(exCacheKey, exCacheWrapper);
             }
         }
