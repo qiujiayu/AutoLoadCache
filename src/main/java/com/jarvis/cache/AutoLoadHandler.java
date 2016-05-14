@@ -230,7 +230,6 @@ public class AutoLoadHandler {
             }
             Cache cache=autoLoadTO.getCache();
             long requestTimeout=cache.requestTimeout();
-            int expire=cache.expire();
             if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
                 autoLoadMap.remove(autoLoadTO.getCacheKey().getFullKey());
                 return;
@@ -250,17 +249,23 @@ public class AutoLoadHandler {
             if(autoLoadTO.isLoading()) {
                 return;
             }
-            
-            //计算超时时间
-            int alarmTime = autoLoadTO.getCache().alarmTime();
-            long timeout = (alarmTime > 0 && alarmTime < expire) ? (expire - alarmTime) * 1000 : 0;
-            if(timeout == 0){
+            int expire=autoLoadTO.getExpire();
+            if(expire == 0) {
+                return;
+            }
+            // 计算超时时间
+            int alarmTime=autoLoadTO.getCache().alarmTime();
+            long timeout;
+            if(alarmTime > 0 && alarmTime < expire) {
+                timeout=expire - alarmTime;
+            } else {
                 if(expire >= 600) {
-                    timeout=(expire - 120) * 1000;
+                    timeout=expire - 120;
                 } else {
-                    timeout=(expire - 60) * 1000;;
+                    timeout=expire - 60;
                 }
             }
+            timeout*=1000;
 
             if((now - autoLoadTO.getLastLoadTime()) >= timeout) {
                 if(config.isCheckFromCacheBeforeLoad()) {

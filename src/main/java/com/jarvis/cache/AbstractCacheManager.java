@@ -229,16 +229,30 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == cacheKey) {
             return null;
         }
-        int expire = (null == result && 0 < cache.nullExpireTime()) ? cache.nullExpireTime() : cache.expire();
+        Object[] arguments=pjp.getArgs();
+        if(null != autoLoadTO) {
+            arguments=autoLoadTO.getArgs();
+        }
+        String expireExpression=cache.expireExpression();
+        Integer tmpExpire=null;
+        if(null != expireExpression && expireExpression.length() > 0) {
+            try {
+                tmpExpire=CacheUtil.getElValue(expireExpression, arguments, result, true, Integer.class);
+            } catch(Exception ex) {
+
+            }
+        }
+
+        int expire=cache.expire();
+        if(null != tmpExpire && tmpExpire.intValue() >= 0) {
+            expire=tmpExpire.intValue();
+        }
         CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
         this.setCache(cacheKey, cacheWrapper);
 
         ExCache[] exCaches=cache.exCache();
         if(null != exCaches && exCaches.length > 0) {
-            Object[] arguments=pjp.getArgs();
-            if(null != autoLoadTO) {
-                arguments=autoLoadTO.getArgs();
-            }
+
             for(ExCache exCache: exCaches) {
                 if(!CacheUtil.isCacheable(exCache, arguments, result)) {
                     continue;
@@ -252,6 +266,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     exResult=result;
                 } else {
                     exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
+                }
+                AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
+                if(null != tmpAutoLoadTO) {
+                    tmpAutoLoadTO.setExpire(exCache.expire());
                 }
                 CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCache.expire());
                 this.setCache(exCacheKey, exCacheWrapper);

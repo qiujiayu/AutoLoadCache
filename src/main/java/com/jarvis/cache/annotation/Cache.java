@@ -20,15 +20,15 @@ public @interface Cache {
      * @return 时间
      */
     int expire();
-    
+
     /**
-     * 数据为null时缓存的过期时间，单位：秒，必须大于0才有效
+     * 动态获取缓存过期时间的Spring EL表达式
      * @return 时间
      */
-    int nullExpireTime() default 0;
-    
+    String expireExpression() default "";
+
     /**
-     * 预警自动刷新时间(单位：秒)，必须满足  0 < alarmTime < expire才有效
+     * 预警自动刷新时间(单位：秒)，必须满足 0 < alarmTime < expire才有效
      * @return
      */
     int alarmTime() default 0;

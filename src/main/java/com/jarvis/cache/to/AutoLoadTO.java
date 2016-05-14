@@ -23,6 +23,11 @@ public class AutoLoadTO implements Serializable {
     private Cache cache;
 
     /**
+     * 缓存时长
+     */
+    private int expire;
+
+    /**
      * 缓存Key
      */
     private CacheKeyTO cacheKey;
@@ -153,4 +158,13 @@ public class AutoLoadTO implements Serializable {
         }
         return this.useTotalTime / this.loadCnt;
     }
+
+    public int getExpire() {
+        return expire;
+    }
+
+    public void setExpire(int expire) {
+        this.expire=expire;
+    }
+
 }
