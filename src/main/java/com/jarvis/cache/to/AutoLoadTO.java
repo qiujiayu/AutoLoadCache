@@ -64,12 +64,12 @@ public class AutoLoadTO implements Serializable {
      */
     private long useTotalTime=0L;
 
-    public AutoLoadTO(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Object args[], Cache cache) {
+    public AutoLoadTO(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Object args[], Cache cache, int expire) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
         this.args=args;
         this.cache=cache;
-        this.expire = cache.expire();
+        this.expire=expire;
     }
 
     public CacheAopProxyChain getJoinPoint() {
@@ -107,7 +107,9 @@ public class AutoLoadTO implements Serializable {
     }
 
     public void setLastLoadTime(long lastLoadTime) {
-        this.lastLoadTime=lastLoadTime;
+        if(lastLoadTime > this.lastLoadTime) {
+            this.lastLoadTime=lastLoadTime;
+        }
     }
 
     public CacheKeyTO getCacheKey() {

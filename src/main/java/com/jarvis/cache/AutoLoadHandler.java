@@ -116,12 +116,13 @@ public class AutoLoadHandler {
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
-    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, ISerializer<Object> serializer) {
+    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, ISerializer<Object> serializer,
+        CacheWrapper cacheWrapper) {
         if(null == autoLoadMap) {
             return null;
         }
-
-        if(cache.expire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
+        int expire=cacheWrapper.getExpire();
+        if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
                 arguments=(Object[])BeanUtil.deepClone(arguments, serializer); // 进行深度复制
@@ -129,7 +130,7 @@ public class AutoLoadHandler {
                 logger.error(e.getMessage(), e);
                 return null;
             }
-            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache);
+            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache, expire);
             AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
             if(null == tmp) {
                 return autoLoadTO;
@@ -266,22 +267,24 @@ public class AutoLoadHandler {
                 }
             }
             timeout*=1000;
-
-            if((now - autoLoadTO.getLastLoadTime()) >= timeout) {
-                if(config.isCheckFromCacheBeforeLoad()) {
-                    CacheWrapper result=cacheManager.get(autoLoadTO.getCacheKey());
-                    if(null != result && result.getLastLoadTime() > autoLoadTO.getLastLoadTime()
-                        && (now - result.getLastLoadTime()) < timeout) {// 如果已经被别的服务器更新了，则不需要再次更新
+            if((now - autoLoadTO.getLastLoadTime()) < timeout) {
+                return;
+            }
+            if(config.isCheckFromCacheBeforeLoad()) {
+                CacheWrapper result=cacheManager.get(autoLoadTO.getCacheKey());
+                if(null != result) {// 如果已经被别的服务器更新了，则不需要再次更新
+                    autoLoadTO.setExpire(result.getExpire());
+                    if(result.getLastLoadTime() > autoLoadTO.getLastLoadTime() && (now - result.getLastLoadTime()) < timeout) {
                         autoLoadTO.setLastLoadTime(result.getLastLoadTime());
                         return;
                     }
                 }
-                try {
-                    CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
-                    cacheManager.loadData(pjp, autoLoadTO, autoLoadTO.getCacheKey(), autoLoadTO.getCache());
-                } catch(Throwable e) {
-                    logger.error(e.getMessage(), e);
-                }
+            }
+            try {
+                CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
+                cacheManager.loadData(pjp, autoLoadTO, autoLoadTO.getCacheKey(), autoLoadTO.getCache());
+            } catch(Throwable e) {
+                logger.error(e.getMessage(), e);
             }
         }
     }

@@ -15,6 +15,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
+import com.jarvis.cache.type.CacheOpType;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -272,12 +273,15 @@ public class CacheUtil {
      * @param arguments 参数
      * @return autoload 是否自动加载
      */
-    public static boolean isAutoload(Cache cache, Object[] arguments) {
+    public static boolean isAutoload(Cache cache, Object[] arguments, Object retVal) {
+        if(cache.opType() == CacheOpType.WRITE) {
+            return false;
+        }
         boolean autoload=cache.autoload();
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
-            autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
+            autoload=getElValue(cache.autoloadCondition(), arguments, retVal, true, Boolean.class);
         }
-        return autoload && cache.expire() >= AutoLoadHandler.AUTO_LOAD_MIN_EXPIRE;
+        return autoload;
     }
 
     /**
@@ -295,7 +299,7 @@ public class CacheUtil {
         }
         return rv;
     }
-    
+
     /**
      * 获取真实的缓存时间值
      * @param expire 缓存时间
@@ -304,13 +308,13 @@ public class CacheUtil {
      * @param result 方法执行返回结果
      * @return
      */
-    public static int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result){
+    public static int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result) {
         Integer tmpExpire=null;
         if(null != expireExpression && expireExpression.length() > 0) {
             try {
                 tmpExpire=getElValue(expireExpression, arguments, result, true, Integer.class);
                 if(null != tmpExpire && tmpExpire.intValue() >= 0) {
-                    //返回缓存时间表达式计算的时间
+                    // 返回缓存时间表达式计算的时间
                     return tmpExpire.intValue();
                 }
             } catch(Exception ex) {
