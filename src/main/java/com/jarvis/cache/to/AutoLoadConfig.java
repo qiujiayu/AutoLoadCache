@@ -118,7 +118,7 @@ public class AutoLoadConfig {
 
     /**
      * 为Spring EL注册自定义函数
-     * @param funcs
+     * @param funcs 函数
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void setFunctions(Map<String, String> funcs) {

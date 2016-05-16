@@ -28,7 +28,7 @@ public @interface Cache {
     String expireExpression() default "";
 
     /**
-     * 预警自动刷新时间(单位：秒)，必须满足 0 < alarmTime < expire才有效
+     * 预警自动刷新时间(单位：秒)，必须满足 0 &lt; alarmTime &lt; expire才有效
      * @return 时间
      */
     int alarmTime() default 0;
@@ -83,7 +83,7 @@ public @interface Cache {
 
     /**
      * 扩展缓存
-     * @return
+     * @return ExCache[]
      */
     ExCache[] exCache() default @ExCache(expire=-1, key="");
 }

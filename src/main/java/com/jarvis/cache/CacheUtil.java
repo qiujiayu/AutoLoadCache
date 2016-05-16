@@ -271,6 +271,7 @@ public class CacheUtil {
      * 是否可以自动加载
      * @param cache Cache 注解
      * @param arguments 参数
+     * @param retVal return value
      * @return autoload 是否自动加载
      */
     public static boolean isAutoload(Cache cache, Object[] arguments, Object retVal) {
@@ -306,7 +307,7 @@ public class CacheUtil {
      * @param expireExpression 缓存时间表达式
      * @param arguments 方法参数
      * @param result 方法执行返回结果
-     * @return
+     * @return real expire
      */
     public static int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result) {
         Integer tmpExpire=null;

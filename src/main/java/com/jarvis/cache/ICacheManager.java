@@ -45,11 +45,11 @@ public interface ICacheManager {
 
     /**
      * 加载数据
-     * @param pjp
-     * @param autoLoadTO
-     * @param cacheKey
-     * @param cache
-     * @return
+     * @param pjp CacheAopProxyChain
+     * @param autoLoadTO AutoLoadTO
+     * @param cacheKey CacheKeyTO
+     * @param cache Cache
+     * @return Object
      * @throws Throwable
      */
     Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;

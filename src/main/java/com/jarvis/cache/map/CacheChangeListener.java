@@ -13,7 +13,7 @@ public interface CacheChangeListener {
 
     /**
      * 变更多条记录
-     * @param cnt
+     * @param cnt 变更数量
      */
     void cacheChange(int cnt);
 }

@@ -251,7 +251,7 @@ public class AutoLoadHandler {
                 return;
             }
             int expire=autoLoadTO.getExpire();
-            if(expire == 0) {
+            if(expire < AUTO_LOAD_MIN_EXPIRE) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
                 return;
             }
             // 计算超时时间

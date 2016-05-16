@@ -50,7 +50,7 @@ public @interface ExCache {
 
     /**
      * 通过SpringEL表达式获取需要缓存的数据，如果没有设置，则默认使用 #retVal
-     * @return
+     * @return 缓存对象
      */
     String cacheObject() default "";
 

@@ -288,12 +288,12 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 通过CacheAopProxyChain加载数据
-     * @param pjp
-     * @param autoLoadTO
-     * @param cacheKey
-     * @param cache
+     * @param pjp CacheAopProxyChain
+     * @param autoLoadTO AutoLoadTO
+     * @param cacheKey CacheKeyTO
+     * @param cache Cache
      * @return 返回值
-     * @throws Exception
+     * @throws Throwable
      */
     @Override
     public Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
@@ -376,8 +376,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 直接加载数据（加载后的数据不往缓存放）
-     * @param pjp
-     * @return
+     * @param pjp CacheAopProxyChain
+     * @return Object
      * @throws Throwable
      */
     private Object getData(CacheAopProxyChain pjp) throws Throwable {
@@ -399,11 +399,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     /**
      * 加载数据（加载后的数据需要往缓存放）
-     * @param pjp
-     * @param autoLoadTO
-     * @param cache
-     * @param cacheKey
-     * @return
+     * @param pjp CacheAopProxyChain
+     * @param autoLoadTO AutoLoadTO
+     * @param cache Cache
+     * @param cacheKey CacheKeyTO
+     * @return CacheWrapper
      * @throws Throwable
      */
     private CacheWrapper getCacheWrapper(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey)
