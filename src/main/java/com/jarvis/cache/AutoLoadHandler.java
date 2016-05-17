@@ -146,7 +146,7 @@ public class AutoLoadHandler {
      * @return autoload 队列
      */
     public AutoLoadTO[] getAutoLoadQueue() {
-        if(autoLoadMap.isEmpty()) {
+        if(null == autoLoadMap || autoLoadMap.isEmpty()) {
             return null;
         }
         AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];

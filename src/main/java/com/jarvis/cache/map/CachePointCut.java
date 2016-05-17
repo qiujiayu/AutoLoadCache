@@ -46,12 +46,12 @@ public class CachePointCut extends AbstractCacheManager {
 
     public CachePointCut(AutoLoadConfig config) {
         super(config);
+        cacheTask=new CacheTask(this);
+        changeListener=cacheTask;
     }
 
     public synchronized void start() {
         if(null == thread) {
-            cacheTask=new CacheTask(this);
-            changeListener=cacheTask;
             thread=new Thread(cacheTask);
             cacheTask.start();
             thread.start();
