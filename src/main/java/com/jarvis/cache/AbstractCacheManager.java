@@ -65,133 +65,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
     }
 
     /**
-     * 生成缓存KeyTO
-     * @param className 类名
-     * @param methodName 方法名
-     * @param arguments 参数
-     * @param _key key
-     * @param _hfield hfield
-     * @param result 执行实际方法的返回值
-     * @return CacheKeyTO
-     */
-    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
-        Object result, boolean hasRetVal) {
-        String key=null;
-        String hfield=null;
-        if(null != _key && _key.trim().length() > 0) {
-            key=CacheUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
-            if(null != _hfield && _hfield.trim().length() > 0) {
-                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
-            }
-        } else {
-            key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
-        }
-        if(null == key || key.trim().length() == 0) {
-            logger.error(className + "." + methodName + "; cache key is empty");
-            return null;
-        }
-        CacheKeyTO to=new CacheKeyTO();
-        to.setNamespace(namespace);
-        to.setKey(key);
-        to.setHfield(hfield);
-        return to;
-    }
-
-    /**
-     * 生成缓存 Key
-     * @param pjp
-     * @param cache
-     * @return String 缓存Key
-     */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
-        String className=pjp.getTargetClass().getName();
-        String methodName=pjp.getMethod().getName();
-        Object[] arguments=pjp.getArgs();
-        String _key=cache.key();
-        String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, null, false);
-    }
-
-    /**
-     * 生成缓存 Key
-     * @param pjp
-     * @param cache
-     * @param result 执行结果值
-     * @return 缓存Key
-     */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
-        String className=pjp.getTargetClass().getName();
-        String methodName=pjp.getMethod().getName();
-        Object[] arguments=pjp.getArgs();
-        String _key=cache.key();
-        String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
-    }
-
-    /**
-     * 生成缓存 Key
-     * @param pjp
-     * @param cache
-     * @param result 执行结果值
-     * @return 缓存Key
-     */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
-        String className=pjp.getTargetClass().getName();
-        String methodName=pjp.getMethod().getName();
-        Object[] arguments=pjp.getArgs();
-        if(null != autoLoadTO) {
-            arguments=autoLoadTO.getArgs();
-        }
-        String _key=cache.key();
-        if(null == _key || _key.trim().length() == 0) {
-            return null;
-        }
-        String _hfield=cache.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
-    }
-
-    /**
-     * 生成缓存 Key
-     * @param jp
-     * @param cacheDeleteKey
-     * @param retVal 执行结果值
-     * @return 缓存Key
-     */
-    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
-        String className=jp.getTargetClass().getName();
-        String methodName=jp.getMethod().getName();
-        Object[] arguments=jp.getArgs();
-        String _key=cacheDeleteKey.value();
-        String _hfield=cacheDeleteKey.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
-
-    }
-
-    /**
-     * 获取 AutoLoadTO
-     * @param pjp
-     * @param arguments
-     * @param cache
-     * @param cacheKey
-     * @param cacheWrapper
-     * @return
-     */
-    private AutoLoadTO getAutoLoadTO(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) {
-        AutoLoadTO autoLoadTO=null;
-        if(CacheUtil.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
-            autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
-            if(null == autoLoadTO) {
-                AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, serializer, cacheWrapper);
-                if(null != tmp) {
-                    autoLoadTO=tmp;
-                }
-            }
-        }
-        return autoLoadTO;
-    }
-
-    /**
      * 处理@Cache 拦截
      * @param pjp 切面
      * @param cache 注解
@@ -235,55 +108,27 @@ public abstract class AbstractCacheManager implements ICacheManager {
     }
 
     /**
-     * 写缓存
-     * @param pjp CacheAopProxyChain
-     * @param autoLoadTO AutoLoadTO
-     * @param cache Cache annotation
-     * @param cacheKey Cache Key
-     * @param cacheWrapper CacheWrapper
-     * @return CacheWrapper
+     * 处理@CacheDelete 拦截
+     * @param jp 切点
+     * @param cacheDelete 拦截到的注解
+     * @param retVal 返回值
      */
-    private CacheWrapper writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) {
-        if(null == cacheKey) {
-            return null;
+    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) {
+        Object[] arguments=jp.getArgs();
+        CacheDeleteKey[] keys=cacheDelete.value();
+        if(null == keys || keys.length == 0) {
+            return;
         }
-        this.setCache(cacheKey, cacheWrapper);
-
-        ExCache[] exCaches=cache.exCache();
-        if(null != exCaches && exCaches.length > 0) {
-            Object[] arguments=pjp.getArgs();
-            if(null != autoLoadTO) {
-                arguments=autoLoadTO.getArgs();
+        for(int i=0; i < keys.length; i++) {
+            CacheDeleteKey keyConfig=keys[i];
+            if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
+                continue;
             }
-            Object result=cacheWrapper.getCacheObject();
-            for(ExCache exCache: exCaches) {
-                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
-                    continue;
-                }
-                CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
-                if(null == exCacheKey) {
-                    continue;
-                }
-                Object exResult=null;
-                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                    exResult=result;
-                } else {
-                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
-                }
-
-                int exCacheExpire=CacheUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
-                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
-                AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
-                if(null != tmpAutoLoadTO) {
-                    tmpAutoLoadTO.setExpire(exCacheExpire);
-                    tmpAutoLoadTO.setLastLoadTime(exCacheWrapper.getLastLoadTime());
-                }
-
-                this.setCache(exCacheKey, exCacheWrapper);
+            CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
+            if(null != key) {
+                this.delete(key);
             }
         }
-        return cacheWrapper;
     }
 
     /**
@@ -438,33 +283,62 @@ public abstract class AbstractCacheManager implements ICacheManager {
         } catch(Throwable e) {
             throw e;
         } finally {
-            if (autoLoadTO != null)
+            if(null != autoLoadTO) {
                 autoLoadTO.setLoading(false);
+            }
         }
     }
 
     /**
-     * 处理@CacheDelete 拦截
-     * @param jp 切点
-     * @param cacheDelete 拦截到的注解
-     * @param retVal 返回值
+     * 写缓存
+     * @param pjp CacheAopProxyChain
+     * @param autoLoadTO AutoLoadTO
+     * @param cache Cache annotation
+     * @param cacheKey Cache Key
+     * @param cacheWrapper CacheWrapper
+     * @return CacheWrapper
      */
-    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) {
-        Object[] arguments=jp.getArgs();
-        CacheDeleteKey[] keys=cacheDelete.value();
-        if(null == keys || keys.length == 0) {
-            return;
+    private CacheWrapper writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey,
+        CacheWrapper cacheWrapper) {
+        if(null == cacheKey) {
+            return null;
         }
-        for(int i=0; i < keys.length; i++) {
-            CacheDeleteKey keyConfig=keys[i];
-            if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
-                continue;
+        this.setCache(cacheKey, cacheWrapper);
+
+        ExCache[] exCaches=cache.exCache();
+        if(null != exCaches && exCaches.length > 0) {
+            Object[] arguments=pjp.getArgs();
+            if(null != autoLoadTO) {
+                arguments=autoLoadTO.getArgs();
             }
-            CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
-            if(null != key) {
-                this.delete(key);
+            Object result=cacheWrapper.getCacheObject();
+            for(ExCache exCache: exCaches) {
+                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                    continue;
+                }
+                CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
+                if(null == exCacheKey) {
+                    continue;
+                }
+                Object exResult=null;
+                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                    exResult=result;
+                } else {
+                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
+                }
+
+                int exCacheExpire=CacheUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
+                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
+                AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
+                if(null != tmpAutoLoadTO) {
+                    tmpAutoLoadTO.setExpire(exCacheExpire);
+                    tmpAutoLoadTO.setLastLoadTime(exCacheWrapper.getLastLoadTime());
+                }
+
+                this.setCache(exCacheKey, exCacheWrapper);
             }
         }
+        return cacheWrapper;
     }
 
     @Override
@@ -472,5 +346,132 @@ public abstract class AbstractCacheManager implements ICacheManager {
         autoLoadHandler.shutdown();
         autoLoadHandler=null;
         logger.info("cache destroy ... ... ...");
+    }
+
+    /**
+     * 生成缓存KeyTO
+     * @param className 类名
+     * @param methodName 方法名
+     * @param arguments 参数
+     * @param _key key
+     * @param _hfield hfield
+     * @param result 执行实际方法的返回值
+     * @return CacheKeyTO
+     */
+    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
+        Object result, boolean hasRetVal) {
+        String key=null;
+        String hfield=null;
+        if(null != _key && _key.trim().length() > 0) {
+            key=CacheUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
+            if(null != _hfield && _hfield.trim().length() > 0) {
+                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
+            }
+        } else {
+            key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
+        }
+        if(null == key || key.trim().length() == 0) {
+            logger.error(className + "." + methodName + "; cache key is empty");
+            return null;
+        }
+        CacheKeyTO to=new CacheKeyTO();
+        to.setNamespace(namespace);
+        to.setKey(key);
+        to.setHfield(hfield);
+        return to;
+    }
+
+    /**
+     * 生成缓存 Key
+     * @param pjp
+     * @param cache
+     * @return String 缓存Key
+     */
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
+        Object[] arguments=pjp.getArgs();
+        String _key=cache.key();
+        String _hfield=cache.hfield();
+        return getCacheKey(className, methodName, arguments, _key, _hfield, null, false);
+    }
+
+    /**
+     * 生成缓存 Key
+     * @param pjp
+     * @param cache
+     * @param result 执行结果值
+     * @return 缓存Key
+     */
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
+        Object[] arguments=pjp.getArgs();
+        String _key=cache.key();
+        String _hfield=cache.hfield();
+        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
+    }
+
+    /**
+     * 生成缓存 Key
+     * @param pjp
+     * @param cache
+     * @param result 执行结果值
+     * @return 缓存Key
+     */
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
+        Object[] arguments=pjp.getArgs();
+        if(null != autoLoadTO) {
+            arguments=autoLoadTO.getArgs();
+        }
+        String _key=cache.key();
+        if(null == _key || _key.trim().length() == 0) {
+            return null;
+        }
+        String _hfield=cache.hfield();
+        return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
+    }
+
+    /**
+     * 生成缓存 Key
+     * @param jp
+     * @param cacheDeleteKey
+     * @param retVal 执行结果值
+     * @return 缓存Key
+     */
+    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+        String className=jp.getTargetClass().getName();
+        String methodName=jp.getMethod().getName();
+        Object[] arguments=jp.getArgs();
+        String _key=cacheDeleteKey.value();
+        String _hfield=cacheDeleteKey.hfield();
+        return getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
+
+    }
+
+    /**
+     * 获取 AutoLoadTO
+     * @param pjp
+     * @param arguments
+     * @param cache
+     * @param cacheKey
+     * @param cacheWrapper
+     * @return
+     */
+    private AutoLoadTO getAutoLoadTO(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
+        CacheWrapper cacheWrapper) {
+        AutoLoadTO autoLoadTO=null;
+        if(CacheUtil.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
+            autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
+            if(null == autoLoadTO) {
+                AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, serializer, cacheWrapper);
+                if(null != tmp) {
+                    autoLoadTO=tmp;
+                }
+            }
+        }
+        return autoLoadTO;
     }
 }
