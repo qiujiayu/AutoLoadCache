@@ -438,7 +438,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
         } catch(Throwable e) {
             throw e;
         } finally {
-            autoLoadTO.setLoading(false);
+            if (autoLoadTO != null)
+                autoLoadTO.setLoading(false);
         }
     }
 
