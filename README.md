@@ -197,7 +197,17 @@ Memcache 配置：
          * @return 时间
          */
         int expire();
+        /**
+         * 动态获取缓存过期时间的Spring EL表达式
+         * @return 时间
+         */
+        String expireExpression() default "";
 
+        /**
+         * 预警自动刷新时间(单位：秒)，必须满足 0 < alarmTime < expire才有效
+         * @return 时间
+         */
+        int alarmTime() default 0;
         /**
          * 自定义缓存Key，支持Spring EL表达式
          * @return String 自定义缓存Key
@@ -272,6 +282,12 @@ Memcache 配置：
          * @return 时间
          */
         int expire();
+
+        /**
+         * 动态获取缓存过期时间的Spring EL表达式
+         * @return 时间
+         */
+        String expireExpression() default "";
 
         /**
          * 自定义缓存Key，支持Spring EL表达式
@@ -353,7 +369,7 @@ Memcache 配置：
 | 名字 | 描述 | 示例 |
 | ------------- | ------------- | ------------- |
 | args | 当前被调用的方法的参数列表 | #args[0] |
-| retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),@ExCache() | #retVal |
+| retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),expireExpression,autoloadCondition,@ExCache() | #retVal |
 
 ###提供的SpEL函数
 
@@ -547,6 +563,12 @@ web.xml配置：
 
 
 ## 更新日志
+
+* ####4.6-SNAPSHOT 修改说明：
+
+    * @Cache中增加 expireExpression，实现通过表达式来动态获取expire 值；
+    * @Cache 中增加 alarmTime，用于自定义自动刷新缓存内容的时间间隔；
+    * 解决 hessian2 无法序列化SoftReference 的bug；
 
 * ####4.5 修改说明：
 

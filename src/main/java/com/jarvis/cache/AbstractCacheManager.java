@@ -273,9 +273,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
             CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
             if(null != cacheKey && null == autoLoadTO) {
                 autoLoadTO=getAutoLoadTO(pjp, arguments, cache, cacheKey, cacheWrapper);
+                if(null != autoLoadTO) {// 只有当autoLoadTO时才是实际用户请求，不为null时，是AutoLoadHandler 发过来的请求
+                    autoLoadTO.setLastRequestTime(startTime);
+                }
             }
             if(null != autoLoadTO) {
-                autoLoadTO.setLastRequestTime(startTime);
                 autoLoadTO.setLastLoadTime(startTime);
                 autoLoadTO.addUseTotalTime(useTime);
             }
