@@ -15,6 +15,7 @@ public class HessianSerializer implements ISerializer<Object> {
     static {
         serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
         serializerFactory.addFactory(new HessionSoftReferenceSerializerFactory());
+        // serializerFactory.addFactory(new WeakReferenceSerializerFactory());
     }
 
     @Override
