@@ -567,7 +567,7 @@ web.xml配置：
 * ####4.6-SNAPSHOT 修改说明：
 
     * @Cache中增加 expireExpression，实现通过表达式来动态获取expire 值；
-    * @Cache 中增加 alarmTime，用于自定义自动刷新缓存内容的时间间隔；
+    * @Cache 中增加 alarmTime。当缓存在alarmTime 时间内即将过期的话，会自动刷新缓存内容；
     * 解决 hessian2 无法序列化SoftReference 的bug；
 
 * ####4.5 修改说明：
