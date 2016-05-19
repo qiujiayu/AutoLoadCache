@@ -272,7 +272,8 @@ public class AutoLoadHandler {
                     timeout=expire - 60;
                 }
             }
-            timeout=(timeout - random.nextInt(10)) * 1000;
+            int rand = random.nextInt(10);
+            timeout=(timeout + (rand % 2 == 0 ? rand : -rand)) * 1000;
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;
             }
