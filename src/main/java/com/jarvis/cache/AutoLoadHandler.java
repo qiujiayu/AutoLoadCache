@@ -1,6 +1,7 @@
 package com.jarvis.cache;
 
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -53,6 +54,11 @@ public class AutoLoadHandler {
      * 自动加载配置
      */
     private AutoLoadConfig config;
+    
+    /**
+     * 随机数种子
+     */
+    private Random random = new Random();
 
     /**
      * @param cacheManager 缓存的set,get方法实现类
@@ -266,7 +272,7 @@ public class AutoLoadHandler {
                     timeout=expire - 60;
                 }
             }
-            timeout*=1000;
+            timeout=(timeout - random.nextInt(10)) * 1000;
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;
             }
