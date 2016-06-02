@@ -570,7 +570,7 @@ web.xml配置：
 
     * 修改缓存预警时间值，加入-10~10秒随机数，避免缓存集中失效
     * 实现表达式引擎的可扩展性，默认还是使用SpringEL表达式引擎（com.jarvis.cache.script.SpringELParser），但可以自己实际情况进行扩展。扩展方法：实现com.jarvis.cache.script.IScriptParser,然后通过配置把实现的实例注入到AbstractCacheManager中的scriptParser属性即可。使用不同表达式引擎时，注意表达式的语言的区别。
-    * 增加了JavaScript 表达式引擎实现：com.jarvis.cache.script.JavaScriptParser
+    * 增加了JavaScript 表达式引擎实现：com.jarvis.cache.script.JavaScriptParser。如果项目使用JDK1.8的，想用JavaScript的话，建议使用Nashorn 来实现，性能会比较好。
     
 
 * ####4.6 修改说明：
