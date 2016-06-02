@@ -24,11 +24,11 @@ public class JavaScriptParser implements IScriptParser {
 
     private static final ScriptEngineManager manager=new ScriptEngineManager();
 
-    private static final ScriptEngine engine=manager.getEngineByName("javascript");
-
     private final ConcurrentHashMap<String, CompiledScript> expCache=new ConcurrentHashMap<String, CompiledScript>();
 
     private static final StringBuffer funcs=new StringBuffer();
+
+    private static int versionCode;
     static {
         try {
             registerFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
@@ -36,8 +36,21 @@ public class JavaScriptParser implements IScriptParser {
         } catch(Exception e) {
             logger.error(e.getMessage(), e);
         }
-
+        String javaVersion=System.getProperty("java.version");
+        int ind=0;
+        for(int i=0; i < 2; i++) {
+            ind=javaVersion.indexOf(".", ind);
+            ind++;
+        }
+        javaVersion=javaVersion.substring(0, ind);
+        javaVersion=javaVersion.replaceAll("\\.", "");
+        versionCode=Integer.parseInt(javaVersion);
     }
+
+    /**
+     * 如果使用的是JDK大于1.8版本的，则用 nashorn，否则用javascript
+     */
+    private static final ScriptEngine engine=manager.getEngineByName(versionCode > 18 ? "nashorn" : "javascript");
 
     private static void registerFunction(String name, Method method) {
         try {
