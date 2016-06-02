@@ -558,9 +558,11 @@ web.xml配置：
 显示内容，如下图所示：
 ![Alt 缓存管理](/doc/cache_admin.png "缓存管理")
 
+##与Spring Cache的区别 [SpringCache](SpringCache.md)
+
+
 ##未来计划：redis3.0 集群研究以及使用
 
-##与Spring Cache的区别 [SpringCache](SpringCache.md)
 
 ## 更新日志
 
