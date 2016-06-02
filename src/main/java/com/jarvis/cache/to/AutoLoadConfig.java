@@ -1,10 +1,7 @@
 package com.jarvis.cache.to;
 
-import java.lang.reflect.Method;
-import java.util.Iterator;
 import java.util.Map;
 
-import com.jarvis.cache.CacheUtil;
 import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
@@ -47,6 +44,8 @@ public class AutoLoadConfig {
      * 单个线程中执行自动加载的时间间隔
      */
     private int autoLoadPeriod=50;
+
+    private Map<String, String> functions;
 
     public int getThreadCnt() {
         return threadCnt;
@@ -117,26 +116,18 @@ public class AutoLoadConfig {
     }
 
     /**
-     * 为Spring EL注册自定义函数
+     * 为表达式注册自定义函数
      * @param funcs 函数
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void setFunctions(Map<String, String> funcs) {
         if(null == funcs || funcs.isEmpty()) {
             return;
         }
-        Iterator<Map.Entry<String, String>> it=funcs.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry<String, String> entry=it.next();
-            try {
-                String name=entry.getKey();
-                Class cls=Class.forName(entry.getValue());
-                Method method=cls.getDeclaredMethod(name, new Class[]{Object.class});
-                CacheUtil.addFunction(name, method);
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
+        functions=funcs;
+    }
+
+    public Map<String, String> getFunctions() {
+        return functions;
     }
 
 }

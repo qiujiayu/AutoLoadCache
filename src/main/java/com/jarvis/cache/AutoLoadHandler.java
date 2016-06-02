@@ -54,11 +54,11 @@ public class AutoLoadHandler {
      * 自动加载配置
      */
     private AutoLoadConfig config;
-    
+
     /**
      * 随机数种子
      */
-    private Random random = new Random();
+    private Random random=new Random();
 
     /**
      * @param cacheManager 缓存的set,get方法实现类
@@ -272,7 +272,7 @@ public class AutoLoadHandler {
                     timeout=expire - 60;
                 }
             }
-            int rand = random.nextInt(10);
+            int rand=random.nextInt(10);
             timeout=(timeout + (rand % 2 == 0 ? rand : -rand)) * 1000;
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;

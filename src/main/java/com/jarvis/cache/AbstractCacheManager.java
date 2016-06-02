@@ -1,5 +1,8 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -10,6 +13,9 @@ import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
+import com.jarvis.cache.script.IScriptParser;
+import com.jarvis.cache.script.ScriptParserUtil;
+import com.jarvis.cache.script.SpringELParser;
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -39,8 +45,16 @@ public abstract class AbstractCacheManager implements ICacheManager {
      */
     private ISerializer<Object> serializer=new HessianSerializer();
 
+    /**
+     * 表达式解析器
+     */
+    private IScriptParser scriptParser=new SpringELParser();
+
+    private ScriptParserUtil scriptParserUtil=new ScriptParserUtil(scriptParser);
+
     public AbstractCacheManager(AutoLoadConfig config) {
         autoLoadHandler=new AutoLoadHandler(this, config);
+        registerFunction(config.getFunctions());
     }
 
     public ISerializer<Object> getSerializer() {
@@ -64,6 +78,41 @@ public abstract class AbstractCacheManager implements ICacheManager {
         this.namespace=namespace;
     }
 
+    public IScriptParser getScriptParser() {
+        return scriptParser;
+    }
+
+    public void setScriptParser(IScriptParser scriptParser) {
+        this.scriptParser=scriptParser;
+        scriptParserUtil=new ScriptParserUtil(this.scriptParser);
+        registerFunction(this.autoLoadHandler.getConfig().getFunctions());
+    }
+
+    public ScriptParserUtil getScriptParserUtil() {
+        return scriptParserUtil;
+    }
+
+    private void registerFunction(Map<String, String> funcs) {
+        if(null == scriptParser) {
+            return;
+        }
+        if(null == funcs || funcs.isEmpty()) {
+            return;
+        }
+        Iterator<Map.Entry<String, String>> it=funcs.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry<String, String> entry=it.next();
+            try {
+                String name=entry.getKey();
+                Class<?> cls=Class.forName(entry.getValue());
+                Method method=cls.getDeclaredMethod(name, new Class[]{Object.class});
+                scriptParser.addFunction(name, method);
+            } catch(Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+    }
+
     /**
      * 处理@Cache 拦截
      * @param pjp 切面
@@ -80,13 +129,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             CacheWrapper cacheWrapper=getCacheWrapper(pjp, null, cache, null);
             Object result=cacheWrapper.getCacheObject();
-            if(CacheUtil.isCacheable(cache, arguments, result)) {
+            if(scriptParserUtil.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
                 writeCache(pjp, null, cache, cacheKey, cacheWrapper);
             }
             return result;
         }
-        if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
+        if(!scriptParserUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp);
         }
         CacheKeyTO cacheKey=getCacheKey(pjp, cache);
@@ -121,12 +170,16 @@ public abstract class AbstractCacheManager implements ICacheManager {
         }
         for(int i=0; i < keys.length; i++) {
             CacheDeleteKey keyConfig=keys[i];
-            if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
-                continue;
-            }
-            CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
-            if(null != key) {
-                this.delete(key);
+            try {
+                if(!scriptParserUtil.isCanDelete(keyConfig, arguments, retVal)) {
+                    continue;
+                }
+                CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
+                if(null != key) {
+                    this.delete(key);
+                }
+            } catch(Exception e) {
+                logger.error(e.getMessage(), e);
             }
         }
     }
@@ -269,7 +322,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 String className=pjp.getTargetClass().getName();
                 logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
             }
-            int expire=CacheUtil.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
+            int expire=scriptParserUtil.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
             CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
             if(null != cacheKey && null == autoLoadTO) {
                 autoLoadTO=getAutoLoadTO(pjp, arguments, cache, cacheKey, cacheWrapper);
@@ -299,9 +352,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheKey Cache Key
      * @param cacheWrapper CacheWrapper
      * @return CacheWrapper
+     * @throws Exception
      */
     private CacheWrapper writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) {
+        CacheWrapper cacheWrapper) throws Exception {
         if(null == cacheKey) {
             return null;
         }
@@ -315,7 +369,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
             Object result=cacheWrapper.getCacheObject();
             for(ExCache exCache: exCaches) {
-                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
+                if(!scriptParserUtil.isCacheable(exCache, arguments, result)) {
                     continue;
                 }
                 CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
@@ -326,17 +380,16 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
                     exResult=result;
                 } else {
-                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
+                    exResult=scriptParser.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
                 }
 
-                int exCacheExpire=CacheUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
+                int exCacheExpire=scriptParserUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
                 CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if(null != tmpAutoLoadTO) {
                     tmpAutoLoadTO.setExpire(exCacheExpire);
                     tmpAutoLoadTO.setLastLoadTime(exCacheWrapper.getLastLoadTime());
                 }
-
                 this.setCache(exCacheKey, exCacheWrapper);
             }
         }
@@ -359,15 +412,16 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param _hfield hfield
      * @param result 执行实际方法的返回值
      * @return CacheKeyTO
+     * @throws Exception
      */
     private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
-        Object result, boolean hasRetVal) {
+        Object result, boolean hasRetVal) throws Exception {
         String key=null;
         String hfield=null;
         if(null != _key && _key.trim().length() > 0) {
-            key=CacheUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
+            key=scriptParserUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
             if(null != _hfield && _hfield.trim().length() > 0) {
-                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
+                hfield=scriptParserUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
             }
         } else {
             key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
@@ -388,8 +442,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param pjp
      * @param cache
      * @return String 缓存Key
+     * @throws Exception
      */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) throws Exception {
         String className=pjp.getTargetClass().getName();
         String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
@@ -404,8 +459,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cache
      * @param result 执行结果值
      * @return 缓存Key
+     * @throws Exception
      */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) throws Exception {
         String className=pjp.getTargetClass().getName();
         String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
@@ -420,8 +476,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cache
      * @param result 执行结果值
      * @return 缓存Key
+     * @throws Exception
      */
-    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) throws Exception {
         String className=pjp.getTargetClass().getName();
         String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
@@ -442,8 +499,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheDeleteKey
      * @param retVal 执行结果值
      * @return 缓存Key
+     * @throws Exception
      */
-    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) throws Exception {
         String className=jp.getTargetClass().getName();
         String methodName=jp.getMethod().getName();
         Object[] arguments=jp.getArgs();
@@ -461,11 +519,12 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheKey
      * @param cacheWrapper
      * @return
+     * @throws Exception
      */
     private AutoLoadTO getAutoLoadTO(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) {
+        CacheWrapper cacheWrapper) throws Exception {
         AutoLoadTO autoLoadTO=null;
-        if(CacheUtil.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
+        if(scriptParserUtil.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
             autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
             if(null == autoLoadTO) {
                 AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, serializer, cacheWrapper);

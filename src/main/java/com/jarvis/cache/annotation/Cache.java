@@ -28,8 +28,7 @@ public @interface Cache {
     String expireExpression() default "";
 
     /**
-     * 预警自动刷新时间(单位：秒)，必须满足 0 &lt; alarmTime &lt; expire才有效
-     * 当缓存在alarmTime 时间内即将过期的话，会自动刷新缓存内容；
+     * 预警自动刷新时间(单位：秒)，必须满足 0 &lt; alarmTime &lt; expire才有效 当缓存在alarmTime 时间内即将过期的话，会自动刷新缓存内容；
      * @return 时间
      */
     int alarmTime() default 0;
