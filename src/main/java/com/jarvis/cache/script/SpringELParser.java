@@ -41,8 +41,8 @@ public class SpringELParser implements IScriptParser {
     private final ConcurrentHashMap<String, Method> funcs=new ConcurrentHashMap<String, Method>(64);
 
     /**
-     * @param name
-     * @param method
+     * @param name 方法名
+     * @param method 方法
      */
     @Override
     public void addFunction(String name, Method method) {

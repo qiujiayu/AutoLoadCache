@@ -50,7 +50,7 @@ public interface ICacheManager {
      * @param cacheKey CacheKeyTO
      * @param cache Cache
      * @return Object
-     * @throws Throwable
+     * @throws Throwable 异常
      */
     Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;
 }

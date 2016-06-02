@@ -20,7 +20,7 @@ public class ScriptParserUtil {
      * @param valueType 值类型
      * @return T Value 返回值
      * @param <T> 泛型
-     * @throws Exception
+     * @throws Exception 异常
      */
     public <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) throws Exception {
         return parser.getElValue(keySpEL, arguments, null, false, valueType);
@@ -33,7 +33,7 @@ public class ScriptParserUtil {
      * @param retVal 结果值
      * @param hasRetVal 是否有retVal
      * @return CacheKey 缓存Key
-     * @throws Exception
+     * @throws Exception 异常
      */
     public String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal) throws Exception {
         return parser.getElValue(keySpEL, arguments, retVal, hasRetVal, String.class);
@@ -44,7 +44,7 @@ public class ScriptParserUtil {
      * @param cache Cache
      * @param arguments 参数
      * @return cacheAble 是否可以进行缓存
-     * @throws Exception
+     * @throws Exception 异常
      */
     public boolean isCacheable(Cache cache, Object[] arguments) throws Exception {
         boolean rv=true;
@@ -60,7 +60,7 @@ public class ScriptParserUtil {
      * @param arguments 参数
      * @param result 执行结果
      * @return cacheAble 是否可以进行缓存
-     * @throws Exception
+     * @throws Exception 异常
      */
     public boolean isCacheable(Cache cache, Object[] arguments, Object result) throws Exception {
         boolean rv=true;
@@ -76,7 +76,7 @@ public class ScriptParserUtil {
      * @param arguments 参数
      * @param result 执行结果
      * @return cacheAble 是否可以进行缓存
-     * @throws Exception
+     * @throws Exception 异常
      */
     public boolean isCacheable(ExCache cache, Object[] arguments, Object result) throws Exception {
         if(null == cache || cache.expire() < 0 || cache.key().length() == 0) {
@@ -95,7 +95,7 @@ public class ScriptParserUtil {
      * @param arguments 参数
      * @param retVal return value
      * @return autoload 是否自动加载
-     * @throws Exception
+     * @throws Exception 异常
      */
     public boolean isAutoload(Cache cache, Object[] arguments, Object retVal) throws Exception {
         if(cache.opType() == CacheOpType.WRITE) {
@@ -114,7 +114,7 @@ public class ScriptParserUtil {
      * @param arguments 参数
      * @param retVal 结果值
      * @return Can Delete
-     * @throws Exception
+     * @throws Exception 异常
      */
     public boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
         boolean rv=true;
@@ -132,7 +132,7 @@ public class ScriptParserUtil {
      * @param arguments 方法参数
      * @param result 方法执行返回结果
      * @return real expire
-     * @throws Exception
+     * @throws Exception 异常
      */
     public int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result) throws Exception {
         Integer tmpExpire=null;

@@ -191,7 +191,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheKey CacheKeyTO
      * @param cache Cache
      * @return 返回值
-     * @throws Throwable
+     * @throws Throwable 异常
      */
     @Override
     public Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
