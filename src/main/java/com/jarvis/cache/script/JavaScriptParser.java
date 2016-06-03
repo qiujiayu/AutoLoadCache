@@ -22,20 +22,19 @@ public class JavaScriptParser implements IScriptParser {
 
     private static final Logger logger=Logger.getLogger(JavaScriptParser.class);
 
-    private static final ScriptEngineManager manager=new ScriptEngineManager();
+    private final ScriptEngineManager manager=new ScriptEngineManager();
 
-    private final ConcurrentHashMap<String, CompiledScript> expCache=new ConcurrentHashMap<String, CompiledScript>();
+    private final ConcurrentHashMap<String, CompiledScript> expCache=new ConcurrentHashMap<String, CompiledScript>(64);
 
-    private static final StringBuffer funcs=new StringBuffer();
+    private final StringBuffer funcs=new StringBuffer();
 
     private static int versionCode;
+
+    /**
+     * 如果使用的是JDK大于1.8版本的，则用 nashorn，否则用javascript
+     */
+    private final ScriptEngine engine;
     static {
-        try {
-            registerFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
-            registerFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));
-        } catch(Exception e) {
-            logger.error(e.getMessage(), e);
-        }
         String javaVersion=System.getProperty("java.version");
         int ind=0;
         for(int i=0; i < 2; i++) {
@@ -47,16 +46,11 @@ public class JavaScriptParser implements IScriptParser {
         versionCode=Integer.parseInt(javaVersion);
     }
 
-    /**
-     * 如果使用的是JDK大于1.8版本的，则用 nashorn，否则用javascript
-     */
-    private static final ScriptEngine engine=manager.getEngineByName(versionCode > 18 ? "nashorn" : "javascript");
-
-    private static void registerFunction(String name, Method method) {
+    public JavaScriptParser() {
+        engine=manager.getEngineByName(versionCode > 18 ? "nashorn" : "javascript");
         try {
-            String clsName=method.getDeclaringClass().getName();
-            String methodName=method.getName();
-            funcs.append("function " + name + "(obj){return " + clsName + "." + methodName + "(obj);}");
+            addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
+            addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));
         } catch(Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -64,7 +58,13 @@ public class JavaScriptParser implements IScriptParser {
 
     @Override
     public void addFunction(String name, Method method) {
-        registerFunction(name, method);
+        try {
+            String clsName=method.getDeclaringClass().getName();
+            String methodName=method.getName();
+            funcs.append("function " + name + "(obj){return " + clsName + "." + methodName + "(obj);}");
+        } catch(Exception e) {
+            logger.error(e.getMessage(), e);
+        }
     }
 
     @SuppressWarnings("unchecked")
