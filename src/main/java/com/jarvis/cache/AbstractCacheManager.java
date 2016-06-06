@@ -13,10 +13,7 @@ import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
-import com.jarvis.cache.script.IScriptParser;
-import com.jarvis.cache.script.ScriptParserUtil;
-import com.jarvis.cache.script.SpringELParser;
-import com.jarvis.cache.serializer.HessianSerializer;
+import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
@@ -36,33 +33,29 @@ public abstract class AbstractCacheManager implements ICacheManager {
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
     private final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
 
-    private AutoLoadHandler autoLoadHandler;
+    private final AutoLoadHandler autoLoadHandler;
 
     private String namespace;
 
     /**
      * 序列化工具，默认使用Hessian2
      */
-    private ISerializer<Object> serializer=new HessianSerializer();
+    private final ISerializer<Object> serializer;
 
     /**
      * 表达式解析器
      */
-    private IScriptParser scriptParser=new SpringELParser();
+    private final AbstractScriptParser scriptParser;
 
-    private ScriptParserUtil scriptParserUtil=new ScriptParserUtil(scriptParser);
-
-    public AbstractCacheManager(AutoLoadConfig config) {
+    public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
+        this.serializer=serializer;
+        this.scriptParser=scriptParser;
         registerFunction(config.getFunctions());
     }
 
     public ISerializer<Object> getSerializer() {
         return serializer;
-    }
-
-    public void setSerializer(ISerializer<Object> serializer) {
-        this.serializer=serializer;
     }
 
     @Override
@@ -78,18 +71,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
         this.namespace=namespace;
     }
 
-    public IScriptParser getScriptParser() {
+    public AbstractScriptParser getScriptParser() {
         return scriptParser;
-    }
-
-    public void setScriptParser(IScriptParser scriptParser) {
-        this.scriptParser=scriptParser;
-        scriptParserUtil=new ScriptParserUtil(this.scriptParser);
-        registerFunction(this.autoLoadHandler.getConfig().getFunctions());
-    }
-
-    public ScriptParserUtil getScriptParserUtil() {
-        return scriptParserUtil;
     }
 
     private void registerFunction(Map<String, String> funcs) {
@@ -129,13 +112,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             CacheWrapper cacheWrapper=getCacheWrapper(pjp, null, cache, null);
             Object result=cacheWrapper.getCacheObject();
-            if(scriptParserUtil.isCacheable(cache, arguments, result)) {
+            if(scriptParser.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
                 writeCache(pjp, null, cache, cacheKey, cacheWrapper);
             }
             return result;
         }
-        if(!scriptParserUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
+        if(!scriptParser.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp);
         }
         CacheKeyTO cacheKey=getCacheKey(pjp, cache);
@@ -171,7 +154,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         for(int i=0; i < keys.length; i++) {
             CacheDeleteKey keyConfig=keys[i];
             try {
-                if(!scriptParserUtil.isCanDelete(keyConfig, arguments, retVal)) {
+                if(!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
                     continue;
                 }
                 CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
@@ -322,7 +305,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 String className=pjp.getTargetClass().getName();
                 logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
             }
-            int expire=scriptParserUtil.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
+            int expire=scriptParser.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
             CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
             if(null != cacheKey && null == autoLoadTO) {
                 autoLoadTO=getAutoLoadTO(pjp, arguments, cache, cacheKey, cacheWrapper);
@@ -369,7 +352,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
             Object result=cacheWrapper.getCacheObject();
             for(ExCache exCache: exCaches) {
-                if(!scriptParserUtil.isCacheable(exCache, arguments, result)) {
+                if(!scriptParser.isCacheable(exCache, arguments, result)) {
                     continue;
                 }
                 CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
@@ -383,7 +366,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     exResult=scriptParser.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
                 }
 
-                int exCacheExpire=scriptParserUtil.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
+                int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
                 CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if(null != tmpAutoLoadTO) {
@@ -399,7 +382,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
     @Override
     public void destroy() {
         autoLoadHandler.shutdown();
-        autoLoadHandler=null;
         logger.info("cache destroy ... ... ...");
     }
 
@@ -419,9 +401,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
         String key=null;
         String hfield=null;
         if(null != _key && _key.trim().length() > 0) {
-            key=scriptParserUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
+            key=scriptParser.getDefinedCacheKey(_key, arguments, result, hasRetVal);
             if(null != _hfield && _hfield.trim().length() > 0) {
-                hfield=scriptParserUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
+                hfield=scriptParser.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
             }
         } else {
             key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
@@ -524,7 +506,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private AutoLoadTO getAutoLoadTO(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
         CacheWrapper cacheWrapper) throws Exception {
         AutoLoadTO autoLoadTO=null;
-        if(scriptParserUtil.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
+        if(scriptParser.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
             autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
             if(null == autoLoadTO) {
                 AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, serializer, cacheWrapper);

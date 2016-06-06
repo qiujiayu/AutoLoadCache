@@ -1,17 +1,46 @@
 package com.jarvis.cache.script;
 
+import java.lang.reflect.Method;
+
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.type.CacheOpType;
 
-public class ScriptParserUtil {
+/**
+ * 表达式处理
+ * @author jiayu.qiu
+ */
+public abstract class AbstractScriptParser {
 
-    private IScriptParser parser;
+    protected static final String ARGS="args";
 
-    public ScriptParserUtil(IScriptParser parser) {
-        this.parser=parser;
-    }
+    protected static final String RET_VAL="retVal";
+
+    protected static final String HASH="hash";
+
+    protected static final String EMPTY="empty";
+
+    /**
+     * 为了简化表达式，方便调用Java static 函数，在这里注入表达式自定义函数
+     * @param name 自定义函数名
+     * @param method 调用的方法
+     */
+    public abstract void addFunction(String name, Method method);
+
+    /**
+     * 将表达式转换期望的值
+     * @param exp 生成缓存Key的表达式
+     * @param arguments 参数
+     * @param retVal 结果值（缓存数据）
+     * @param hasRetVal 是否使用 retVal 参数
+     * @param valueType 表达式最终返回值类型
+     * @return T value 返回值
+     * @param <T> 泛型
+     * @throws Exception 异常
+     */
+    public abstract <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType)
+        throws Exception;
 
     /**
      * 将Spring EL 表达式转换期望的值
@@ -23,7 +52,7 @@ public class ScriptParserUtil {
      * @throws Exception 异常
      */
     public <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) throws Exception {
-        return parser.getElValue(keySpEL, arguments, null, false, valueType);
+        return this.getElValue(keySpEL, arguments, null, false, valueType);
     }
 
     /**
@@ -36,7 +65,7 @@ public class ScriptParserUtil {
      * @throws Exception 异常
      */
     public String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal) throws Exception {
-        return parser.getElValue(keySpEL, arguments, retVal, hasRetVal, String.class);
+        return this.getElValue(keySpEL, arguments, retVal, hasRetVal, String.class);
     }
 
     /**
@@ -65,7 +94,7 @@ public class ScriptParserUtil {
     public boolean isCacheable(Cache cache, Object[] arguments, Object result) throws Exception {
         boolean rv=true;
         if(null != cache.condition() && cache.condition().length() > 0) {
-            rv=parser.getElValue(cache.condition(), arguments, result, true, Boolean.class);
+            rv=this.getElValue(cache.condition(), arguments, result, true, Boolean.class);
         }
         return rv;
     }
@@ -84,7 +113,7 @@ public class ScriptParserUtil {
         }
         boolean rv=true;
         if(null != cache.condition() && cache.condition().length() > 0) {
-            rv=parser.getElValue(cache.condition(), arguments, result, true, Boolean.class);
+            rv=this.getElValue(cache.condition(), arguments, result, true, Boolean.class);
         }
         return rv;
     }
@@ -103,7 +132,7 @@ public class ScriptParserUtil {
         }
         boolean autoload=cache.autoload();
         if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
-            autoload=parser.getElValue(cache.autoloadCondition(), arguments, retVal, true, Boolean.class);
+            autoload=this.getElValue(cache.autoloadCondition(), arguments, retVal, true, Boolean.class);
         }
         return autoload;
     }
@@ -120,7 +149,7 @@ public class ScriptParserUtil {
         boolean rv=true;
         if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition()
             && cacheDeleteKey.condition().length() > 0) {
-            rv=parser.getElValue(cacheDeleteKey.condition(), arguments, retVal, true, Boolean.class);
+            rv=this.getElValue(cacheDeleteKey.condition(), arguments, retVal, true, Boolean.class);
         }
         return rv;
     }
@@ -137,7 +166,7 @@ public class ScriptParserUtil {
     public int getRealExpire(int expire, String expireExpression, Object[] arguments, Object result) throws Exception {
         Integer tmpExpire=null;
         if(null != expireExpression && expireExpression.length() > 0) {
-            tmpExpire=parser.getElValue(expireExpression, arguments, result, true, Integer.class);
+            tmpExpire=this.getElValue(expireExpression, arguments, result, true, Integer.class);
             if(null != tmpExpire && tmpExpire.intValue() >= 0) {
                 // 返回缓存时间表达式计算的时间
                 return tmpExpire.intValue();

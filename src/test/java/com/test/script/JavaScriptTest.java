@@ -1,8 +1,7 @@
 package com.test.script;
 
-import com.jarvis.cache.script.IScriptParser;
+import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.script.JavaScriptParser;
-import com.jarvis.cache.script.ScriptParserUtil;
 
 public class JavaScriptTest {
 
@@ -20,11 +19,10 @@ public class JavaScriptTest {
 
         String keySpEL="'test'";
         Object[] arguments=new Object[]{"1111", "2222"};
-        IScriptParser scriptParser=new JavaScriptParser();
-        ScriptParserUtil scriptParserUtil=new ScriptParserUtil(scriptParser);
-        String res=scriptParserUtil.getDefinedCacheKey(keySpEL, arguments, null, false);
+        AbstractScriptParser scriptParser=new JavaScriptParser();
+        String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, null, false);
         System.out.println(res);
-        Boolean rv=scriptParserUtil.getElValue("empty(args[0])", arguments, Boolean.class);
+        Boolean rv=scriptParser.getElValue("empty(args[0])", arguments, Boolean.class);
         System.out.println(rv);
     }
 

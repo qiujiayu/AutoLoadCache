@@ -18,7 +18,7 @@ import com.jarvis.cache.CacheUtil;
  * 解析JavaScript表达式
  * @author jiayu.qiu
  */
-public class JavaScriptParser implements IScriptParser {
+public class JavaScriptParser extends AbstractScriptParser {
 
     private static final Logger logger=Logger.getLogger(JavaScriptParser.class);
 

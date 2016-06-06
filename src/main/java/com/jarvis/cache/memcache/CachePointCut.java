@@ -3,6 +3,8 @@ package com.jarvis.cache.memcache;
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -14,8 +16,8 @@ public class CachePointCut extends AbstractCacheManager {
 
     private MemcachedClient memcachedClient;
 
-    public CachePointCut(AutoLoadConfig config) {
-        super(config);
+    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
     }
 
     @Override

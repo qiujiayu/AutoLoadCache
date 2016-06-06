@@ -49,11 +49,10 @@ public class AdminServlet extends HttpServlet {
             try {
                 cacheManagerConfig=(CacheManagerConfig)Class.forName(_cacheManagerConfig).newInstance();
             } catch(Exception e) {
-                e.printStackTrace();
+                throw new ServletException(e);
             }
         } else {
-            cacheManagerConfig=new SpringCacheManagerConfig();
-            _cacheManagerConfig=SpringCacheManagerConfig.class.getName();
+            throw new ServletException("请设置com.jarvis.cache.admin.servlet.AdminServlet 中的 cacheManagerConfig 参数！");
         }
     }
 

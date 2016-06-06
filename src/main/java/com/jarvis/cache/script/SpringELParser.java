@@ -16,7 +16,7 @@ import com.jarvis.cache.CacheUtil;
  * Spring EL表达式解析处理
  * @author jiayu.qiu
  */
-public class SpringELParser implements IScriptParser {
+public class SpringELParser extends AbstractScriptParser {
 
     private final ExpressionParser parser=new SpelExpressionParser();
 

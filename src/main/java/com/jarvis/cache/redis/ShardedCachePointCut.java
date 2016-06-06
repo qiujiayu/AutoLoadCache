@@ -15,6 +15,8 @@ import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -42,8 +44,8 @@ public class ShardedCachePointCut extends AbstractCacheManager {
      */
     private boolean hashExpireByScript=false;
 
-    public ShardedCachePointCut(AutoLoadConfig config) {
-        super(config);
+    public ShardedCachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
     }
 
     private void returnResource(ShardedJedis shardedJedis) {

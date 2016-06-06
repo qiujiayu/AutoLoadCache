@@ -1,0 +1,60 @@
+##使用方法
+
+
+###1. Maven dependency:
+
+    <dependency>
+      <groupId>com.github.qiujiayu</groupId>
+      <artifactId>autoload-cache</artifactId>
+      <version>${version}</version>
+    </dependency>
+
+###2. [AutoLoadConfig 配置说明](AutoLoadConfig.md)
+
+###3. 序列化工具：
+
+序列化工具主要用于深度复杂，以及缓存中数据与Java对象的转换。框架中已经实现了Hessian和Jdk自带的序列化工具类，分别的：com.jarvis.cache.serializer.HessianSerializer 和 com.jarvis.cache.serializer.JdkSerializer，如果需要使用其它序列化工具，可以通过实现com.jarvis.cache.serializer.ISerializer<Object>来扩展（比如：Kryo和FST等）。
+
+    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
+    <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
+
+###4. 表达式解析器
+
+缓存Key及一些条件表达式，都是通过表达式与Java对象进行交互的，框架中已经内置了使用Spring El和Javascript两种表达的解析器，分别的：com.jarvis.cache.script.SpringELParser 和 com.jarvis.cache.script.JavaScriptParser，如果需要扩展，需要继承com.jarvis.cache.script.AbstractScriptParser 这个抽象类。
+
+    <bean id="scriptParser" class="com.jarvis.cache.script.SpringELParser" />
+
+###5.缓存配置
+
+框架已经支持 Redis、Memcache以及ConcurrentHashMap 三种缓存：
+
+* [Redis 配置](JRedis.md)
+* [Memcache 配置](Memcache.md)
+* [ConcurrentHashMap 配置](ConcurrentHashMap.md)
+
+
+###6.AOP 配置：
+
+    <bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
+      <property name="cacheManager" ref="cacheManager" />
+    </bean>
+    <aop:config proxy-target-class="true">
+      <aop:aspect ref="cacheInterceptor">
+        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
+        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
+      </aop:aspect>
+      <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
+        <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
+        <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
+      </aop:aspect>
+    </aop:config>
+
+
+如果不同的数据，要使用不同的缓存的话，可以通过配置多个AOP来进行共区分。
+
+
+###7. 在需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解
+
+更多的配置可以参照[实例代码](https://github.com/qiujiayu/cache-example)
+
+以上配置是基于 Spring 的配置，如果是使用nutz，请参照 [AutoLoadCache-nutz](https://github.com/qiujiayu/AutoLoadCache-nutz) 中的说明。
