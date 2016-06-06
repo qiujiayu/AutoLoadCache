@@ -26,7 +26,7 @@ Spring AOP这几年非常热门，使用也越来越多，但个人建议AOP只�
 
 ###[与Spring Cache的区别](SpringCache.md)
 
-### [更新日志](ConcurrentHashMap.md)
+### [更新日志](changesLog.md)
 
 ###未来计划：redis3.0 集群研究以及使用
 
