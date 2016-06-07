@@ -1,11 +1,11 @@
 ###ConcurrentHashMap配置
 
-  <bean id="cacheManager" class="com.jarvis.cache.map.CachePointCut" init-method="start" destroy-method="destroy">
-    <constructor-arg ref="autoLoadConfig" />
-    <constructor-arg ref="hessianSerializer" />
-    <constructor-arg ref="scriptParser" />
-    <property name="namespace" value="test" />
-  </bean>
+    <bean id="cacheManager" class="com.jarvis.cache.map.CachePointCut" init-method="start" destroy-method="destroy">
+      <constructor-arg ref="autoLoadConfig" />
+      <constructor-arg ref="hessianSerializer" />
+      <constructor-arg ref="scriptParser" />
+      <property name="namespace" value="test" />
+    </bean>
 
 CachePointCut中可以配置参数说明：
 
