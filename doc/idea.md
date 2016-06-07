@@ -1,7 +1,7 @@
 ###设计思想及原理
 
 如下图所示：
-![Alt 缓存框架](/doc/autoload-cache.png "缓存框架")
+![Alt 缓存框架](autoload-cache.png "缓存框架")
 
 AOP拦截到请求后：
 >1. 根据请求参数生成Key，后面我们会对生成Key的规则，进一步说明；

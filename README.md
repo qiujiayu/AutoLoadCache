@@ -10,23 +10,23 @@
 Spring AOP这几年非常热门，使用也越来越多，但个人建议AOP只用于处理一些辅助的功能（比如：接下来我们要说的缓存），而不能把业务逻辑使用AOP中实现，尤其是在需要“事务”的环境中。
 
 
-###[设计思想及原理](idea.md)
+###[设计思想及原理](./doc/idea.md)
 
-###[使用方法](use.md)
+###[使用方法](./doc/use.md)
 
-###[注解（Annotation）说明](annotations.md)
+###[注解（Annotation）说明](./doc/annotations.md)
 
-###[表达式的应用](script.md)
+###[表达式的应用](./doc/script.md)
 
-###[缓存删除](deleteCache.md)
+###[缓存删除](./doc/deleteCache.md)
 
-###[注意事项](warning.md)
+###[注意事项](./doc/warning.md)
 
-###[缓存管理页面](admin.md)
+###[缓存管理页面](./doc/admin.md)
 
-###[与Spring Cache的区别](SpringCache.md)
+###[与Spring Cache的区别](./doc/SpringCache.md)
 
-### [更新日志](changesLog.md)
+### [更新日志](./doc/changesLog.md)
 
 ###未来计划：redis3.0 集群研究以及使用
 

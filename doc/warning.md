@@ -63,6 +63,20 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
 ###7. 如果DAO方法中需要从ThreadLocal 获取数据时，不能使用自动加载机制（@Cache的autoload值不能设置为true）。自动加载是用新的线程中模拟用户请求的，这时ThreadLocal的数据都是空的。
 
+###8. 使用 @Cache(opType=CacheOpType.WRITE)的坑
+因为AutoloadCache是不支持事务回滚的，所以在如下情况时，会出现缓存中的数据不正确的情况：
+
+    public class UserDAO {
+        // 更新数据后，同时把数据缓存
+        @Cache(expire=600, key="'user'+#retVal.id", opType=CacheOpType.WRITE)
+        public UserTO updateUser(UserTO user) {
+            getSqlMapClient().update("USER.updateUser", user);
+            return user;
+        }
+    }
+
+如果事务提交失败时，此时缓存中的数据无法回滚，所以使用时要注意。
+
 ##在事务环境中，如何减少“脏读”
 
 1. 不要从缓存中取数据，然后应用到修改数据的SQL语句中

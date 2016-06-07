@@ -36,4 +36,4 @@ web.xml配置：
 
 
 显示内容，如下图所示：
-![Alt 缓存管理](/doc/cache_admin.png "缓存管理")
+![Alt 缓存管理](./cache_admin.png "缓存管理")

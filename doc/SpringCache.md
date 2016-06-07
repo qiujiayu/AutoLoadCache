@@ -11,3 +11,5 @@ Spring Cache 最大的缺点就是无法使用Spring EL表达式来动态生成C
 AutoLoadCache中使用了一致性hash算法对Redis缓存进行分片处理。如果在Spring Cache 中想使用一致性hash算法进行分片那是不太可能的，即使实现了，也会给批量清缓存带来麻烦。
 
 Spring Cache中只能使用Spring 中的AOP, 而AutoloadCache 根据自己的实际情况进行扩展。
+
+Spring Cache只能基于Spring 中的AOP及Spring EL表达式来使用，而AutoloadCache 可以根据使用者的实际情况进行扩展。 
