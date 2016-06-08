@@ -88,7 +88,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
         return saveFile;
     }
 
-    private ISerializer<Object> getPersistSerializer() {// 持久化到磁盘，只能使用HessianSerializer
+    private ISerializer<Object> getPersistSerializer() {// 因为只有HessianSerializer才支持SoftReference序列化，所以只能使用HessianSerializer
         if(null == persistSerializer) {
             if(null != cacheManager.getSerializer() && cacheManager.getSerializer() instanceof HessianSerializer) {
                 persistSerializer=cacheManager.getSerializer();
