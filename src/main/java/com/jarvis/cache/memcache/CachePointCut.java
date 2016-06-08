@@ -1,5 +1,7 @@
 package com.jarvis.cache.memcache;
 
+import java.lang.reflect.Type;
+
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
@@ -10,7 +12,7 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 缓存切面，用于拦截数据并调用memcache进行缓存
+ * memcache缓存管理
  */
 public class CachePointCut extends AbstractCacheManager {
 
@@ -37,7 +39,7 @@ public class CachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }

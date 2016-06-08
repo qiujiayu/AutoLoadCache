@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.jarvis.cache.serializer.ISerializer;
-
 /**
  * @author jiayu.qiu
  */
@@ -136,17 +134,5 @@ public class BeanUtil {
             cl=cl.getSuperclass();
         } while(cl != null);
         return r;
-    }
-
-    /**
-     * 通过序列化进行深度复制
-     * @param obj Object
-     * @param serializer ISerializer
-     * @throws Exception Exception
-     * @return T Value 返回值
-     * @param <T> 泛型
-     */
-    public static <T> T deepClone(T obj, ISerializer<T> serializer) throws Exception {
-        return serializer.deserialize(serializer.serialize(obj));
     }
 }

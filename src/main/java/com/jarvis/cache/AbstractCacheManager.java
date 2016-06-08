@@ -1,6 +1,7 @@
 package com.jarvis.cache;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -125,8 +126,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == cacheKey) {
             return getData(pjp);
         }
+        Type returnType=pjp.getMethod().getGenericReturnType();
+        CacheWrapper cacheWrapper=null;
+        try {
+            cacheWrapper=this.get(cacheKey, returnType);// 从缓存中获取数据
+        } catch(Exception ex) {
 
-        CacheWrapper cacheWrapper=this.get(cacheKey);// 从缓存中获取数据
+        }
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO=getAutoLoadTO(pjp, arguments, cache, cacheKey, cacheWrapper);
             if(null != autoLoadTO) {// 同步最后加载时间

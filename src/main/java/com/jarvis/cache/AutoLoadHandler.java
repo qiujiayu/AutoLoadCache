@@ -1,5 +1,6 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,6 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
@@ -131,7 +131,7 @@ public class AutoLoadHandler {
         if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])BeanUtil.deepClone(arguments, serializer); // 进行深度复制
+                arguments=(Object[])serializer.deepClone(arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
@@ -278,7 +278,13 @@ public class AutoLoadHandler {
                 return;
             }
             if(config.isCheckFromCacheBeforeLoad()) {
-                CacheWrapper result=cacheManager.get(autoLoadTO.getCacheKey());
+                CacheWrapper result=null;
+                try {
+                    Type returnType=autoLoadTO.getJoinPoint().getMethod().getGenericReturnType();
+                    result=cacheManager.get(autoLoadTO.getCacheKey(), returnType);
+                } catch(Exception ex) {
+
+                }
                 if(null != result) {// 如果已经被别的服务器更新了，则不需要再次更新
                     autoLoadTO.setExpire(result.getExpire());
                     if(result.getLastLoadTime() > autoLoadTO.getLastLoadTime() && (now - result.getLastLoadTime()) < timeout) {

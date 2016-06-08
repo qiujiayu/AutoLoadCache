@@ -3,12 +3,14 @@ package com.test;
 import java.lang.ref.WeakReference;
 
 import com.jarvis.cache.serializer.HessianSerializer;
-import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.lib.util.BeanUtil;
+import com.jarvis.cache.serializer.WeakReferenceSerializerFactory;
 
 public class WeakReferenceTest {
 
-    private static final ISerializer<Object> serializer=new HessianSerializer();
+    private static final HessianSerializer serializer=new HessianSerializer();
+    static {
+        serializer.addSerializerFactory(new WeakReferenceSerializerFactory());
+    }
 
     public static void main(String[] args) {
         Simple s=new Simple();
@@ -18,7 +20,7 @@ public class WeakReferenceTest {
         WeakReference<Simple> ref=new WeakReference<Simple>(s);
         s=null;
         try {
-            WeakReference<Simple> ref2=(WeakReference<Simple>)BeanUtil.deepClone(ref, serializer);
+            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref);
             System.out.println(ref2.get());
         } catch(Exception e1) {
             e1.printStackTrace();
@@ -38,7 +40,7 @@ public class WeakReferenceTest {
         }
         System.out.println("object a was cleared by JVM!");
         try {
-            WeakReference<Simple> ref2=(WeakReference<Simple>)BeanUtil.deepClone(ref, serializer);
+            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref);
             System.out.println(ref2.get());
         } catch(Exception e1) {
             e1.printStackTrace();

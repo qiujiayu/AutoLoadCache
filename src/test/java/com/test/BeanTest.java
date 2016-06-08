@@ -12,6 +12,10 @@ public class BeanTest {
         isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
         System.out.println("isProcessing2==" + isProcessing);
 
+        String t="daddadfaf";
+        System.out.println(t.length());
+        System.out.println(t.getBytes().length);
+
     }
 
 }

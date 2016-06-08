@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
+import com.jarvis.cache.serializer.HessianSerializer;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.OsUtil;
 
@@ -31,6 +33,8 @@ public class CacheTask implements Runnable, CacheChangeListener {
     private volatile boolean running=false;
 
     private File saveFile;
+
+    private ISerializer<Object> persistSerializer;
 
     public CacheTask(CachePointCut cacheManager) {
         this.cacheManager=cacheManager;
@@ -84,6 +88,17 @@ public class CacheTask implements Runnable, CacheChangeListener {
         return saveFile;
     }
 
+    private ISerializer<Object> getPersistSerializer() {// 持久化到磁盘，只能使用HessianSerializer
+        if(null == persistSerializer) {
+            if(null != cacheManager.getSerializer() && cacheManager.getSerializer() instanceof HessianSerializer) {
+                persistSerializer=cacheManager.getSerializer();
+            } else {
+                persistSerializer=new HessianSerializer();
+            }
+        }
+        return persistSerializer;
+    }
+
     /**
      * 从磁盘中加载之前保存的缓存数据，避免刚启动时，因为没有缓存，而且造成压力过大
      */
@@ -107,7 +122,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
                 baos.write(buf, 0, len);
             }
             byte retArr[]=baos.toByteArray();
-            Object obj=cacheManager.getSerializer().deserialize(retArr);
+            Object obj=getPersistSerializer().deserialize(retArr, null);
             if(null != obj && obj instanceof ConcurrentHashMap) {
                 cacheManager.getCache().putAll((ConcurrentHashMap<String, Object>)obj);
             }
@@ -136,7 +151,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
         cacheChanged.set(0);
         FileOutputStream fos=null;
         try {
-            byte[] data=cacheManager.getSerializer().serialize(cacheManager.getCache());
+            byte[] data=getPersistSerializer().serialize(cacheManager.getCache());
             File file=getSaveFile();
             fos=new FileOutputStream(file);
             fos.write(data);

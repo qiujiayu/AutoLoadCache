@@ -2,9 +2,11 @@ package com.jarvis.cache.serializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Type;
 
 import com.caucho.hessian.io.AbstractHessianInput;
 import com.caucho.hessian.io.AbstractHessianOutput;
+import com.caucho.hessian.io.AbstractSerializerFactory;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
@@ -15,7 +17,14 @@ public class HessianSerializer implements ISerializer<Object> {
     static {
         serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
         serializerFactory.addFactory(new HessionSoftReferenceSerializerFactory());
-        // serializerFactory.addFactory(new WeakReferenceSerializerFactory());
+    }
+
+    /**
+     * 添加自定义SerializerFactory
+     * @param factory AbstractSerializerFactory
+     */
+    public void addSerializerFactory(AbstractSerializerFactory factory) {
+        serializerFactory.addFactory(factory);
     }
 
     @Override
@@ -36,7 +45,7 @@ public class HessianSerializer implements ISerializer<Object> {
     }
 
     @Override
-    public Object deserialize(byte[] bytes) throws Exception {
+    public Object deserialize(byte[] bytes, Type returnType) throws Exception {
         if(null == bytes || bytes.length == 0) {
             return null;
         }
@@ -46,6 +55,11 @@ public class HessianSerializer implements ISerializer<Object> {
         Object obj=input.readObject();
         input.close();
         return obj;
+    }
+
+    @Override
+    public Object deepClone(Object obj) throws Exception {
+        return deserialize(serialize(obj), null);
     }
 
 }

@@ -1,5 +1,7 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Type;
+
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
@@ -22,9 +24,10 @@ public interface ICacheManager {
     /**
      * 根据缓存Key获得缓存中的数据
      * @param key 缓存key
+     * @param returnType AOP拦截方法的 GenericReturnType
      * @return 缓存数据
      */
-    CacheWrapper get(CacheKeyTO key);
+    CacheWrapper get(CacheKeyTO key, Type returnType);
 
     /**
      * 删除缓存

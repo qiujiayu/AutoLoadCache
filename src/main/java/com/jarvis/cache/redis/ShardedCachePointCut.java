@@ -1,6 +1,7 @@
 package com.jarvis.cache.redis;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +24,7 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 缓存切面，用于拦截数据并调用Redis进行缓存
+ * Redis缓存管理
  * @author jiayu.qiu
  */
 public class ShardedCachePointCut extends AbstractCacheManager {
@@ -143,7 +144,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }
@@ -163,7 +164,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            res=(CacheWrapper)getSerializer().deserialize(bytes);
+            res=(CacheWrapper)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {

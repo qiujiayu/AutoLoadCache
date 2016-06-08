@@ -1,6 +1,7 @@
 package com.jarvis.cache.map;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.jarvis.cache.AbstractCacheManager;
@@ -9,8 +10,11 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
 
+/**
+ * 使用ConcurrentHashMap管理缓存
+ * @author jiayu.qiu
+ */
 public class CachePointCut extends AbstractCacheManager {
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
@@ -79,7 +83,7 @@ public class CachePointCut extends AbstractCacheManager {
         CacheWrapper value=null;
         if(copyValue) {
             try {
-                value=(CacheWrapper)BeanUtil.deepClone(value, this.getSerializer());
+                value=(CacheWrapper)this.getSerializer().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -108,7 +112,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -145,7 +149,7 @@ public class CachePointCut extends AbstractCacheManager {
         }
         if(copyValue) {
             try {
-                return (CacheWrapper)BeanUtil.deepClone(value, this.getSerializer());
+                return (CacheWrapper)this.getSerializer().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }

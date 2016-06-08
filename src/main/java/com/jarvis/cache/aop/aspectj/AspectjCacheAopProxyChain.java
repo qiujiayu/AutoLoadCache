@@ -10,10 +10,13 @@ import com.jarvis.cache.aop.CacheAopProxyChain;
 
 public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
 
-    private ProceedingJoinPoint jp;
+    private final ProceedingJoinPoint jp;
+
+    private Method method;
 
     public AspectjCacheAopProxyChain(ProceedingJoinPoint jp) {
         this.jp=jp;
+
     }
 
     @Override
@@ -29,9 +32,12 @@ public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
 
     @Override
     public Method getMethod() {
-        Signature signature=jp.getSignature();
-        MethodSignature methodSignature=(MethodSignature)signature;
-        return methodSignature.getMethod();
+        if(null == method) {
+            Signature signature=jp.getSignature();
+            MethodSignature methodSignature=(MethodSignature)signature;
+            this.method=methodSignature.getMethod();
+        }
+        return method;
     }
 
     @Override

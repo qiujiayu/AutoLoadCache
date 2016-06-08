@@ -4,10 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Type;
 
 public class JdkSerializer implements ISerializer<Object> {
 
-    public Object deserialize(byte[] bytes) throws Exception {
+    @Override
+    public Object deserialize(byte[] bytes, Type returnType) throws Exception {
         if(null == bytes || bytes.length == 0) {
             return null;
         }
@@ -16,6 +18,7 @@ public class JdkSerializer implements ISerializer<Object> {
         return input.readObject();
     }
 
+    @Override
     public byte[] serialize(Object obj) throws Exception {
         if(obj == null) {
             return new byte[0];
@@ -26,5 +29,10 @@ public class JdkSerializer implements ISerializer<Object> {
         output.writeObject(obj);
         output.flush();
         return outputStream.toByteArray();
+    }
+
+    @Override
+    public Object deepClone(Object obj) throws Exception {
+        return deserialize(serialize(obj), null);
     }
 }
