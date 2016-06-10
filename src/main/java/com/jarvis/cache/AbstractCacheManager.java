@@ -111,7 +111,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         // Class returnType=methodSignature.getReturnType(); // 获取返回值类型
         // System.out.println("returnType:" + returnType.getName());
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
-            CacheWrapper cacheWrapper=getCacheWrapper(pjp, null, cache, null);
+            CacheWrapper<Object> cacheWrapper=getCacheWrapper(pjp, null, cache, null);
             Object result=cacheWrapper.getCacheObject();
             if(scriptParser.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
@@ -127,7 +127,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             return getData(pjp);
         }
         Type returnType=pjp.getMethod().getGenericReturnType();
-        CacheWrapper cacheWrapper=null;
+        CacheWrapper<Object> cacheWrapper=null;
         try {
             cacheWrapper=this.get(cacheKey, returnType);// 从缓存中获取数据
         } catch(Exception ex) {
@@ -195,7 +195,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
         }
         Object lock=null;
-        CacheWrapper cacheWrapper=null;
+        CacheWrapper<Object> cacheWrapper=null;
         // String tname=Thread.currentThread().getName();
         if(null == isProcessing) {// 当前并发中的第一个请求
             lock=processingTO;
@@ -293,7 +293,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return CacheWrapper
      * @throws Throwable
      */
-    private CacheWrapper getCacheWrapper(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey)
+    private CacheWrapper<Object> getCacheWrapper(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey)
         throws Throwable {
         try {
             long startTime=System.currentTimeMillis();
@@ -312,7 +312,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
             }
             int expire=scriptParser.getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
-            CacheWrapper cacheWrapper=new CacheWrapper(result, expire);
+            CacheWrapper<Object> cacheWrapper=new CacheWrapper<Object>(result, expire);
             if(null != cacheKey && null == autoLoadTO) {
                 autoLoadTO=getAutoLoadTO(pjp, arguments, cache, cacheKey, cacheWrapper);
                 if(null != autoLoadTO) {// 只有当autoLoadTO时才是实际用户请求，不为null时，是AutoLoadHandler 发过来的请求
@@ -343,8 +343,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @return CacheWrapper
      * @throws Exception
      */
-    private CacheWrapper writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) throws Exception {
+    private CacheWrapper<Object> writeCache(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey,
+        CacheWrapper<Object> cacheWrapper) throws Exception {
         if(null == cacheKey) {
             return null;
         }
@@ -373,7 +373,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 }
 
                 int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
-                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCacheExpire);
+                CacheWrapper<Object> exCacheWrapper=new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if(null != tmpAutoLoadTO) {
                     tmpAutoLoadTO.setExpire(exCacheExpire);
@@ -510,7 +510,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception
      */
     private AutoLoadTO getAutoLoadTO(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper cacheWrapper) throws Exception {
+        CacheWrapper<Object> cacheWrapper) throws Exception {
         AutoLoadTO autoLoadTO=null;
         if(scriptParser.isAutoload(cache, arguments, cacheWrapper.getCacheObject())) {
             autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);

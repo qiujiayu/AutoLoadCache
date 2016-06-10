@@ -72,7 +72,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) {
         if(null == cacheKeyTO) {
             return;
         }
@@ -80,27 +80,27 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
-        CacheWrapper value=null;
+        CacheWrapper<Object> value=null;
         if(copyValue) {
             try {
-                value=(CacheWrapper)this.getSerializer().deepClone(value);
+                value=(CacheWrapper<Object>)this.getSerializer().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }
         } else {
             value=result;
         }
-        SoftReference<CacheWrapper> reference=new SoftReference<CacheWrapper>(value);
+        SoftReference<CacheWrapper<Object>> reference=new SoftReference<CacheWrapper<Object>>(value);
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
             cache.put(cacheKey, reference);
         } else {
-            ConcurrentHashMap<String, SoftReference<CacheWrapper>> hash=
-                (ConcurrentHashMap<String, SoftReference<CacheWrapper>>)cache.get(cacheKey);
+            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash=
+                (ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.get(cacheKey);
             if(null == hash) {
-                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper>>();
-                ConcurrentHashMap<String, SoftReference<CacheWrapper>> _hash=null;
-                _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper>>)cache.putIfAbsent(cacheKey, hash);
+                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>();
+                ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> _hash=null;
+                _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
                 }
@@ -112,7 +112,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -125,31 +125,31 @@ public class CachePointCut extends AbstractCacheManager {
             return null;
         }
         String hfield=cacheKeyTO.getHfield();
-        CacheWrapper value=null;
+        CacheWrapper<Object> value=null;
         if(null == hfield || hfield.length() == 0) {
             if(obj instanceof SoftReference) {
-                SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)obj;
+                SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)obj;
                 if(null != reference) {
                     value=reference.get();
                 }
             } else if(obj instanceof CacheWrapper) {// 兼容老版本
-                value=(CacheWrapper)obj;
+                value=(CacheWrapper<Object>)obj;
             }
         } else {
             ConcurrentHashMap<String, Object> hash=(ConcurrentHashMap<String, Object>)obj;
             Object tmp=hash.get(hfield);
             if(tmp instanceof SoftReference) {
-                SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)tmp;
+                SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)tmp;
                 if(null != reference) {
                     value=reference.get();
                 }
             } else if(tmp instanceof CacheWrapper) {// 兼容老版本
-                value=(CacheWrapper)tmp;
+                value=(CacheWrapper<Object>)tmp;
             }
         }
         if(copyValue) {
             try {
-                return (CacheWrapper)this.getSerializer().deepClone(value);
+                return (CacheWrapper<Object>)this.getSerializer().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -176,13 +176,14 @@ public class CachePointCut extends AbstractCacheManager {
             if(tmp instanceof CacheWrapper) {
                 this.changeListener.cacheChange();
             } else if(tmp instanceof ConcurrentHashMap) {
-                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)tmp;
+                ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)tmp;
                 if(hash.size() > 0) {
                     this.changeListener.cacheChange(hash.size());
                 }
             }
         } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
+            ConcurrentHashMap<String, CacheWrapper<Object>> hash=
+                (ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
             if(null != hash) {
                 Object tmp=hash.remove(hfield);
                 if(null != tmp) {// 如果删除成功

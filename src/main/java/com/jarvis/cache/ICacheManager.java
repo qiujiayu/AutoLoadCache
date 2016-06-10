@@ -19,7 +19,7 @@ public interface ICacheManager {
      * @param cacheKey 缓存Key
      * @param result 缓存数据
      */
-    void setCache(CacheKeyTO cacheKey, CacheWrapper result);
+    void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result);
 
     /**
      * 根据缓存Key获得缓存中的数据
@@ -27,7 +27,7 @@ public interface ICacheManager {
      * @param returnType AOP拦截方法的 GenericReturnType
      * @return 缓存数据
      */
-    CacheWrapper get(CacheKeyTO key, Type returnType);
+    CacheWrapper<Object> get(CacheKeyTO key, Type returnType);
 
     /**
      * 删除缓存

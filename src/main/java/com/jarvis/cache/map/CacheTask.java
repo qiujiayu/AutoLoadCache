@@ -216,9 +216,9 @@ public class CacheTask implements Runnable, CacheChangeListener {
         int _cacheChanged=0;
         Object value=iterator.next().getValue();
         if(value instanceof SoftReference) {
-            SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)value;
+            SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)value;
             if(null != reference && null != reference.get()) {
-                CacheWrapper tmp=reference.get();
+                CacheWrapper<Object> tmp=reference.get();
                 if(tmp.isExpired()) {
                     iterator.remove();
                     _cacheChanged++;
@@ -233,9 +233,9 @@ public class CacheTask implements Runnable, CacheChangeListener {
             while(iterator2.hasNext()) {
                 Object tmpObj=iterator2.next().getValue();
                 if(tmpObj instanceof SoftReference) {
-                    SoftReference<CacheWrapper> reference=(SoftReference<CacheWrapper>)tmpObj;
+                    SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)tmpObj;
                     if(null != reference && null != reference.get()) {
-                        CacheWrapper tmp=reference.get();
+                        CacheWrapper<Object> tmp=reference.get();
                         if(tmp.isExpired()) {
                             iterator2.remove();
                             _cacheChanged++;
@@ -245,7 +245,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
                         _cacheChanged++;
                     }
                 } else if(tmpObj instanceof CacheWrapper) {// 兼容老版本
-                    CacheWrapper tmp=(CacheWrapper)tmpObj;
+                    CacheWrapper<Object> tmp=(CacheWrapper<Object>)tmpObj;
                     if(tmp.isExpired()) {
                         iterator2.remove();
                         _cacheChanged++;
@@ -256,7 +256,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
                 iterator.remove();
             }
         } else {
-            CacheWrapper tmp=(CacheWrapper)value;
+            CacheWrapper<Object> tmp=(CacheWrapper<Object>)value;
             if(tmp.isExpired()) {
                 iterator.remove();
                 _cacheChanged++;

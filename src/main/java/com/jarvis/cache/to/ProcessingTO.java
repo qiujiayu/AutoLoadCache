@@ -4,7 +4,7 @@ public class ProcessingTO {
 
     private volatile long startTime;
 
-    private volatile CacheWrapper cache;
+    private volatile CacheWrapper<Object> cache;
 
     private volatile boolean firstFinished=false;
 
@@ -14,11 +14,11 @@ public class ProcessingTO {
         startTime=System.currentTimeMillis();
     }
 
-    public CacheWrapper getCache() {
+    public CacheWrapper<Object> getCache() {
         return cache;
     }
 
-    public void setCache(CacheWrapper cache) {
+    public void setCache(CacheWrapper<Object> cache) {
         this.cache=cache;
     }
 

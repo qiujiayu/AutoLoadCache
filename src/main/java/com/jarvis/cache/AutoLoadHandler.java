@@ -123,7 +123,7 @@ public class AutoLoadHandler {
     }
 
     public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, ISerializer<Object> serializer,
-        CacheWrapper cacheWrapper) {
+        CacheWrapper<Object> cacheWrapper) {
         if(null == autoLoadMap) {
             return null;
         }
@@ -278,7 +278,7 @@ public class AutoLoadHandler {
                 return;
             }
             if(config.isCheckFromCacheBeforeLoad()) {
-                CacheWrapper result=null;
+                CacheWrapper<Object> result=null;
                 try {
                     Type returnType=autoLoadTO.getJoinPoint().getMethod().getGenericReturnType();
                     result=cacheManager.get(autoLoadTO.getCacheKey(), returnType);

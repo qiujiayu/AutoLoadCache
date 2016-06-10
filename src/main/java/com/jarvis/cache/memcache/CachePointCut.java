@@ -23,7 +23,7 @@ public class CachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) {
         if(null == cacheKeyTO) {
             return;
         }
@@ -38,8 +38,9 @@ public class CachePointCut extends AbstractCacheManager {
         memcachedClient.set(cacheKey, result.getExpire(), result);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -51,7 +52,7 @@ public class CachePointCut extends AbstractCacheManager {
         if(null != hfield && hfield.length() > 0) {
             throw new RuntimeException("memcached does not support hash cache.");
         }
-        return (CacheWrapper)memcachedClient.get(cacheKey);
+        return (CacheWrapper<Object>)memcachedClient.get(cacheKey);
     }
 
     /**

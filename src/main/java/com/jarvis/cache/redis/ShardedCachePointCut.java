@@ -54,7 +54,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper result) {
+    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
         }
@@ -96,7 +96,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     private static final Map<Jedis, byte[]> hashSetScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
 
-    private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper result) throws Exception {
+    private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
         byte[] key=keySerializer.serialize(cacheKey);
         byte[] field=keySerializer.serialize(hfield);
         byte[] val=getSerializer().serialize(result);
@@ -143,8 +143,9 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }
@@ -152,7 +153,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return null;
         }
-        CacheWrapper res=null;
+        CacheWrapper<Object> res=null;
         ShardedJedis shardedJedis=null;
         try {
             shardedJedis=shardedJedisPool.getResource();
@@ -164,7 +165,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            res=(CacheWrapper)getSerializer().deserialize(bytes, returnType);
+            res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {

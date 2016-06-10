@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 import com.alibaba.fastjson.JSON;
+import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
+import com.jarvis.cache.to.CacheWrapper;
 
 public class FastjsonSerializer implements ISerializer<Object> {
 
@@ -32,7 +34,9 @@ public class FastjsonSerializer implements ISerializer<Object> {
             return null;
         }
         String json=new String(bytes, charset);
-        return JSON.parseObject(json, returnType);
+        Type[] agsType=new Type[]{returnType};
+
+        return JSON.parseObject(json, ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
     }
 
     @Override
