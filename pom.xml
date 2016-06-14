@@ -82,9 +82,16 @@
   </distributionManagement>
   <dependencies>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.11</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>
       <version>1.2.12</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

@@ -52,6 +52,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         super(config, serializer, scriptParser);
+        config.setCheckFromCacheBeforeLoad(false);
         cacheTask=new CacheTask(this);
         changeListener=cacheTask;
     }
@@ -112,7 +113,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }

@@ -10,7 +10,7 @@ public interface ISerializer<T> {
      * @return the equivalent binary data
      * @throws Exception 异常
      */
-    byte[] serialize(T obj) throws Exception;
+    byte[] serialize(final T obj) throws Exception;
 
     /**
      * Deserialize an object from the given binary data.
@@ -19,7 +19,7 @@ public interface ISerializer<T> {
      * @return the equivalent object instance
      * @throws Exception 异常
      */
-    T deserialize(byte[] bytes, Type returnType) throws Exception;
+    T deserialize(final byte[] bytes, final Type returnType) throws Exception;
 
     /**
      * 深度复制

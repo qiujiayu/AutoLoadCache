@@ -27,7 +27,7 @@ public interface ICacheManager {
      * @param returnType AOP拦截方法的 GenericReturnType
      * @return 缓存数据
      */
-    CacheWrapper<Object> get(CacheKeyTO key, Type returnType);
+    CacheWrapper<Object> get(CacheKeyTO key, final Type returnType);
 
     /**
      * 删除缓存

@@ -20,7 +20,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
     }
 
     @Override
-    public byte[] serialize(Object obj) throws Exception {
+    public byte[] serialize(final Object obj) throws Exception {
         if(obj == null) {
             return null;
         }
@@ -29,7 +29,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
     }
 
     @Override
-    public Object deserialize(byte[] bytes, Type returnType) throws Exception {
+    public Object deserialize(final byte[] bytes, final Type returnType) throws Exception {
         if(null == bytes || bytes.length == 0) {
             return null;
         }

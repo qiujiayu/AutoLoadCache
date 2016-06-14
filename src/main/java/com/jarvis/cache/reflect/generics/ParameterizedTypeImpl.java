@@ -29,6 +29,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     }
 
     private void validateConstructorArguments() {
+        @SuppressWarnings("rawtypes")
         TypeVariable[] arrayOfTypeVariable=this.rawType.getTypeParameters();
 
         if(arrayOfTypeVariable.length != this.actualTypeArguments.length) {
@@ -80,8 +81,8 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         StringBuilder localStringBuilder=new StringBuilder();
 
         if(this.ownerType != null) {
-            if((this.ownerType instanceof Class))
-                localStringBuilder.append(((Class)this.ownerType).getName());
+            if((this.ownerType instanceof Class<?>))
+                localStringBuilder.append(((Class<?>)this.ownerType).getName());
             else {
                 localStringBuilder.append(this.ownerType.toString());
             }
@@ -101,8 +102,8 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             for(Type localType: this.actualTypeArguments) {
                 if(i == 0)
                     localStringBuilder.append(", ");
-                if((localType instanceof Class))
-                    localStringBuilder.append(((Class)localType).getName());
+                if((localType instanceof Class<?>))
+                    localStringBuilder.append(((Class<?>)localType).getName());
                 else {
                     // if(null!=localType){
                     localStringBuilder.append(localType.toString());

@@ -145,7 +145,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }

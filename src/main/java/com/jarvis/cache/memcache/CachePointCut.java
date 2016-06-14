@@ -40,7 +40,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) {
         if(null == cacheKeyTO) {
             return null;
         }
