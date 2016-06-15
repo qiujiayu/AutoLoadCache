@@ -36,7 +36,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private ShardedJedisPool shardedJedisPool;
 
     /**
-     * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。如果hashExpire 小于0则使用@Cache中设置的expire值。
+     * Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）。
      */
     private int hashExpire=-1;
 

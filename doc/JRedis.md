@@ -49,7 +49,7 @@ ShardedCachePointCut中可以配置参数说明：
 
 * namespace ： 命名空间，在缓存表达式生成的缓存key中加入此命名空间，达到区分不同业务的数据的作用；
 
-* hashExpire：Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。如果hashExpire 小于0则使用@Cache中设置的expire值。默认值为-1；
+* hashExpire：Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）；
 
 * hashExpireByScript ： 是否通过脚本来设置 Hash的缓存时长；
 
