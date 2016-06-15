@@ -28,7 +28,7 @@
     <bean id="fastjsonSerializer" class="com.jarvis.cache.serializer.FastjsonSerializer" />
 
     <bean id="hessianCompressorSerializer" class="com.jarvis.cache.serializer.CompressorSerializer">
-      <constructor-arg ref="hessian" />
+      <constructor-arg ref="hessianSerializer" />
     </bean>
 
 ###4. 表达式解析器
