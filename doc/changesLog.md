@@ -1,5 +1,7 @@
 ##更新日志
 
+* ####4.10 增加使用Fastjson进行序列化的支持，同时也增加了对比较大的数据进行压缩的工具。
+
 * ####4.9 去除默认的serializer和scriptParser，以便于与Spring 进行强解耦。
 
 * ####4.8 优化JavaScriptParser 中的代码，并根据JDK版本，使用javascript 还是nashorn 引擎。

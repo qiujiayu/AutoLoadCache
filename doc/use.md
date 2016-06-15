@@ -13,10 +13,23 @@
 
 ###3. 序列化工具：
 
-序列化工具主要用于深度复杂，以及缓存中数据与Java对象的转换。框架中已经实现了Hessian和Jdk自带的序列化工具类，分别的：com.jarvis.cache.serializer.HessianSerializer 和 com.jarvis.cache.serializer.JdkSerializer，如果需要使用其它序列化工具，可以通过实现com.jarvis.cache.serializer.ISerializer<Object>来扩展（比如：Kryo和FST等）。
+序列化工具主要用于深度复杂，以及缓存中数据与Java对象的转换。框架中已经实现如下几种序列化工具:
+
+1.  com.jarvis.cache.serializer.HessianSerializer 基于Hessian2序列化工具
+2.  com.jarvis.cache.serializer.JdkSerializer JDK自带序列化工具
+3.  com.jarvis.cache.serializer.FastjsonSerializer 基于Fastjson序列化工具，使用Fastjson时需要注意：返回值中如果是泛型的话，需要指明具体的类型，比如：List<User>，如果是直接返回List则会出错。
+
+如果希望对比较长的数据进行压缩处理后再传的分布式缓存服务器的话，可以使用com.jarvis.cache.serializer.CompressorSerializer 进行处理。
+
+如果需要使用其它序列化工具，可以通过实现com.jarvis.cache.serializer.ISerializer<Object>来扩展（比如：Kryo和FST等）。
 
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
     <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
+    <bean id="fastjsonSerializer" class="com.jarvis.cache.serializer.FastjsonSerializer" />
+
+    <bean id="hessianCompressorSerializer" class="com.jarvis.cache.serializer.CompressorSerializer">
+      <constructor-arg ref="hessian" />
+    </bean>
 
 ###4. 表达式解析器
 
