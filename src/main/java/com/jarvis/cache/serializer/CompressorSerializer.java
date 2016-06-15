@@ -20,19 +20,25 @@ public class CompressorSerializer implements ISerializer<Object> {
 
     public CompressorSerializer(ISerializer<Object> serializer) {
         this.serializer=serializer;
-        compressor=new CommonsCompressor(CompressorStreamFactory.GZIP);
+        this.compressor=new CommonsCompressor(CompressorStreamFactory.GZIP);
     }
 
     public CompressorSerializer(ISerializer<Object> serializer, int compressionThreshold) {
         this.serializer=serializer;
         this.compressionThreshold=compressionThreshold;
-        compressor=new CommonsCompressor(CompressorStreamFactory.GZIP);
+        this.compressor=new CommonsCompressor(CompressorStreamFactory.GZIP);
     }
 
     public CompressorSerializer(ISerializer<Object> serializer, int compressionThreshold, String compressType) {
         this.serializer=serializer;
         this.compressionThreshold=compressionThreshold;
-        compressor=new CommonsCompressor(compressType);
+        this.compressor=new CommonsCompressor(compressType);
+    }
+
+    public CompressorSerializer(ISerializer<Object> serializer, int compressionThreshold, ICompressor compressor) {
+        this.serializer=serializer;
+        this.compressionThreshold=compressionThreshold;
+        this.compressor=compressor;
     }
 
     @Override

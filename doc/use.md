@@ -19,7 +19,7 @@
 2.  com.jarvis.cache.serializer.JdkSerializer JDK自带序列化工具
 3.  com.jarvis.cache.serializer.FastjsonSerializer 基于Fastjson序列化工具，使用Fastjson时需要注意：返回值中如果是泛型的话，需要指明具体的类型，比如：List<User>，如果是直接返回List则会出错。
 
-如果希望对比较长的数据进行压缩处理后再传的分布式缓存服务器的话，可以使用com.jarvis.cache.serializer.CompressorSerializer 进行处理。
+如果希望对比较长的数据进行压缩处理后再传到分布式缓存服务器的话，可以使用com.jarvis.cache.serializer.CompressorSerializer 进行处理。支持GZIP，BZIP2，XZ，PACK200，DEFLATE，等几种压缩算法（默认使用GZIP）。
 
 如果需要使用其它序列化工具，可以通过实现com.jarvis.cache.serializer.ISerializer<Object>来扩展（比如：Kryo和FST等）。
 
