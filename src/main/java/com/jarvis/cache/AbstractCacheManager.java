@@ -5,6 +5,10 @@ import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -48,11 +52,30 @@ public abstract class AbstractCacheManager implements ICacheManager {
      */
     private final AbstractScriptParser scriptParser;
 
+    /**
+     * 刷新缓存线程池
+     */
+    private final ThreadPoolExecutor refreshThreadPool;
+
+    /**
+     * 正在刷新缓存队列
+     */
+    private final ConcurrentHashMap<String, Byte> refreshing;
+
     public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
         this.serializer=serializer;
         this.scriptParser=scriptParser;
         registerFunction(config.getFunctions());
+        int corePoolSize=2;// 线程池的基本大小
+        int maximumPoolSize=20;// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
+        int keepAliveTime=10;
+        TimeUnit unit=TimeUnit.MINUTES;
+        int queueCapacity=2000;// 队列容量
+        refreshing=new ConcurrentHashMap<String, Byte>(queueCapacity);
+        LinkedBlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>(queueCapacity);
+        RejectedExecutionHandler rejectedHandler=new RefreshRejectedExecutionHandler();
+        refreshThreadPool=new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, rejectedHandler);
     }
 
     public ISerializer<Object> getSerializer() {
@@ -139,10 +162,47 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 autoLoadTO.setLastRequestTime(System.currentTimeMillis());
                 autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
                 autoLoadTO.setExpire(cacheWrapper.getExpire());// 同步过期时间
+            } else {// 如果缓存快要失效，则自动刷新
+                doRefresh(pjp, cache, cacheKey, cacheWrapper);
             }
             return cacheWrapper.getCacheObject();
         }
         return loadData(pjp, null, cacheKey, cache);// 从DAO加载数据
+    }
+
+    private void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
+        int expire=cacheWrapper.getExpire();
+        if(expire < 60) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+            return;
+        }
+        // 计算超时时间
+        int alarmTime=cache.alarmTime();
+        long timeout;
+        if(alarmTime > 0 && alarmTime < expire) {
+            timeout=expire - alarmTime;
+        } else {
+            if(expire >= 600) {
+                timeout=expire - 120;
+            } else {
+                timeout=expire - 60;
+            }
+        }
+        if((System.currentTimeMillis() - cacheWrapper.getLastLoadTime()) < (timeout * 1000)) {
+            return;
+        }
+        String fullKey=cacheKey.getFullKey();
+        Byte tmpByte=refreshing.get(fullKey);
+        if(null != tmpByte) {// 如果有正在刷新的请求，则不处理
+            return;
+        }
+        tmpByte=1;
+        if(null == refreshing.putIfAbsent(fullKey, tmpByte)) {
+            try {
+                refreshThreadPool.execute(new RefreshTask(pjp, cacheKey, cacheWrapper));
+            } catch(Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -388,6 +448,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     @Override
     public void destroy() {
         autoLoadHandler.shutdown();
+        refreshThreadPool.shutdownNow();
         logger.info("cache destroy ... ... ...");
     }
 
@@ -522,5 +583,72 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
         }
         return autoLoadTO;
+    }
+
+    class RefreshTask implements Runnable {
+
+        private CacheAopProxyChain pjp;
+
+        private CacheKeyTO cacheKey;
+
+        private CacheWrapper<Object> cacheWrapper;
+
+        private Object[] arguments;
+
+        public RefreshTask(CacheAopProxyChain pjp, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) throws Exception {
+            this.pjp=pjp;
+            this.cacheKey=cacheKey;
+            this.cacheWrapper=cacheWrapper;
+            Object[] _arguments=pjp.getArgs();
+            this.arguments=(Object[])serializer.deepClone(_arguments); // 进行深度复制
+        }
+
+        @Override
+        public void run() {
+            // 加载数据
+            try {
+                long startTime=System.currentTimeMillis();
+                Object result=pjp.doProxyChain(arguments);
+                long useTime=System.currentTimeMillis() - startTime;
+                AutoLoadConfig config=autoLoadHandler.getConfig();
+                if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
+                    String className=pjp.getTargetClass().getName();
+                    logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
+                }
+                CacheWrapper<Object> tmpWrapper=new CacheWrapper<Object>(result, cacheWrapper.getExpire());
+                setCache(cacheKey, tmpWrapper);
+            } catch(Throwable e) {
+                logger.error(e.getMessage(), e);
+                // 加载失败，使用旧数据，并将过期时间减半
+                int expire=(int)(cacheWrapper.getExpire() / 2);
+                cacheWrapper.setExpire(expire);
+                setCache(cacheKey, cacheWrapper);
+            } finally {
+                String fullKey=cacheKey.getFullKey();
+                refreshing.remove(fullKey);
+            }
+        }
+
+        public CacheKeyTO getCacheKey() {
+            return cacheKey;
+        }
+
+    }
+
+    class RefreshRejectedExecutionHandler implements RejectedExecutionHandler {
+
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+            if(!e.isShutdown()) {
+                Runnable last=e.getQueue().poll();
+                if(last instanceof RefreshTask) {
+                    RefreshTask lastTask=(RefreshTask)last;
+                    String fullKey=lastTask.getCacheKey().getFullKey();
+                    refreshing.remove(fullKey);
+                }
+                e.execute(r);
+            }
+        }
+
     }
 }
