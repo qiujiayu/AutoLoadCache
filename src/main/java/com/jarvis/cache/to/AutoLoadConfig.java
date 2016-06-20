@@ -45,6 +45,26 @@ public class AutoLoadConfig {
      */
     private int autoLoadPeriod=50;
 
+    /**
+     * 异步刷新缓存线程池的 corePoolSize
+     */
+    private int refreshThreadPoolSize=2;
+
+    /**
+     * 异步刷新缓存线程池的 maximumPoolSize
+     */
+    private int refreshThreadPoolMaxSize=20;
+
+    /**
+     * 异步刷新缓存线程池的 keepAliveTime
+     */
+    private int refreshThreadPoolkeepAliveTime=20;// 单位：分钟
+
+    /**
+     * 异步刷新缓存队列容量
+     */
+    private int refreshQueueCapacity=2000;
+
     private Map<String, String> functions;
 
     public int getThreadCnt() {
@@ -128,6 +148,46 @@ public class AutoLoadConfig {
 
     public Map<String, String> getFunctions() {
         return functions;
+    }
+
+    public int getRefreshThreadPoolSize() {
+        return refreshThreadPoolSize;
+    }
+
+    public void setRefreshThreadPoolSize(int refreshThreadPoolSize) {
+        if(refreshThreadPoolSize > 1) {
+            this.refreshThreadPoolSize=refreshThreadPoolSize;
+        }
+    }
+
+    public int getRefreshThreadPoolMaxSize() {
+        return refreshThreadPoolMaxSize;
+    }
+
+    public void setRefreshThreadPoolMaxSize(int refreshThreadPoolMaxSize) {
+        if(refreshThreadPoolMaxSize > 1) {
+            this.refreshThreadPoolMaxSize=refreshThreadPoolMaxSize;
+        }
+    }
+
+    public int getRefreshThreadPoolkeepAliveTime() {
+        return refreshThreadPoolkeepAliveTime;
+    }
+
+    public void setRefreshThreadPoolkeepAliveTime(int refreshThreadPoolkeepAliveTime) {
+        if(refreshThreadPoolkeepAliveTime > 1) {
+            this.refreshThreadPoolkeepAliveTime=refreshThreadPoolkeepAliveTime;
+        }
+    }
+
+    public int getRefreshQueueCapacity() {
+        return refreshQueueCapacity;
+    }
+
+    public void setRefreshQueueCapacity(int refreshQueueCapacity) {
+        if(refreshQueueCapacity > 1) {
+            this.refreshQueueCapacity=refreshQueueCapacity;
+        }
     }
 
 }

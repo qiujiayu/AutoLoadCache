@@ -44,13 +44,13 @@ public interface ICacheManager {
 
     /**
      * 获取表达式解析器
-     * @return
+     * @return 表达式解析器
      */
     AbstractScriptParser getScriptParser();
 
     /**
      * 获取序列化工具
-     * @return
+     * @return 序列化工具
      */
     ISerializer<Object> getSerializer();
 

@@ -313,7 +313,7 @@ public class AutoLoadHandler {
             }
             if(dataLoader.isFirst() || null == newCacheWrapper) {
                 if(null == newCacheWrapper && null != result) {// 如果加载失败，则把旧数据进行续租
-                    int newExpire=AUTO_LOAD_MIN_EXPIRE;
+                    int newExpire=AUTO_LOAD_MIN_EXPIRE + 60;
                     newCacheWrapper=new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
                 try {

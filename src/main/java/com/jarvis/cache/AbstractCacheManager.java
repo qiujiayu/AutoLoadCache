@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
@@ -19,6 +20,7 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.cache.to.ProcessingTO;
 import com.jarvis.cache.type.CacheOpType;
 
 /**
@@ -28,6 +30,9 @@ import com.jarvis.cache.type.CacheOpType;
 public abstract class AbstractCacheManager implements ICacheManager {
 
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
+
+    // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
+    public final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
 
     private final AutoLoadHandler autoLoadHandler;
 
@@ -50,7 +55,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         this.serializer=serializer;
         this.scriptParser=scriptParser;
         registerFunction(config.getFunctions());
-        refreshHandler=new RefreshHandler(this);
+        refreshHandler=new RefreshHandler(this, config);
     }
 
     /**

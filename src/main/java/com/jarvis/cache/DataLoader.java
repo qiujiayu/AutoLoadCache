@@ -21,7 +21,7 @@ public class DataLoader {
     private static final Logger logger=Logger.getLogger(DataLoader.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
-    private final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
+    private final static ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
 
     private final ICacheManager cacheManager;
 
@@ -83,12 +83,12 @@ public class DataLoader {
             }
         }
         Object lock=null;
-        // String tname=Thread.currentThread().getName();
+        String tname=Thread.currentThread().getName();
         if(null == isProcessing) {// 当前并发中的第一个请求
             isFirst=true;
             lock=processingTO;
             try {
-                // System.out.println(tname + " first thread!");
+                System.out.println(tname + " first thread!");
                 Object result=getData();
                 buildCacheWrapper(result);
                 processingTO.setCache(cacheWrapper);// 本地缓存
@@ -112,19 +112,19 @@ public class DataLoader {
                 }
                 if(isProcessing.isFirstFinished()) {
                     CacheWrapper<Object> _cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                    // System.out.println(tname + " do FirstFinished" + " is null :" + (null == cacheWrapper));
+                    System.out.println(tname + " do FirstFinished" + " is null :" + (null == _cacheWrapper));
                     if(null != _cacheWrapper) {
                         cacheWrapper=_cacheWrapper;
                     }
                     Throwable error=isProcessing.getError();
                     if(null != error) {// 当DAO出错时，直接抛异常
-                        // System.out.println(tname + " do error");
+                        System.out.println(tname + " do error");
                         throw error;
                     }
                     break;
                 } else {
                     synchronized(lock) {
-                        // System.out.println(tname + " do wait");
+                        System.out.println(tname + " do wait");
                         try {
                             lock.wait(50);// 如果要测试lock对象是否有效，wait时间去掉就可以
                         } catch(InterruptedException ex) {

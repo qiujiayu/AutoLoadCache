@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
+import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -29,13 +30,13 @@ public class RefreshHandler {
 
     private final ICacheManager cacheManager;
 
-    public RefreshHandler(ICacheManager cacheManager) {
+    public RefreshHandler(ICacheManager cacheManager, AutoLoadConfig config) {
         this.cacheManager=cacheManager;
-        int corePoolSize=2;// 线程池的基本大小
-        int maximumPoolSize=20;// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
-        int keepAliveTime=10;
+        int corePoolSize=config.getRefreshThreadPoolSize();// 线程池的基本大小
+        int maximumPoolSize=config.getRefreshThreadPoolMaxSize();// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
+        int keepAliveTime=config.getRefreshThreadPoolkeepAliveTime();
         TimeUnit unit=TimeUnit.MINUTES;
-        int queueCapacity=2000;// 队列容量
+        int queueCapacity=config.getRefreshQueueCapacity();// 队列容量
         refreshing=new ConcurrentHashMap<String, Byte>(queueCapacity);
         LinkedBlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>(queueCapacity);
         RejectedExecutionHandler rejectedHandler=new RefreshRejectedExecutionHandler();
@@ -115,6 +116,9 @@ public class RefreshHandler {
             if(dataLoader.isFirst() || null == newCacheWrapper) {
                 if(null == newCacheWrapper && null != cacheWrapper) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=cacheWrapper.getExpire() / 2;
+                    if(newExpire < 60) {
+                        newExpire=60;
+                    }
                     newCacheWrapper=new CacheWrapper<Object>(cacheWrapper.getCacheObject(), newExpire);
                 }
                 try {
