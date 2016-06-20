@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
-import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -122,21 +121,32 @@ public class AutoLoadHandler {
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
-    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, ISerializer<Object> serializer,
-        CacheWrapper<Object> cacheWrapper) {
+    public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, CacheWrapper<Object> cacheWrapper) {
         if(null == autoLoadMap) {
+            return null;
+        }
+        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
+        if(null != autoLoadTO) {
+            return autoLoadTO;
+        }
+        try {
+            if(!cacheManager.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
+                return null;
+            }
+        } catch(Exception e) {
+            logger.error(e.getMessage(), e);
             return null;
         }
         int expire=cacheWrapper.getExpire();
         if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])serializer.deepClone(arguments); // 进行深度复制
+                arguments=(Object[])cacheManager.getSerializer().deepClone(arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
             }
-            AutoLoadTO autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache, expire);
+            autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache, expire);
             AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
             if(null == tmp) {
                 return autoLoadTO;
@@ -275,8 +285,8 @@ public class AutoLoadHandler {
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;
             }
+            CacheWrapper<Object> result=null;
             if(config.isCheckFromCacheBeforeLoad()) {
-                CacheWrapper<Object> result=null;
                 try {
                     Type returnType=autoLoadTO.getJoinPoint().getMethod().getGenericReturnType();
                     result=cacheManager.get(autoLoadTO.getCacheKey(), returnType);
@@ -291,11 +301,31 @@ public class AutoLoadHandler {
                     }
                 }
             }
+            CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
+            CacheKeyTO cacheKey=autoLoadTO.getCacheKey();
+            DataLoader dataLoader=new DataLoader(pjp, autoLoadTO, cacheKey, cache, cacheManager);
+            CacheWrapper<Object> newCacheWrapper=null;
             try {
-                CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
-                cacheManager.loadData(pjp, autoLoadTO, autoLoadTO.getCacheKey(), autoLoadTO.getCache());
+                dataLoader.loadData();// 从DAO加载数据
+                newCacheWrapper=dataLoader.getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
+            }
+            if(dataLoader.isFirst() || null == newCacheWrapper) {
+                if(null == newCacheWrapper && null != result) {// 如果加载失败，则把旧数据进行续租
+                    int newExpire=AUTO_LOAD_MIN_EXPIRE;
+                    newCacheWrapper=new CacheWrapper<Object>(result.getCacheObject(), newExpire);
+                }
+                try {
+                    if(null != newCacheWrapper) {
+                        cacheManager.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
+                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime());
+                        autoLoadTO.setExpire(newCacheWrapper.getExpire());// 同步过期时间
+                        autoLoadTO.addUseTotalTime(dataLoader.getLoadDataUseTime());
+                    }
+                } catch(Exception e) {
+                    logger.error(e.getMessage(), e);
+                }
             }
         }
     }

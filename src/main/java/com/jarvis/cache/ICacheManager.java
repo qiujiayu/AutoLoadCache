@@ -4,7 +4,8 @@ import java.lang.reflect.Type;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
-import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -42,18 +43,31 @@ public interface ICacheManager {
     AutoLoadHandler getAutoLoadHandler();
 
     /**
+     * 获取表达式解析器
+     * @return
+     */
+    AbstractScriptParser getScriptParser();
+
+    /**
+     * 获取序列化工具
+     * @return
+     */
+    ISerializer<Object> getSerializer();
+
+    /**
      * 销毁：关闭线程
      */
     void destroy();
 
     /**
-     * 加载数据
+     * 写缓存
      * @param pjp CacheAopProxyChain
-     * @param autoLoadTO AutoLoadTO
-     * @param cacheKey CacheKeyTO
-     * @param cache Cache
-     * @return Object
-     * @throws Throwable 异常
+     * @param arguments arguments
+     * @param cache Cache annotation
+     * @param cacheKey Cache Key
+     * @param cacheWrapper CacheWrapper
+     * @throws Exception
      */
-    Object loadData(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable;
+    void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper)
+        throws Exception;
 }
