@@ -74,6 +74,7 @@ public class AutoLoadHandler {
         this.sortThread.start();
         for(int i=0; i < this.config.getThreadCnt(); i++) {
             this.threads[i]=new Thread(new AutoLoadRunnable());
+            this.threads[i].setName("autoLoadThread-" + i);
             this.threads[i].start();
         }
     }
