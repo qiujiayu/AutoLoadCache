@@ -14,6 +14,8 @@ import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
+import com.jarvis.cache.clone.Cloning;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -50,6 +52,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     private final RefreshHandler refreshHandler;
 
+    private ICloner cloner=new Cloning();
+
     public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
         this.serializer=serializer;
@@ -70,16 +74,15 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             DataLoader dataLoader=new DataLoader(pjp, cache, this);
             Object result=dataLoader.getData();
-            dataLoader.buildCacheWrapper(result);
-            CacheWrapper<Object> cacheWrapper=dataLoader.getCacheWrapper();
+            CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
             if(scriptParser.isCacheable(cache, arguments, result)) {
                 CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
                 AutoLoadTO autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
                 try {
                     writeCache(pjp, pjp.getArgs(), cache, cacheKey, cacheWrapper);
                     if(null != autoLoadTO) {
-                        autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
-                        autoLoadTO.setExpire(cacheWrapper.getExpire());// 同步过期时间
+                        autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
+                            .setExpire(cacheWrapper.getExpire());// 同步过期时间
                     }
                 } catch(Exception ex) {
                     logger.error(ex.getMessage(), ex);
@@ -104,27 +107,26 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
             if(null != autoLoadTO) {// 同步最后加载时间
-                autoLoadTO.setLastRequestTime(System.currentTimeMillis());
-                autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
-                autoLoadTO.setExpire(cacheWrapper.getExpire());// 同步过期时间
+                autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
+                    .setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
+                    .setExpire(cacheWrapper.getExpire());// 同步过期时间
             } else {// 如果缓存快要失效，则自动刷新
                 refreshHandler.doRefresh(pjp, cache, cacheKey, cacheWrapper);
             }
             return cacheWrapper.getCacheObject();
         }
         DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, this);
-        dataLoader.loadData();// 从DAO加载数据
-        CacheWrapper<Object> newCacheWrapper=dataLoader.getCacheWrapper();
+        CacheWrapper<Object> newCacheWrapper=dataLoader.loadData().getCacheWrapper();
         AutoLoadTO autoLoadTO=null;
         if(dataLoader.isFirst()) {
             autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
                 if(null != autoLoadTO) {// 同步最后加载时间
-                    autoLoadTO.setLastRequestTime(System.currentTimeMillis());
-                    autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime());
-                    autoLoadTO.setExpire(newCacheWrapper.getExpire());// 同步过期时间
-                    autoLoadTO.addUseTotalTime(dataLoader.getLoadDataUseTime());
+                    autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
+                        .setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
+                        .setExpire(newCacheWrapper.getExpire())// 同步过期时间
+                        .addUseTotalTime(dataLoader.getLoadDataUseTime());// 统计用时
                 }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
@@ -219,8 +221,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 this.setCache(exCacheKey, exCacheWrapper);
                 if(null != tmpAutoLoadTO) {
-                    tmpAutoLoadTO.setExpire(exCacheExpire);
-                    tmpAutoLoadTO.setLastLoadTime(exCacheWrapper.getLastLoadTime());
+                    tmpAutoLoadTO.setExpire(exCacheExpire)//
+                        .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
                 }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
@@ -362,6 +364,15 @@ public abstract class AbstractCacheManager implements ICacheManager {
     @Override
     public AbstractScriptParser getScriptParser() {
         return scriptParser;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return cloner;
+    }
+
+    public void setCloner(ICloner cloner) {
+        this.cloner=cloner;
     }
 
     private void registerFunction(Map<String, String> funcs) {

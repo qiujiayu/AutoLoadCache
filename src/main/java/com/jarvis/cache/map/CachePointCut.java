@@ -84,7 +84,7 @@ public class CachePointCut extends AbstractCacheManager {
         CacheWrapper<Object> value=null;
         if(copyValue) {
             try {
-                value=(CacheWrapper<Object>)this.getSerializer().deepClone(value);
+                value=(CacheWrapper<Object>)this.getCloner().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -150,7 +150,7 @@ public class CachePointCut extends AbstractCacheManager {
         }
         if(copyValue) {
             try {
-                return (CacheWrapper<Object>)this.getSerializer().deepClone(value);
+                return (CacheWrapper<Object>)this.getCloner().deepClone(value);
             } catch(Exception e) {
                 e.printStackTrace();
             }

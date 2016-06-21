@@ -141,7 +141,7 @@ public class AutoLoadHandler {
         if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])cacheManager.getSerializer().deepClone(arguments); // 进行深度复制
+                arguments=(Object[])cacheManager.getCloner().deepClone(arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
@@ -306,8 +306,7 @@ public class AutoLoadHandler {
             DataLoader dataLoader=new DataLoader(pjp, autoLoadTO, cacheKey, cache, cacheManager);
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                dataLoader.loadData();// 从DAO加载数据
-                newCacheWrapper=dataLoader.getCacheWrapper();
+                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -319,9 +318,9 @@ public class AutoLoadHandler {
                 try {
                     if(null != newCacheWrapper) {
                         cacheManager.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
-                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime());
-                        autoLoadTO.setExpire(newCacheWrapper.getExpire());// 同步过期时间
-                        autoLoadTO.addUseTotalTime(dataLoader.getLoadDataUseTime());
+                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
+                            .setExpire(newCacheWrapper.getExpire())// 同步过期时间
+                            .addUseTotalTime(dataLoader.getLoadDataUseTime());
                     }
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);

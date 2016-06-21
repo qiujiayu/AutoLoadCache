@@ -100,7 +100,7 @@ public class RefreshHandler {
             this.cache=cache;
             this.cacheKey=cacheKey;
             this.cacheWrapper=cacheWrapper;
-            this.arguments=(Object[])cacheManager.getSerializer().deepClone(pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+            this.arguments=(Object[])cacheManager.getCloner().deepClone(pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
         }
 
         @Override
@@ -108,16 +108,15 @@ public class RefreshHandler {
             DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, cacheManager, arguments);
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                dataLoader.loadData();// 从DAO加载数据
-                newCacheWrapper=dataLoader.getCacheWrapper();
+                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
             } catch(Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
             if(dataLoader.isFirst() || null == newCacheWrapper) {
                 if(null == newCacheWrapper && null != cacheWrapper) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=cacheWrapper.getExpire() / 2;
-                    if(newExpire < 60) {
-                        newExpire=60;
+                    if(newExpire < 120) {
+                        newExpire=120;
                     }
                     newCacheWrapper=new CacheWrapper<Object>(cacheWrapper.getCacheObject(), newExpire);
                 }

@@ -36,7 +36,11 @@ public class StringSerializer implements ISerializer<String> {
     }
 
     @Override
-    public String deepClone(String obj) throws Exception {
-        return deserialize(serialize(obj), null);
+    public Object deepClone(Object obj) throws Exception {
+        if(null == obj) {
+            return obj;
+        }
+        String str=(String)obj;
+        return String.copyValueOf(str.toCharArray());
     }
 }

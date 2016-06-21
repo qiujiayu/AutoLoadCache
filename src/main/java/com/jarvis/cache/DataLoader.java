@@ -71,7 +71,7 @@ public class DataLoader {
         this(pjp, null, cacheKey, cache, cacheManager);
     }
 
-    public void loadData() throws Throwable {
+    public DataLoader loadData() throws Throwable {
         String fullKey=cacheKey.getFullKey();
         ProcessingTO isProcessing=processing.get(fullKey);
         ProcessingTO processingTO=null;
@@ -144,6 +144,7 @@ public class DataLoader {
                 }
             }
         }
+        return this;
     }
 
     public boolean isFirst() {
@@ -173,7 +174,7 @@ public class DataLoader {
         }
     }
 
-    public void buildCacheWrapper(Object result) {
+    public DataLoader buildCacheWrapper(Object result) {
         int expire=cache.expire();
         try {
             expire=cacheManager.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
@@ -181,6 +182,7 @@ public class DataLoader {
             logger.error(e.getMessage(), e);
         }
         cacheWrapper=new CacheWrapper<Object>(result, expire);
+        return this;
     }
 
     public CacheWrapper<Object> getCacheWrapper() {

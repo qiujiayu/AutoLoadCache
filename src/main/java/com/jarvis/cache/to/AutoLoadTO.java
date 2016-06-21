@@ -80,7 +80,7 @@ public class AutoLoadTO implements Serializable {
         return lastRequestTime;
     }
 
-    public void setLastRequestTime(long lastRequestTime) {
+    public AutoLoadTO setLastRequestTime(long lastRequestTime) {
         synchronized(this) {
             this.lastRequestTime=lastRequestTime;
             if(firstRequestTime == 0) {
@@ -88,6 +88,7 @@ public class AutoLoadTO implements Serializable {
             }
             requestTimes++;
         }
+        return this;
     }
 
     public long getFirstRequestTime() {
@@ -106,10 +107,11 @@ public class AutoLoadTO implements Serializable {
         return lastLoadTime;
     }
 
-    public void setLastLoadTime(long lastLoadTime) {
+    public AutoLoadTO setLastLoadTime(long lastLoadTime) {
         if(lastLoadTime > this.lastLoadTime) {
             this.lastLoadTime=lastLoadTime;
         }
+        return this;
     }
 
     public CacheKeyTO getCacheKey() {
@@ -120,16 +122,13 @@ public class AutoLoadTO implements Serializable {
         return loading;
     }
 
-    public void setLoading(boolean loading) {
+    public AutoLoadTO setLoading(boolean loading) {
         this.loading=loading;
+        return this;
     }
 
     public Object[] getArgs() {
         return args;
-    }
-
-    public static long getSerialversionuid() {
-        return serialVersionUID;
     }
 
     public long getLoadCnt() {
@@ -144,11 +143,12 @@ public class AutoLoadTO implements Serializable {
      * 记录用时
      * @param useTime 用时
      */
-    public void addUseTotalTime(long useTime) {
+    public AutoLoadTO addUseTotalTime(long useTime) {
         synchronized(this) {
             this.loadCnt++;
             this.useTotalTime+=useTotalTime;
         }
+        return this;
     }
 
     /**
@@ -166,8 +166,9 @@ public class AutoLoadTO implements Serializable {
         return expire;
     }
 
-    public void setExpire(int expire) {
+    public AutoLoadTO setExpire(int expire) {
         this.expire=expire;
+        return this;
     }
 
 }

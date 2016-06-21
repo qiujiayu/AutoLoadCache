@@ -2,7 +2,9 @@ package com.jarvis.cache.serializer;
 
 import java.lang.reflect.Type;
 
-public interface ISerializer<T> {
+import com.jarvis.cache.clone.ICloner;
+
+public interface ISerializer<T> extends ICloner {
 
     /**
      * Serialize the given object to binary data.
@@ -21,11 +23,4 @@ public interface ISerializer<T> {
      */
     T deserialize(final byte[] bytes, final Type returnType) throws Exception;
 
-    /**
-     * 深度复制
-     * @param obj object to clone
-     * @return the equivalent object instance
-     * @throws Exception 异常
-     */
-    T deepClone(T obj) throws Exception;
 }
