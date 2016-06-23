@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.clone.ICloner;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -21,7 +22,7 @@ public interface ICacheManager {
      * @param cacheKey 缓存Key
      * @param result 缓存数据
      */
-    void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result);
+    void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result) throws CacheCenterConnectionException;
 
     /**
      * 根据缓存Key获得缓存中的数据
@@ -29,13 +30,13 @@ public interface ICacheManager {
      * @param returnType AOP拦截方法的 GenericReturnType
      * @return 缓存数据
      */
-    CacheWrapper<Object> get(CacheKeyTO key, final Type returnType);
+    CacheWrapper<Object> get(CacheKeyTO key, final Type returnType) throws CacheCenterConnectionException;
 
     /**
      * 删除缓存
      * @param key 缓存key
      */
-    void delete(CacheKeyTO key);
+    void delete(CacheKeyTO key) throws CacheCenterConnectionException;
 
     /**
      * 获取自动加载处理器

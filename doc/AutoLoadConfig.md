@@ -25,3 +25,11 @@
 * autoLoadPeriod： 单个线程中执行自动加载的时间间隔, 此值越小，遍历自动加载队列频率起高，对CPU会越消耗CPU；
 
 * functions： 注册表达式中用到的自定义函数；
+
+* refreshThreadPoolSize ： 异步刷新缓存线程池的 corePoolSize，默认值：2
+
+* refreshThreadPoolMaxSize ： 异步刷新缓存线程池的 maximumPoolSize ，默认值：20；
+
+* refreshThreadPoolkeepAliveTime ： 异步刷新缓存线程池的 keepAliveTime。默认值20，单位分钟；
+
+* refreshQueueCapacity ： 异步刷新缓存队列容量，默认值：2000；

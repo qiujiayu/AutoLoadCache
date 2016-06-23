@@ -60,7 +60,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
             }
             return res;
         } else {
-            String json=JSON.toJSONString(obj);
+            String json=JSON.toJSONString(obj, features);
             return JSON.parseObject(json, clazz);
         }
     }

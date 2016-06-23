@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -23,7 +24,7 @@ public class CachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) {
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) throws CacheCenterConnectionException{
         if(null == cacheKeyTO) {
             return;
         }
@@ -40,7 +41,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) {
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) throws CacheCenterConnectionException{
         if(null == cacheKeyTO) {
             return null;
         }
@@ -60,7 +61,7 @@ public class CachePointCut extends AbstractCacheManager {
      * @param cacheKeyTO 缓存Key
      */
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) {
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException{
         if(null == memcachedClient || null == cacheKeyTO) {
             return;
         }
