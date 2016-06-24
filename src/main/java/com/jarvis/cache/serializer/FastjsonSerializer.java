@@ -3,6 +3,10 @@ package com.jarvis.cache.serializer;
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
@@ -43,6 +47,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
         return JSON.parseObject(json, ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public Object deepClone(Object obj) throws Exception {
         if(null == obj) {
@@ -59,10 +64,31 @@ public class FastjsonSerializer implements ISerializer<Object> {
                 res[i]=deepClone(arr[i]);
             }
             return res;
+        } else if(obj instanceof Collection) {
+            Collection<?> tempCol=(Collection<?>)obj;
+            Collection res=tempCol.getClass().newInstance();
+
+            Iterator<?> it=tempCol.iterator();
+            while(it.hasNext()) {
+                Object val=deepClone(it.next());
+                res.add(val);
+            }
+            return res;
+        } else if(obj instanceof Map) {
+            Map tempMap=(Map)obj;
+            Map res=tempMap.getClass().newInstance();
+            Iterator it=tempMap.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry entry=(Entry)it.next();
+                Object key=entry.getKey();
+                Object val=entry.getValue();
+                res.put(deepClone(key), deepClone(val));
+            }
+            return res;
+
         } else {
             String json=JSON.toJSONString(obj, features);
             return JSON.parseObject(json, clazz);
         }
     }
-
 }
