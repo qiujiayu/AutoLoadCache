@@ -1,5 +1,6 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Random;
@@ -289,8 +290,9 @@ public class AutoLoadHandler {
             CacheWrapper<Object> result=null;
             if(config.isCheckFromCacheBeforeLoad()) {
                 try {
-                    Type returnType=autoLoadTO.getJoinPoint().getMethod().getGenericReturnType();
-                    result=cacheManager.get(autoLoadTO.getCacheKey(), returnType);
+                    Method method=autoLoadTO.getJoinPoint().getMethod();
+                    Type returnType=method.getGenericReturnType();
+                    result=cacheManager.get(autoLoadTO.getCacheKey(), returnType, method);
                 } catch(Exception ex) {
 
                 }

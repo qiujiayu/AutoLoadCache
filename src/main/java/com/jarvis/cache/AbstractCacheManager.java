@@ -97,10 +97,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == cacheKey) {
             return getData(pjp);
         }
-        Type returnType=pjp.getMethod().getGenericReturnType();
+        Method method=pjp.getMethod();
+        Type returnType=method.getGenericReturnType();
         CacheWrapper<Object> cacheWrapper=null;
         try {
-            cacheWrapper=this.get(cacheKey, returnType);// 从缓存中获取数据
+            cacheWrapper=this.get(cacheKey, returnType, method);// 从缓存中获取数据
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -193,7 +194,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == cacheKey) {
             return;
         }
-        this.setCache(cacheKey, cacheWrapper);
+        Method method=pjp.getMethod();
+        this.setCache(cacheKey, cacheWrapper, method);
         ExCache[] exCaches=cache.exCache();
         if(null == exCaches || exCaches.length == 0) {
             return;
@@ -219,7 +221,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
                 CacheWrapper<Object> exCacheWrapper=new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
-                this.setCache(exCacheKey, exCacheWrapper);
+                this.setCache(exCacheKey, exCacheWrapper, method);
                 if(null != tmpAutoLoadTO) {
                     tmpAutoLoadTO.setExpire(exCacheExpire)//
                         .setLastLoadTime(exCacheWrapper.getLastLoadTime());//

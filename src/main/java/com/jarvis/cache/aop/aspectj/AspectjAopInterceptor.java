@@ -12,8 +12,7 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 
 /**
- * 使用Aspectj 实现AOP拦截
- * 注意：拦截器不能有相同名字的Method
+ * 使用Aspectj 实现AOP拦截 注意：拦截器不能有相同名字的Method
  * @author jiayu.qiu
  */
 public class AspectjAopInterceptor {

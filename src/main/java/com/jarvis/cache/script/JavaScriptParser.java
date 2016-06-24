@@ -47,7 +47,7 @@ public class JavaScriptParser extends AbstractScriptParser {
     }
 
     public JavaScriptParser() {
-        engine=manager.getEngineByName(versionCode > 18 ? "nashorn" : "javascript");
+        engine=manager.getEngineByName(versionCode >= 18 ? "nashorn" : "javascript");
         try {
             addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
             addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));

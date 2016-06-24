@@ -1,5 +1,6 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import com.jarvis.cache.annotation.Cache;
@@ -21,16 +22,18 @@ public interface ICacheManager {
      * 往缓存写数据
      * @param cacheKey 缓存Key
      * @param result 缓存数据
+     * @param method Method
      */
-    void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result) throws CacheCenterConnectionException;
+    void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method) throws CacheCenterConnectionException;
 
     /**
      * 根据缓存Key获得缓存中的数据
      * @param key 缓存key
      * @param returnType AOP拦截方法的 GenericReturnType
+     * @param method Method
      * @return 缓存数据
      */
-    CacheWrapper<Object> get(CacheKeyTO key, final Type returnType) throws CacheCenterConnectionException;
+    CacheWrapper<Object> get(CacheKeyTO key, final Type returnType, Method method) throws CacheCenterConnectionException;
 
     /**
      * 删除缓存

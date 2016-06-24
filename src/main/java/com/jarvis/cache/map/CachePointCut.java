@@ -1,6 +1,7 @@
 package com.jarvis.cache.map;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,7 +75,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) throws CacheCenterConnectionException{
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result, Method method) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -114,7 +115,8 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) throws CacheCenterConnectionException{
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType, Method method)
+        throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -161,7 +163,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException{
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }

@@ -1,5 +1,6 @@
 package com.jarvis.cache.memcache;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import net.spy.memcached.MemcachedClient;
@@ -24,7 +25,7 @@ public class CachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result) throws CacheCenterConnectionException{
+    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper<Object> result, Method method) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -41,7 +42,8 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType) throws CacheCenterConnectionException{
+    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType, Method method)
+        throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -61,7 +63,7 @@ public class CachePointCut extends AbstractCacheManager {
      * @param cacheKeyTO 缓存Key
      */
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException{
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
         if(null == memcachedClient || null == cacheKeyTO) {
             return;
         }

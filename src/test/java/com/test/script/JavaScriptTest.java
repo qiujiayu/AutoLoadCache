@@ -1,11 +1,16 @@
 package com.test.script;
 
+import junit.framework.TestCase;
+
+import org.junit.Test;
+
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.script.JavaScriptParser;
 
-public class JavaScriptTest {
+public class JavaScriptTest extends TestCase {
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void testJavaScript() throws Exception {
         String javaVersion=System.getProperty("java.version");
         System.out.println(javaVersion);
         int ind=0;
@@ -17,13 +22,13 @@ public class JavaScriptTest {
         javaVersion=javaVersion.replaceAll("\\.", "");
         System.out.println(Integer.parseInt(javaVersion));
 
-        String keySpEL="'test'";
+        String keySpEL="'test_'+args[0]+'_'+args[1]";
         Object[] arguments=new Object[]{"1111", "2222"};
         AbstractScriptParser scriptParser=new JavaScriptParser();
         String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, null, false);
         System.out.println(res);
         Boolean rv=scriptParser.getElValue("empty(args[0])", arguments, Boolean.class);
-        System.out.println(rv);
+        assertFalse(rv);
     }
 
 }
