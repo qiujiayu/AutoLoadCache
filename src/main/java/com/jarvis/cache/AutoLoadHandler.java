@@ -1,7 +1,6 @@
 package com.jarvis.cache;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -291,8 +290,8 @@ public class AutoLoadHandler {
             if(config.isCheckFromCacheBeforeLoad()) {
                 try {
                     Method method=autoLoadTO.getJoinPoint().getMethod();
-                    Type returnType=method.getGenericReturnType();
-                    result=cacheManager.get(autoLoadTO.getCacheKey(), returnType, method);
+                    // Type returnType=method.getGenericReturnType();
+                    result=cacheManager.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
                 } catch(Exception ex) {
 
                 }

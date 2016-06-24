@@ -1,7 +1,6 @@
 package com.jarvis.cache;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -98,10 +97,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
             return getData(pjp);
         }
         Method method=pjp.getMethod();
-        Type returnType=method.getGenericReturnType();
+        // Type returnType=method.getGenericReturnType();
         CacheWrapper<Object> cacheWrapper=null;
         try {
-            cacheWrapper=this.get(cacheKey, returnType, method);// 从缓存中获取数据
+            cacheWrapper=this.get(cacheKey, method, arguments);// 从缓存中获取数据
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
@@ -195,7 +194,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             return;
         }
         Method method=pjp.getMethod();
-        this.setCache(cacheKey, cacheWrapper, method);
+        this.setCache(cacheKey, cacheWrapper, method, arguments);
         ExCache[] exCaches=cache.exCache();
         if(null == exCaches || exCaches.length == 0) {
             return;
@@ -221,7 +220,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
                 CacheWrapper<Object> exCacheWrapper=new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
-                this.setCache(exCacheKey, exCacheWrapper, method);
+                this.setCache(exCacheKey, exCacheWrapper, method, arguments);
                 if(null != tmpAutoLoadTO) {
                     tmpAutoLoadTO.setExpire(exCacheExpire)//
                         .setLastLoadTime(exCacheWrapper.getLastLoadTime());//

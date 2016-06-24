@@ -56,7 +56,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, Method method)
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[])
         throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
@@ -148,7 +148,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO cacheKeyTO, final Type returnType, Method method)
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[])
         throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
@@ -169,6 +169,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
+            Type returnType=method.getGenericReturnType();
             res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
