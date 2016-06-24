@@ -1,31 +1,82 @@
 package com.test.fastjson;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.jarvis.cache.clone.Cloning;
+import org.springframework.cglib.proxy.Callback;
+import org.springframework.cglib.proxy.Enhancer;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.serializer.FastjsonSerializer;
-import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.serializer.JdkSerializer;
 import com.test.Stopwatch;
 
 public class DeepCloneTest {
+
+    private static final SerializerFeature[] features={SerializerFeature.DisableCircularReferenceDetect};
 
     private static int hot=10000;
 
     private static int run=100000;
 
     public static void main(String[] args) throws Exception {
-        // fastJsonTest();
-        serializerDeepClone(new JdkSerializer());
-        serializerDeepClone(new HessianSerializer());
-        serializerDeepClone(new FastjsonSerializer());
-        deepClone(new Cloning());
+        List<User> list=new ArrayList<User>();
+        Type type1=list.getClass().getGenericSuperclass();
+        
+        Enhancer enhancer = new Enhancer();
+        enhancer.setCallback(new Callback(){
+            
+        });
+        enhancer.setSuperclass(list.getClass());
+        Object obj= enhancer.create();
+        System.out.println(obj.getClass().getGenericSuperclass());
+        if(type1 instanceof ParameterizedType){
+            ParameterizedType type = ((ParameterizedType) type1);
+            System.out.println(type.getActualTypeArguments()[0].getClass().getName());
+        }else{
+            System.out.println("type2 is not ParameterizedType");
+        }
+        List list2=new ArrayList();
+        Type type2=list2.getClass().getGenericSuperclass();
+        if(type2 instanceof ParameterizedType){
+            ParameterizedType type = ((ParameterizedType) type2);
+            System.out.println(type.getActualTypeArguments()[0].getClass().getName());
+        }else{
+            System.out.println("type2 is not ParameterizedType");
+        }
+//        test1();
+//        fastJsonTest();
+//        serializerDeepClone(new JdkSerializer());
+//        serializerDeepClone(new HessianSerializer());
+//        serializerDeepClone(new FastjsonSerializer());
+//        deepClone(new Cloning());
+    }
+
+    private static void test1() {
+        List<User> list=new ArrayList<User>();
+        User user=new User();
+        user.setId(1);
+        user.setName("test");
+        user.setBirthday(new Date());
+        list.add(user);
+        Map<Integer, User> map=new HashMap<Integer, User>();
+        map.put(user.getId(), user);
+        Object[] arr=new Object[]{1, "test", list, map, User.class};
+        String json=JSON.toJSONString(arr, features);
+        System.out.println(json);
+        Object[] arr2=JSON.parseObject(json, arr.getClass());
+        for(int i=0; i < arr2.length; i++) {
+            Object obj=arr2[i];
+            System.out.println(obj.getClass().getName() + "--->" + obj);
+        }
     }
 
     private static void fastJsonTest() {
@@ -65,23 +116,41 @@ public class DeepCloneTest {
         System.out.println("--------------map------------------");
         try {
             Map<Integer, User> obj=(Map<Integer, User>)s.deepClone(map);
-            System.out.println(obj.getClass().getName() + "--->" + obj);
+            Iterator<Map.Entry<Integer, User>> it=obj.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry<Integer, User> enty=it.next();
+                Object key=enty.getKey();
+                Object val=enty.getValue();
+                System.out.println(key.getClass().getName() + "--->" + key);
+                System.out.println(val.getClass().getName() + "--->" + val);
+            }
         } catch(Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-    private static User getUser() {
+    private static Object getUser() {
+        List<User> list=new ArrayList<User>();
         User user=new User();
         user.setId(1);
         user.setName("test");
         user.setBirthday(new Date());
-        return user;
+        list.add(user);
+        Map<Integer, User> map=new HashMap<Integer, User>();
+        User user2=new User();
+        user2.setId(1);
+        user2.setName("test");
+        user2.setBirthday(new Date());
+        map.put(user2.getId(), user2);
+        return new Object[]{1, "test", list, map};
+        //return new Object[]{1, "test", list};
+        //return new User[]{user};
+        //return map;
     }
 
     public static void serializerDeepClone(ISerializer<Object> h) throws Exception {
-        User user=getUser();
+        Object user=getUser();
 
         for(int i=0; i < hot; i++) {
             h.deepClone(user);
@@ -96,7 +165,7 @@ public class DeepCloneTest {
     }
 
     public static void deepClone(ICloner h) throws Exception {
-        User user=getUser();
+        Object user=getUser();
 
         for(int i=0; i < hot; i++) {
             h.deepClone(user);

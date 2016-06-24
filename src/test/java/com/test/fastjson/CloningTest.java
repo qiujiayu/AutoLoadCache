@@ -11,9 +11,18 @@ import com.jarvis.cache.clone.ICloner;
 
 public class CloningTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         deepCloneTest();
 
+        User user=new User();
+        user.setId(2);
+        user.setName("test2");
+        user.setBirthday(new Date());
+        ICloner s=new Cloning();
+        User user2=(User)s.deepClone(user);
+        user2.setName("test3333");
+        System.out.println(user);
+        System.out.println(user2);
     }
 
     private static void deepCloneTest() {
