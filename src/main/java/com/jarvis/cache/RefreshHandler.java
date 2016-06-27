@@ -3,8 +3,10 @@ package com.jarvis.cache;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
@@ -40,7 +42,19 @@ public class RefreshHandler {
         refreshing=new ConcurrentHashMap<String, Byte>(queueCapacity);
         LinkedBlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>(queueCapacity);
         RejectedExecutionHandler rejectedHandler=new RefreshRejectedExecutionHandler();
-        refreshThreadPool=new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, rejectedHandler);
+        refreshThreadPool=new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, new ThreadFactory() {
+
+            private final AtomicInteger threadNumber=new AtomicInteger(1);
+
+            private final String namePrefix="autoload-cache-RefreshHandler-";
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t=new Thread(r, namePrefix + threadNumber.getAndIncrement());
+                t.setDaemon(true);
+                return t;
+            }
+        }, rejectedHandler);
     }
 
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {

@@ -91,13 +91,10 @@ public class CacheKeyTO implements Serializable {
 
     private boolean isEquals(String a, String b) {
         if(a == null) {
-            if(b != null) {
-                return false;
-            }
-        } else if(!a.equals(b)) {
-            return false;
+            return b == null ? true : false;
+        } else {
+            return a.equals(b);
         }
-        return true;
     }
 
 }
