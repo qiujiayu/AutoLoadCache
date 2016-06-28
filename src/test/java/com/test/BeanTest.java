@@ -2,19 +2,21 @@ package com.test;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 public class BeanTest {
 
     private static final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
 
-    public static void main(String args[]) {
+    @Test
+    public void testputIfAbsent() {
         Boolean isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        assertNull(isProcessing);
         System.out.println("isProcessing1==" + isProcessing);
         isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
         System.out.println("isProcessing2==" + isProcessing);
-
-        String t="daddadfaf";
-        System.out.println(t.length());
-        System.out.println(t.getBytes().length);
+        assertEquals(isProcessing, Boolean.TRUE);
 
     }
 

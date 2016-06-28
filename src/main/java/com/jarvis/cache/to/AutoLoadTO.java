@@ -107,6 +107,10 @@ public class AutoLoadTO implements Serializable {
         return lastLoadTime;
     }
 
+    /**
+     * @param lastLoadTime last load time
+     * @return this
+     */
     public AutoLoadTO setLastLoadTime(long lastLoadTime) {
         if(lastLoadTime > this.lastLoadTime) {
             this.lastLoadTime=lastLoadTime;
@@ -122,6 +126,10 @@ public class AutoLoadTO implements Serializable {
         return loading;
     }
 
+    /**
+     * @param loading
+     * @return this
+     */
     public AutoLoadTO setLoading(boolean loading) {
         this.loading=loading;
         return this;
@@ -142,6 +150,7 @@ public class AutoLoadTO implements Serializable {
     /**
      * 记录用时
      * @param useTime 用时
+     * @return this
      */
     public AutoLoadTO addUseTotalTime(long useTime) {
         synchronized(this) {
@@ -166,6 +175,10 @@ public class AutoLoadTO implements Serializable {
         return expire;
     }
 
+    /**
+     * @param expire expire
+     * @return @return this
+     */
     public AutoLoadTO setExpire(int expire) {
         this.expire=expire;
         return this;
