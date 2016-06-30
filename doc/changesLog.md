@@ -1,5 +1,14 @@
 ##更新日志
 
+* ####4.12 修改说明：
+
+    * fastjson deepClone 数组中有Map或Collection时，转换失败的问题
+    * Fastjson深度复制优化：针对深度复制Method的arguments进行优化，通过method.getGenericParameterTypes() 来方便深度复制泛型参数。
+    * 使用 ThreadLocal 缓存Random，提升获取随机数性能
+    * 将异步刷新线程设置为守护线程。
+    * ICacheManager中的get和set方法中，增加Method method和 Object args[]两个参数，方便使用者根据情况进行扩展，比如：增加一些自定义的注解，来处理特殊业务逻辑（比如：增加本地缓存功能）
+
+
 * ####4.11 修改说明：
 
     * 增加刷新缓存数据功能，如果不使用自动加载，则在缓存即将过期时，开启线程进行异步刷新数据，可以减少用户的等待，避免因缓存失效失效造成系统压力过大；
