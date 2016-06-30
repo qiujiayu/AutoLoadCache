@@ -76,8 +76,8 @@ public class CompressorSerializer implements ISerializer<Object> {
     }
 
     @Override
-    public Object deepClone(Object obj) throws Exception {
-        return serializer.deepClone(obj);
+    public Object deepClone(Object obj, final Type type) throws Exception {
+        return serializer.deepClone(obj, type);
     }
 
     @Override

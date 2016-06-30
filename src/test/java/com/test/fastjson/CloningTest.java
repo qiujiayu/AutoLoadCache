@@ -19,7 +19,7 @@ public class CloningTest {
         user.setName("test2");
         user.setBirthday(new Date());
         ICloner s=new Cloning();
-        User user2=(User)s.deepClone(user);
+        User user2=(User)s.deepClone(user, User.class);
         user2.setName("test3333");
         System.out.println(user);
         System.out.println(user2);
@@ -38,7 +38,7 @@ public class CloningTest {
         ICloner s=new Cloning();
         try {
             System.out.println("--------------obj arr------------------");
-            Object[] rs=(Object[])s.deepClone(arr);
+            Object[] rs=(Object[])s.deepClone(arr, null);
             for(int i=0; i < rs.length; i++) {
                 Object obj=rs[i];
                 System.out.println(obj.getClass().getName() + "--->" + obj);
@@ -50,7 +50,7 @@ public class CloningTest {
         System.out.println("--------------user arr------------------");
         User[] arr2=new User[]{user};
         try {
-            Object[] rs=(Object[])s.deepClone(arr2);
+            Object[] rs=(Object[])s.deepClone(arr2, null);
             for(int i=0; i < rs.length; i++) {
                 Object obj=rs[i];
                 System.out.println(obj.getClass().getName() + "--->" + obj);
@@ -61,7 +61,7 @@ public class CloningTest {
         }
         System.out.println("--------------map------------------");
         try {
-            Map<Integer, User> obj=(Map<Integer, User>)s.deepClone(map);
+            Map<Integer, User> obj=(Map<Integer, User>)s.deepClone(map, null);
             System.out.println(obj.getClass().getName() + "--->" + obj);
         } catch(Exception e) {
             // TODO Auto-generated catch block

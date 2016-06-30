@@ -51,9 +51,13 @@ public class FastjsonSerializer implements ISerializer<Object> {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
-    public Object deepClone(Object obj) throws Exception {
+    public Object deepClone(Object obj, final Type type) throws Exception {
         if(null == obj) {
             return null;
+        }
+        if(null != type) {
+            String json=JSON.toJSONString(obj, features);
+            return JSON.parseObject(json, type);
         }
         Class<?> clazz=obj.getClass();
         if(clazz.isArray()) {
@@ -63,7 +67,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
                 ((Object)clazz == (Object)Object[].class) ? (Object[])new Object[arr.length] : (Object[])Array.newInstance(
                     clazz.getComponentType(), arr.length);
             for(int i=0; i < arr.length; i++) {
-                res[i]=deepClone(arr[i]);
+                res[i]=deepClone(arr[i], null);
             }
             return res;
         } else if(obj instanceof Collection) {
@@ -72,7 +76,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
 
             Iterator<?> it=tempCol.iterator();
             while(it.hasNext()) {
-                Object val=deepClone(it.next());
+                Object val=deepClone(it.next(), null);
                 res.add(val);
             }
             return res;
@@ -84,10 +88,16 @@ public class FastjsonSerializer implements ISerializer<Object> {
                 Map.Entry entry=(Entry)it.next();
                 Object key=entry.getKey();
                 Object val=entry.getValue();
-                res.put(deepClone(key), deepClone(val));
+                res.put(deepClone(key, null), deepClone(val, null));
             }
             return res;
-
+        } else if(obj instanceof CacheWrapper) {
+            CacheWrapper<Object> wrapper=(CacheWrapper<Object>)obj;
+            CacheWrapper<Object> res=new CacheWrapper<Object>();
+            res.setExpire(wrapper.getExpire());
+            res.setLastLoadTime(wrapper.getLastLoadTime());
+            res.setCacheObject(deepClone(wrapper.getCacheObject(), null));
+            return res;
         } else {
             String json=JSON.toJSONString(obj, features);
             return JSON.parseObject(json, clazz);
@@ -116,7 +126,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
                 String json=JSON.toJSONString(obj, features);
                 res[i]=JSON.parseObject(json, genericParameterType);
             } else {
-                res[i]=deepClone(obj);
+                res[i]=deepClone(obj, null);
             }
         }
         return res;

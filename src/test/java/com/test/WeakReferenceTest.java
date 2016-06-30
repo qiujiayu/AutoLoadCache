@@ -20,7 +20,7 @@ public class WeakReferenceTest {
         WeakReference<Simple> ref=new WeakReference<Simple>(s);
         s=null;
         try {
-            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref);
+            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref, null);
             System.out.println(ref2.get());
         } catch(Exception e1) {
             e1.printStackTrace();
@@ -40,7 +40,7 @@ public class WeakReferenceTest {
         }
         System.out.println("object a was cleared by JVM!");
         try {
-            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref);
+            WeakReference<Simple> ref2=(WeakReference<Simple>)serializer.deepClone(ref, null);
             System.out.println(ref2.get());
         } catch(Exception e1) {
             e1.printStackTrace();

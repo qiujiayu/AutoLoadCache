@@ -33,7 +33,7 @@ public class JdkSerializer implements ISerializer<Object> {
     }
 
     @Override
-    public Object deepClone(Object obj) throws Exception {
+    public Object deepClone(Object obj, final Type type) throws Exception {
         return deserialize(serialize(obj), null);
     }
 

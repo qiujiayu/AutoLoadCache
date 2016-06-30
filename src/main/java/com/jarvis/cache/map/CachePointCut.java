@@ -86,7 +86,7 @@ public class CachePointCut extends AbstractCacheManager {
         CacheWrapper<Object> value=null;
         if(copyValue) {
             try {
-                value=(CacheWrapper<Object>)this.getCloner().deepClone(value);
+                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可以是设置@ExCache缓存
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -153,7 +153,11 @@ public class CachePointCut extends AbstractCacheManager {
         }
         if(copyValue) {
             try {
-                return (CacheWrapper<Object>)this.getCloner().deepClone(value);
+                CacheWrapper<Object> res=new CacheWrapper<Object>();
+                res.setExpire(value.getExpire());
+                res.setLastLoadTime(value.getLastLoadTime());
+                res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
+                return res;
             } catch(Exception e) {
                 e.printStackTrace();
             }

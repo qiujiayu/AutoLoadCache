@@ -37,7 +37,7 @@ public class StringSerializer implements ISerializer<String> {
     }
 
     @Override
-    public Object deepClone(Object obj) throws Exception {
+    public Object deepClone(Object obj, final Type type) throws Exception {
         if(null == obj) {
             return obj;
         }
@@ -47,6 +47,6 @@ public class StringSerializer implements ISerializer<String> {
 
     @Override
     public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
-        return (Object[])deepClone(args);
+        return (Object[])deepClone(args, null);
     }
 }

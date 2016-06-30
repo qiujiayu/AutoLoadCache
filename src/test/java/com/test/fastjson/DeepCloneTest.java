@@ -105,7 +105,7 @@ public class DeepCloneTest {
         ISerializer<Object> s=new FastjsonSerializer();
         try {
             System.out.println("--------------obj arr------------------");
-            Object[] rs=(Object[])s.deepClone(arr);
+            Object[] rs=(Object[])s.deepClone(arr, null);
             for(int i=0; i < rs.length; i++) {
                 Object obj=rs[i];
                 System.out.println(obj.getClass().getName() + "--->" + obj);
@@ -117,7 +117,7 @@ public class DeepCloneTest {
         System.out.println("--------------user arr------------------");
         User[] arr2=new User[]{user};
         try {
-            Object[] rs=(Object[])s.deepClone(arr2);
+            Object[] rs=(Object[])s.deepClone(arr2, null);
             for(int i=0; i < rs.length; i++) {
                 Object obj=rs[i];
                 System.out.println(obj.getClass().getName() + "--->" + obj);
@@ -128,7 +128,7 @@ public class DeepCloneTest {
         }
         System.out.println("--------------map------------------");
         try {
-            Map<Integer, User> obj=(Map<Integer, User>)s.deepClone(map);
+            Map<Integer, User> obj=(Map<Integer, User>)s.deepClone(map, null);
             Iterator<Map.Entry<Integer, User>> it=obj.entrySet().iterator();
             while(it.hasNext()) {
                 Map.Entry<Integer, User> enty=it.next();
@@ -163,12 +163,12 @@ public class DeepCloneTest {
         Object user=getUser();
 
         for(int i=0; i < hot; i++) {
-            h.deepClone(user);
+            h.deepClone(user, null);
         }
 
         Stopwatch sw=Stopwatch.begin();
         for(int i=0; i < run; i++) {
-            h.deepClone(user);
+            h.deepClone(user, null);
         }
         sw.stop();
         System.out.println(h.getClass().getName() + ": " + sw);
