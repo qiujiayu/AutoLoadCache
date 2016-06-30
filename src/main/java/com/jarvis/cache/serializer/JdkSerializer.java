@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 public class JdkSerializer implements ISerializer<Object> {
@@ -34,5 +35,10 @@ public class JdkSerializer implements ISerializer<Object> {
     @Override
     public Object deepClone(Object obj) throws Exception {
         return deserialize(serialize(obj), null);
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return (Object[])deserialize(serialize(args), null);
     }
 }

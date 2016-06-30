@@ -11,14 +11,15 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.cglib.beans.BeanCopier;
-import net.sf.cglib.proxy.Callback;
-import net.sf.cglib.proxy.Enhancer;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.jarvis.cache.clone.Cloning;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.serializer.FastjsonSerializer;
+import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
+import com.jarvis.cache.serializer.JdkSerializer;
 import com.test.Stopwatch;
 
 public class DeepCloneTest {
@@ -66,10 +67,10 @@ public class DeepCloneTest {
         }
         // test1();
         // fastJsonTest();
-        // serializerDeepClone(new JdkSerializer());
-        // serializerDeepClone(new HessianSerializer());
-        // serializerDeepClone(new FastjsonSerializer());
-        // deepClone(new Cloning());
+        deepClone(new JdkSerializer());
+        deepClone(new HessianSerializer());
+        deepClone(new FastjsonSerializer());
+        deepClone(new Cloning());
     }
 
     private static void test1() {
@@ -155,25 +156,7 @@ public class DeepCloneTest {
         user2.setName("test");
         user2.setBirthday(new Date());
         map.put(user2.getId(), user2);
-        return new Object[]{1, "test", list, map};
-        // return new Object[]{1, "test", list};
-        // return new User[]{user};
-        // return map;
-    }
-
-    public static void serializerDeepClone(ISerializer<Object> h) throws Exception {
-        Object user=getUser();
-
-        for(int i=0; i < hot; i++) {
-            h.deepClone(user);
-        }
-
-        Stopwatch sw=Stopwatch.begin();
-        for(int i=0; i < run; i++) {
-            h.deepClone(user);
-        }
-        sw.stop();
-        System.out.println(h.getClass().getName() + ": " + sw);
+        return new Object[]{1, "test", list, map, user, new String[]{"aaa", "bbb"}};
     }
 
     public static void deepClone(ICloner h) throws Exception {

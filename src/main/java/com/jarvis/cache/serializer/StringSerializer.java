@@ -1,5 +1,6 @@
 package com.jarvis.cache.serializer;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
@@ -42,5 +43,10 @@ public class StringSerializer implements ISerializer<String> {
         }
         String str=(String)obj;
         return String.copyValueOf(str.toCharArray());
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return (Object[])deepClone(args);
     }
 }

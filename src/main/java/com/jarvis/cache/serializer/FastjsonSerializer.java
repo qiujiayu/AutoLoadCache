@@ -1,6 +1,8 @@
 package com.jarvis.cache.serializer;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -90,5 +92,33 @@ public class FastjsonSerializer implements ISerializer<Object> {
             String json=JSON.toJSONString(obj, features);
             return JSON.parseObject(json, clazz);
         }
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        if(null == args || args.length == 0) {
+            return args;
+        }
+        Type[] genericParameterTypes=method.getGenericParameterTypes();
+        if(args.length != genericParameterTypes.length) {
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must "
+                + genericParameterTypes.length);
+        }
+        Class<?> clazz=args.getClass();
+        Object[] res=
+            ((Object)clazz == (Object)Object[].class) ? (Object[])new Object[args.length] : (Object[])Array.newInstance(
+                clazz.getComponentType(), args.length);
+        int len=genericParameterTypes.length;
+        for(int i=0; i < len; i++) {
+            Type genericParameterType=genericParameterTypes[i];
+            Object obj=args[i];
+            if(genericParameterType instanceof ParameterizedType) {
+                String json=JSON.toJSONString(obj, features);
+                res[i]=JSON.parseObject(json, genericParameterType);
+            } else {
+                res[i]=deepClone(obj);
+            }
+        }
+        return res;
     }
 }

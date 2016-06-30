@@ -2,6 +2,7 @@ package com.jarvis.cache.serializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import com.caucho.hessian.io.AbstractHessianInput;
@@ -60,6 +61,11 @@ public class HessianSerializer implements ISerializer<Object> {
     @Override
     public Object deepClone(Object obj) throws Exception {
         return deserialize(serialize(obj), null);
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return (Object[])deserialize(serialize(args), null);
     }
 
 }

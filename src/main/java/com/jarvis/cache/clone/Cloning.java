@@ -1,5 +1,7 @@
 package com.jarvis.cache.clone;
 
+import java.lang.reflect.Method;
+
 import com.rits.cloning.Cloner;
 
 public class Cloning implements ICloner {
@@ -12,6 +14,11 @@ public class Cloning implements ICloner {
             return null;
         }
         return cloner.deepClone(obj);
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return (Object[])deepClone(args);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.jarvis.cache.serializer;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -77,5 +78,10 @@ public class CompressorSerializer implements ISerializer<Object> {
     @Override
     public Object deepClone(Object obj) throws Exception {
         return serializer.deepClone(obj);
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return serializer.deepCloneMethodArgs(method, args);
     }
 }

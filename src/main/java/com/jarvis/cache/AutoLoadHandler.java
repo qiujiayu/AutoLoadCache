@@ -151,7 +151,7 @@ public class AutoLoadHandler {
         if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])cacheManager.getCloner().deepClone(arguments); // 进行深度复制
+                arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
