@@ -5,7 +5,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,7 +16,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.lib.util.BeanUtil;
 
+/**
+ * @author jiayu.qiu
+ */
 public class FastjsonSerializer implements ISerializer<Object> {
 
     private final Charset charset;
@@ -55,11 +61,22 @@ public class FastjsonSerializer implements ISerializer<Object> {
         if(null == obj) {
             return null;
         }
+        Class<?> clazz=obj.getClass();
+        if(BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
+            return obj;
+        }
+        if(obj instanceof Date) {
+            return ((Date)obj).clone();
+        } else if(obj instanceof Calendar) {
+            Calendar cal=Calendar.getInstance();
+            cal.setTimeInMillis(((Calendar)obj).getTime().getTime());
+            return cal;
+        }
         if(null != type) {
             String json=JSON.toJSONString(obj, features);
             return JSON.parseObject(json, type);
         }
-        Class<?> clazz=obj.getClass();
+
         if(clazz.isArray()) {
             Object[] arr=(Object[])obj;
 

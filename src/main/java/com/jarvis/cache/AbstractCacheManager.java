@@ -13,7 +13,6 @@ import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
-import com.jarvis.cache.clone.Cloning;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
@@ -51,11 +50,12 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     private final RefreshHandler refreshHandler;
 
-    private ICloner cloner=new Cloning();
+    private ICloner cloner;
 
     public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
         this.serializer=serializer;
+        this.cloner=this.serializer;
         this.scriptParser=scriptParser;
         registerFunction(config.getFunctions());
         refreshHandler=new RefreshHandler(this, config);

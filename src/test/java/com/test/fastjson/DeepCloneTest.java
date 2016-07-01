@@ -19,6 +19,7 @@ import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.serializer.FastjsonSerializer;
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
+import com.jarvis.cache.serializer.JacksonSerializer;
 import com.jarvis.cache.serializer.JdkSerializer;
 import com.test.Stopwatch;
 
@@ -70,6 +71,7 @@ public class DeepCloneTest {
         deepClone(new JdkSerializer());
         deepClone(new HessianSerializer());
         deepClone(new FastjsonSerializer());
+        deepClone(new JacksonSerializer());
         deepClone(new Cloning());
     }
 
@@ -156,7 +158,7 @@ public class DeepCloneTest {
         user2.setName("test");
         user2.setBirthday(new Date());
         map.put(user2.getId(), user2);
-        return new Object[]{1, "test", list, map, user, new String[]{"aaa", "bbb"}};
+        return new Object[]{list, map, user};
     }
 
     public static void deepClone(ICloner h) throws Exception {

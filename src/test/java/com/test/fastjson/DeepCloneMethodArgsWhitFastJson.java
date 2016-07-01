@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.jarvis.lib.util.BeanUtil;
 import com.test.Stopwatch;
 
 /**
@@ -38,12 +40,13 @@ public class DeepCloneMethodArgsWhitFastJson {
         Method methods[]=DeepCloneMethodArgsWhitFastJson.class.getDeclaredMethods();
         String testName="getUserList";
         Method method=null;
-        for(Method t: methods) {
-            if(t.getName().equals(testName)) {
-                method=t;
+        for(Method m: methods) {
+            if(m.getName().equals(testName)) {
+                method=m;
                 break;
             }
         }
+
         assertNotNull(method);
         Object[] args=getArgs();
         Object[] res=deepClone(method, args);
@@ -72,10 +75,8 @@ public class DeepCloneMethodArgsWhitFastJson {
             throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must "
                 + genericParameterTypes.length);
         }
-        Class<?> clazz=args.getClass();
-        Object[] res=
-            ((Object)clazz == (Object)Object[].class) ? (Object[])new Object[args.length] : (Object[])Array.newInstance(
-                clazz.getComponentType(), args.length);
+        // Class<?> clazz=args.getClass();
+        Object[] res=new Object[args.length];
         int len=genericParameterTypes.length;
         for(int i=0; i < len; i++) {
             Type genericParameterType=genericParameterTypes[i];
@@ -96,6 +97,16 @@ public class DeepCloneMethodArgsWhitFastJson {
             return null;
         }
         Class<?> clazz=obj.getClass();
+        if(BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
+            return obj;
+        }
+        if(obj instanceof Date) {
+            return ((Date)obj).clone();
+        } else if(obj instanceof Calendar) {
+            Calendar cal=Calendar.getInstance();
+            cal.setTimeInMillis(((Calendar)obj).getTime().getTime());
+            return cal;
+        }
         if(clazz.isArray()) {
             Object[] arr=(Object[])obj;
 

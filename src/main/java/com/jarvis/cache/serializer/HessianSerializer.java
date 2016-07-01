@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Calendar;
+import java.util.Date;
 
 import com.caucho.hessian.io.AbstractHessianInput;
 import com.caucho.hessian.io.AbstractHessianOutput;
@@ -11,7 +13,11 @@ import com.caucho.hessian.io.AbstractSerializerFactory;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
+import com.jarvis.lib.util.BeanUtil;
 
+/**
+ * @author jiayu.qiu
+ */
 public class HessianSerializer implements ISerializer<Object> {
 
     private static final SerializerFactory serializerFactory=new SerializerFactory();
@@ -60,12 +66,33 @@ public class HessianSerializer implements ISerializer<Object> {
 
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
+        Class<?> clazz=obj.getClass();
+        if(BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
+            return obj;
+        }
+        if(obj instanceof Date) {
+            return ((Date)obj).clone();
+        } else if(obj instanceof Calendar) {
+            Calendar cal=Calendar.getInstance();
+            cal.setTimeInMillis(((Calendar)obj).getTime().getTime());
+            return cal;
+        }
         return deserialize(serialize(obj), null);
     }
 
     @Override
     public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
-        return (Object[])deserialize(serialize(args), null);
+        Type[] genericParameterTypes=method.getGenericParameterTypes();
+        if(args.length != genericParameterTypes.length) {
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must "
+                + genericParameterTypes.length);
+        }
+        Object[] res=new Object[args.length];
+        int len=genericParameterTypes.length;
+        for(int i=0; i < len; i++) {
+            res[i]=deepClone(args[i], null);
+        }
+        return res;
     }
 
 }

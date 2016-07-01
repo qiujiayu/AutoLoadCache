@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -26,10 +27,12 @@ public class BeanUtil {
      * @param obj Object
      * @return boolean true or false
      */
-    private static boolean isPrimitive(Object obj) {
-        return obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
-            || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
-            || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal;
+    public static boolean isPrimitive(Object obj) {
+        boolean rv=
+            obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
+                || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
+                || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal || obj instanceof BigInteger;
+        return rv;
     }
 
     /**
