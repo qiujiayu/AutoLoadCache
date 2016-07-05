@@ -43,7 +43,7 @@ public class FastJsonDeepCloneCacheWrapper {
             }
         }
         Type superType=CacheWrapper.class.getGenericSuperclass();
-        System.out.println(superType.getTypeName());
+        System.out.println(superType.getClass().getName());
         FastjsonSerializer fjson=new FastjsonSerializer();
         CacheWrapper<List<User>> obj=(CacheWrapper<List<User>>)fjson.deepClone(cache, null);
         System.out.println(obj.getCacheObject());

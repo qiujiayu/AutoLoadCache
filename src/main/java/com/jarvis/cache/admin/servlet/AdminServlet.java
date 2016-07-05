@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.jarvis.cache.AbstractCacheManager;
-import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -127,11 +126,8 @@ public class AdminServlet extends HttpServlet {
         String act=req.getParameter("act");
         String cacheKey=req.getParameter("cacheKey");
         String hfield=req.getParameter("hfield");
-        CacheKeyTO to=new CacheKeyTO();
+        CacheKeyTO to=new CacheKeyTO(cacheManager.getNamespace(), cacheKey, hfield);
 
-        to.setNamespace(cacheManager.getNamespace());
-        to.setHfield(hfield);
-        to.setKey(cacheKey);
         if("removeCache".equals(act)) {
             cacheManager.delete(to);
             resp.getWriter().println("处理成功！");
@@ -237,8 +233,8 @@ public class AdminServlet extends HttpServlet {
         resp.getWriter().println(html.toString());
     }
 
-    private void printList(HttpServletRequest req, HttpServletResponse resp, ICacheManager cacheManager, String cacheManagerName)
-        throws IOException {
+    private void printList(HttpServletRequest req, HttpServletResponse resp, AbstractCacheManager cacheManager,
+        String cacheManagerName) throws IOException {
         AutoLoadTO queue[]=cacheManager.getAutoLoadHandler().getAutoLoadQueue();
         if(null == queue || queue.length == 0) {
             resp.getWriter().println("自动加载队列中无数据！");

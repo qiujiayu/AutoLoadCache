@@ -28,18 +28,18 @@ public class RefreshHandler {
     /**
      * 正在刷新缓存队列
      */
-    private final ConcurrentHashMap<String, Byte> refreshing;
+    private final ConcurrentHashMap<CacheKeyTO, Byte> refreshing;
 
-    private final ICacheManager cacheManager;
+    private final AbstractCacheManager cacheManager;
 
-    public RefreshHandler(ICacheManager cacheManager, AutoLoadConfig config) {
+    public RefreshHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
         this.cacheManager=cacheManager;
         int corePoolSize=config.getRefreshThreadPoolSize();// 线程池的基本大小
         int maximumPoolSize=config.getRefreshThreadPoolMaxSize();// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
         int keepAliveTime=config.getRefreshThreadPoolkeepAliveTime();
         TimeUnit unit=TimeUnit.MINUTES;
         int queueCapacity=config.getRefreshQueueCapacity();// 队列容量
-        refreshing=new ConcurrentHashMap<String, Byte>(queueCapacity);
+        refreshing=new ConcurrentHashMap<CacheKeyTO, Byte>(queueCapacity);
         LinkedBlockingQueue<Runnable> queue=new LinkedBlockingQueue<Runnable>(queueCapacity);
         RejectedExecutionHandler rejectedHandler=new RefreshRejectedExecutionHandler();
         refreshThreadPool=new ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, unit, queue, new ThreadFactory() {
@@ -77,13 +77,12 @@ public class RefreshHandler {
         if((System.currentTimeMillis() - cacheWrapper.getLastLoadTime()) < (timeout * 1000)) {
             return;
         }
-        String fullKey=cacheKey.getFullKey();
-        Byte tmpByte=refreshing.get(fullKey);
+        Byte tmpByte=refreshing.get(cacheKey);
         if(null != tmpByte) {// 如果有正在刷新的请求，则不处理
             return;
         }
         tmpByte=1;
-        if(null == refreshing.putIfAbsent(fullKey, tmpByte)) {
+        if(null == refreshing.putIfAbsent(cacheKey, tmpByte)) {
             try {
                 refreshThreadPool.execute(new RefreshTask(pjp, cache, cacheKey, cacheWrapper));
             } catch(Exception e) {
@@ -142,8 +141,7 @@ public class RefreshHandler {
                     logger.error(e.getMessage(), e);
                 }
             }
-            String fullKey=cacheKey.getFullKey();
-            refreshing.remove(fullKey);
+            refreshing.remove(cacheKey);
         }
 
         public CacheKeyTO getCacheKey() {
@@ -160,8 +158,7 @@ public class RefreshHandler {
                 Runnable last=e.getQueue().poll();
                 if(last instanceof RefreshTask) {
                     RefreshTask lastTask=(RefreshTask)last;
-                    String fullKey=lastTask.getCacheKey().getFullKey();
-                    refreshing.remove(fullKey);
+                    refreshing.remove(lastTask.getCacheKey());
                 }
                 e.execute(r);
             }

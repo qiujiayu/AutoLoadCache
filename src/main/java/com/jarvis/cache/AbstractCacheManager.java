@@ -32,7 +32,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
-    public final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
+    public final ConcurrentHashMap<CacheKeyTO, ProcessingTO> processing=new ConcurrentHashMap<CacheKeyTO, ProcessingTO>();
 
     private final AutoLoadHandler autoLoadHandler;
 
@@ -187,7 +187,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
         }
     }
 
-    @Override
     public void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
         CacheWrapper<Object> cacheWrapper) throws Exception {
         if(null == cacheKey) {
@@ -232,7 +231,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     }
 
-    @Override
     public void destroy() {
         autoLoadHandler.shutdown();
         refreshHandler.shutdown();
@@ -269,11 +267,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             logger.error(className + "." + methodName + "; cache key is empty");
             return null;
         }
-        CacheKeyTO to=new CacheKeyTO();
-        to.setNamespace(namespace);
-        to.setKey(key);
-        to.setHfield(hfield);
-        return to;
+        return new CacheKeyTO(namespace, key, hfield);
     }
 
     /**
@@ -344,12 +338,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     }
 
-    @Override
     public ISerializer<Object> getSerializer() {
         return serializer;
     }
 
-    @Override
     public AutoLoadHandler getAutoLoadHandler() {
         return this.autoLoadHandler;
     }
@@ -362,12 +354,10 @@ public abstract class AbstractCacheManager implements ICacheManager {
         this.namespace=namespace;
     }
 
-    @Override
     public AbstractScriptParser getScriptParser() {
         return scriptParser;
     }
 
-    @Override
     public ICloner getCloner() {
         return cloner;
     }

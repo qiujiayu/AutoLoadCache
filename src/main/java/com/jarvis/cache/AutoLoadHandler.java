@@ -28,36 +28,36 @@ public class AutoLoadHandler {
     /**
      * 自动加载队列
      */
-    private ConcurrentHashMap<String, AutoLoadTO> autoLoadMap;
+    private final ConcurrentHashMap<CacheKeyTO, AutoLoadTO> autoLoadMap;
 
-    private ICacheManager cacheManager;
+    private final AbstractCacheManager cacheManager;
 
     /**
      * 缓存池
      */
-    private Thread threads[];
+    private final Thread threads[];
 
     /**
      * 排序进行，对自动加载队列进行排序
      */
-    private Thread sortThread;
+    private final Thread sortThread;
 
     /**
      * 自动加载队列
      */
-    private LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
+    private final LinkedBlockingQueue<AutoLoadTO> autoLoadQueue;
 
     private volatile boolean running=false;
 
     /**
      * 自动加载配置
      */
-    private AutoLoadConfig config;
+    private final AutoLoadConfig config;
 
     /**
      * 随机数种子
      */
-    private ThreadLocal<Random> random=new ThreadLocal<Random>() {
+    private static final ThreadLocal<Random> random=new ThreadLocal<Random>() {
 
         @Override
         protected Random initialValue() {
@@ -70,12 +70,12 @@ public class AutoLoadHandler {
      * @param cacheManager 缓存的set,get方法实现类
      * @param config 配置
      */
-    public AutoLoadHandler(ICacheManager cacheManager, AutoLoadConfig config) {
+    public AutoLoadHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
         this.cacheManager=cacheManager;
         this.config=config;
         this.running=true;
         this.threads=new Thread[this.config.getThreadCnt()];
-        this.autoLoadMap=new ConcurrentHashMap<String, AutoLoadTO>(this.config.getMaxElement());
+        this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
         this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
         this.sortThread=new Thread(new SortRunnable());
         this.sortThread.setDaemon(true);
@@ -103,14 +103,14 @@ public class AutoLoadHandler {
         if(null == autoLoadMap) {
             return null;
         }
-        return autoLoadMap.get(cacheKey.getFullKey());
+        return autoLoadMap.get(cacheKey);
     }
 
     public void removeAutoLoadTO(CacheKeyTO cacheKey) {
         if(null == autoLoadMap) {
             return;
         }
-        autoLoadMap.remove(cacheKey.getFullKey());
+        autoLoadMap.remove(cacheKey);
     }
 
     /**
@@ -118,7 +118,7 @@ public class AutoLoadHandler {
      * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
-        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey.getFullKey());
+        AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
         if(null != autoLoadTO && !autoLoadTO.isLoading()) {
             autoLoadTO.setLastLoadTime(1L);
         }
@@ -127,7 +127,6 @@ public class AutoLoadHandler {
     public void shutdown() {
         running=false;
         autoLoadMap.clear();
-        autoLoadMap=null;
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
@@ -157,7 +156,7 @@ public class AutoLoadHandler {
                 return null;
             }
             autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache, expire);
-            AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey.getFullKey(), autoLoadTO);
+            AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey, autoLoadTO);
             if(null == tmp) {
                 return autoLoadTO;
             } else {
@@ -256,11 +255,11 @@ public class AutoLoadHandler {
             Cache cache=autoLoadTO.getCache();
             long requestTimeout=cache.requestTimeout();
             if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
-                autoLoadMap.remove(autoLoadTO.getCacheKey().getFullKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {// 如果效率比较高的请求，就没必要使用自动加载了。
-                autoLoadMap.remove(autoLoadTO.getCacheKey().getFullKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             // 对于使用频率很低的数据，也可以考虑不用自动加载
@@ -268,7 +267,7 @@ public class AutoLoadHandler {
             long oneHourSecs=3600000L;
             if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000
                 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
-                autoLoadMap.remove(autoLoadTO.getCacheKey().getFullKey());
+                autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             if(autoLoadTO.isLoading()) {
