@@ -1,5 +1,17 @@
 ##更新日志
 
+* ####4.13 修改说明
+
+    * com.jarvis.cache.clone.ICloner中的Object deepClone(Object obj) 改为 Object deepClone(Object obj, final Type type)，在能获得Type的情况下使用，能更好保证数据准备和效率
+    
+    * 进一步优化深度复制功能，因为深度复制的目的主要是用于防止外部修改已经缓存的数据，对于一些不可变对象，就可以直接使用，不再走clone逻辑。
+    
+    * 增加Jackson支持
+    
+    * 将CacheKeyTO中所有属性改为final，同时删除fullKey属性。同时增加hashCode和equals两个方法的实现
+    
+    * 修复DataLoader中，等待第一个请求获取数据后，又再去数据层获取数据的BUG，这个BUG是在4.11版本产生的，建议使用4.11和4.12的用户升级一下。
+
 * ####4.12 修改说明：
 
     * fastjson deepClone 数组中有Map或Collection时，转换失败的问题
