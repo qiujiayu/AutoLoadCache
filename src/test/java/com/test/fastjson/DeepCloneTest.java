@@ -19,7 +19,7 @@ import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.serializer.FastjsonSerializer;
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.serializer.JacksonSerializer;
+import com.jarvis.cache.serializer.JacksonJsonSerializer;
 import com.jarvis.cache.serializer.JdkSerializer;
 import com.test.Stopwatch;
 
@@ -71,7 +71,7 @@ public class DeepCloneTest {
         deepClone(new JdkSerializer());
         deepClone(new HessianSerializer());
         deepClone(new FastjsonSerializer());
-        deepClone(new JacksonSerializer());
+        deepClone(new JacksonJsonSerializer());
         deepClone(new Cloning());
     }
 
