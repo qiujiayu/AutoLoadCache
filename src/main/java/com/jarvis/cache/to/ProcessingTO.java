@@ -1,5 +1,8 @@
 package com.jarvis.cache.to;
 
+import lombok.Data;
+
+@Data
 public class ProcessingTO {
 
     private volatile long startTime;
@@ -13,37 +16,4 @@ public class ProcessingTO {
     public ProcessingTO() {
         startTime=System.currentTimeMillis();
     }
-
-    public CacheWrapper<Object> getCache() {
-        return cache;
-    }
-
-    public void setCache(CacheWrapper<Object> cache) {
-        this.cache=cache;
-    }
-
-    public boolean isFirstFinished() {
-        return firstFinished;
-    }
-
-    public void setFirstFinished(boolean firstFinished) {
-        this.firstFinished=firstFinished;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime=startTime;
-    }
-
-    public Throwable getError() {
-        return error;
-    }
-
-    public void setError(Throwable error) {
-        this.error=error;
-    }
-
 }
