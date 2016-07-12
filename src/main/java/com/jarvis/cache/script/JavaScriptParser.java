@@ -24,7 +24,7 @@ public class JavaScriptParser extends AbstractScriptParser {
 
     private final ScriptEngineManager manager=new ScriptEngineManager();
 
-    private final ConcurrentHashMap<String, CompiledScript> expCache=new ConcurrentHashMap<String, CompiledScript>(64);
+    private final ConcurrentHashMap<String, CompiledScript> expCache=new ConcurrentHashMap<String, CompiledScript>();
 
     private final StringBuffer funcs=new StringBuffer();
 

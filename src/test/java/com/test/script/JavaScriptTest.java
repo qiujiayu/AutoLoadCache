@@ -2,14 +2,11 @@ package com.test.script;
 
 import junit.framework.TestCase;
 
-import org.junit.Test;
-
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.script.JavaScriptParser;
 
 public class JavaScriptTest extends TestCase {
 
-    @Test
     public void testJavaScript() throws Exception {
         String javaVersion=System.getProperty("java.version");
         System.out.println(javaVersion);

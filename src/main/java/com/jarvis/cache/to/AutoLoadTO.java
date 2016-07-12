@@ -13,14 +13,14 @@ public class AutoLoadTO implements Serializable {
 
     private static final long serialVersionUID=1L;
 
-    private CacheAopProxyChain joinPoint;
+    private final CacheAopProxyChain joinPoint;
 
-    private Object args[];
+    private final Object args[];
 
     /**
      * 缓存注解
      */
-    private Cache cache;
+    private final Cache cache;
 
     /**
      * 缓存时长
@@ -30,7 +30,7 @@ public class AutoLoadTO implements Serializable {
     /**
      * 缓存Key
      */
-    private CacheKeyTO cacheKey;
+    private final CacheKeyTO cacheKey;
 
     /**
      * 上次从DAO加载数据时间
