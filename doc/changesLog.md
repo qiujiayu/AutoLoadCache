@@ -2,7 +2,7 @@
 
 * ####4.14 修改说明
 
-    * 使用Lambok来缩减代码,Lambok能帮助我们减少写get,set,hashCode,toString等没有技术含量的工作，而且在修改增加或删除java bean中的属性时，不需要去改hashCode，toString等方法，减少因为忘记修改而造成的错误。
+    * 使用lombok来缩减代码,Lambok能帮助我们减少写get,set,hashCode,toString等没有技术含量的工作，而且在修改增加或删除java bean中的属性时，不需要去改hashCode，toString等方法，减少因为忘记修改而造成的错误。
     * 增加OGNL表达式引擎支持，经过测试它的性能要比SpringEL表达式还要优秀。测试代码在：com.test.script.ScriptTest
 
 * ####4.13 修改说明

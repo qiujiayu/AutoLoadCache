@@ -33,12 +33,6 @@ public class OgnlParser extends AbstractScriptParser {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
-        OgnlContext context=new OgnlContext();
-        context.put(ARGS, arguments);
-        if(hasRetVal) {
-            context.put(RET_VAL, retVal);
-        }
-        context.setRoot(arguments);
         Object object=expCache.get(exp);
         if(null == object) {
             String className=CacheUtil.class.getName();
@@ -54,7 +48,12 @@ public class OgnlParser extends AbstractScriptParser {
             object=Ognl.parseExpression(exp2);
             expCache.put(exp, object);
         }
-
+        OgnlContext context=new OgnlContext();
+        context.put(ARGS, arguments);
+        if(hasRetVal) {
+            context.put(RET_VAL, retVal);
+        }
+        context.setRoot(arguments);
         Object res=Ognl.getValue(object, context, context.getRoot(), valueType);
         return (T)res;
     }
