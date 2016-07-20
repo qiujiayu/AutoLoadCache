@@ -14,7 +14,7 @@ public class OgnlTest extends TestCase {
         AbstractScriptParser scriptParser=new OgnlParser();
         String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, null, false);
         System.out.println(res);
-
+        // 自定义函数使用
         Boolean rv=scriptParser.getElValue("@@empty(#args[0])", arguments, Boolean.class);
         assertFalse(rv);
     }

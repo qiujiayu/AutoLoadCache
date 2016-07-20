@@ -1,9 +1,10 @@
-package com.test;
+package com.test.hessian;
 
 import java.lang.ref.WeakReference;
 
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.WeakReferenceSerializerFactory;
+import com.test.Simple;
 
 public class WeakReferenceTest {
 

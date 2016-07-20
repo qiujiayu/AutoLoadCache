@@ -1,4 +1,4 @@
-package com.test;
+package com.test.script;
 
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.script.SpringELParser;

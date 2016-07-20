@@ -1,4 +1,4 @@
-package com.test;
+package com.test.hessian;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,7 +10,6 @@ import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
 import com.jarvis.cache.serializer.HessionBigDecimalSerializerFactory;
-import com.test.hessian.MyTO;
 
 public class HessianTest {
 

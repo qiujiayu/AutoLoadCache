@@ -48,12 +48,21 @@
     </bean>
 
 网上大概搜了一下，有以下几种表达式计算引擎:
+
 1. Ognl http://commons.apache.org/proper/commons-ognl/
 2. fast-el https://code.google.com/archive/p/fast-el/
 3. JSEL https://code.google.com/archive/p/lite/wikis/JSEL.wiki
 4. Commons EL http://commons.apache.org/proper/commons-el/index.html
 5. commons-jexl http://commons.apache.org/proper/commons-jexl/
-6. Aviator
-7. IKExpression
+6. Aviator https://code.google.com/archive/p/aviator/
+7. IKExpression https://code.google.com/archive/p/ik-expression/
 8. JDK自带脚本引擎：javax.script.ScriptEngineManager
 9. JUEL  
+10. beanshell http://www.beanshell.org/
+11. Groovy
+12. JRuby
+
+
+脚本性能测试代码：com.test.script.ScriptTest，通过这个测试发现OGNL的性能最优。
+
+已经实现了SpringEL、OGNL、JavaScript三种表达式的支持。

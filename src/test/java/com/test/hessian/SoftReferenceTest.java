@@ -1,6 +1,8 @@
-package com.test;
+package com.test.hessian;
 
 import java.lang.ref.SoftReference;
+
+import com.test.Simple;
 
 public class SoftReferenceTest {
 
