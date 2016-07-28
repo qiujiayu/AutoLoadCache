@@ -28,7 +28,7 @@
   </scm>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spring.version>3.2.10.RELEASE</spring.version>
+    <spring.version>4.3.1.RELEASE</spring.version>
   </properties>
   <build>
     <plugins>
@@ -161,7 +161,7 @@
     <dependency>
       <groupId>cglib</groupId>
       <artifactId>cglib</artifactId>
-      <version>3.2.3</version>
+      <version>3.2.4</version>
       <optional>true</optional>
     </dependency>
     <dependency>
