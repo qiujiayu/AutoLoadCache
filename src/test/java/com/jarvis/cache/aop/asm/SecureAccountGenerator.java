@@ -12,8 +12,7 @@ public class SecureAccountGenerator {
 
     private static Class<?> secureAccountClass;
 
-    public static Account generateSecureAccount()
-        throws ClassFormatError, InstantiationException, IllegalAccessException, IOException {
+    public static Account generateSecureAccount() throws ClassFormatError, InstantiationException, IllegalAccessException, IOException {
         if(null == secureAccountClass) {
             String className=Account.class.getName();
             ClassReader cr=new ClassReader(className);
@@ -21,7 +20,7 @@ public class SecureAccountGenerator {
             ClassVisitor classAdapter=new AddSecurityCheckClassAdapter(cw);
             cr.accept(classAdapter, ClassReader.SKIP_DEBUG);
             byte[] data=cw.toByteArray();
-            secureAccountClass=classLoader.defineClassFromClassFile(className+"$EnhancedByASM", data);
+            secureAccountClass=classLoader.defineClassFromClassFile(className + "$EnhancedByASM", data);
         }
         return (Account)secureAccountClass.newInstance();
     }

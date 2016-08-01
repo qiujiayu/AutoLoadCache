@@ -107,8 +107,7 @@ public class RefreshHandler {
 
         private final Object[] arguments;
 
-        public RefreshTask(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper)
-            throws Exception {
+        public RefreshTask(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) throws Exception {
             this.pjp=pjp;
             this.cache=cache;
             this.cacheKey=cacheKey;

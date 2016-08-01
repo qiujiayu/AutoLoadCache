@@ -24,8 +24,7 @@ public class CachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -42,8 +41,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }

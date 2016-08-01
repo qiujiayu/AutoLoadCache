@@ -38,6 +38,9 @@ public class JdkSerializer implements ISerializer<Object> {
 
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
+        if(null == obj) {
+            return obj;
+        }
         Class<?> clazz=obj.getClass();
         if(BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
             return obj;
@@ -54,10 +57,12 @@ public class JdkSerializer implements ISerializer<Object> {
 
     @Override
     public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        if(null == args || args.length == 0) {
+            return args;
+        }
         Type[] genericParameterTypes=method.getGenericParameterTypes();
         if(args.length != genericParameterTypes.length) {
-            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must "
-                + genericParameterTypes.length);
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must " + genericParameterTypes.length);
         }
         Object[] res=new Object[args.length];
         int len=genericParameterTypes.length;

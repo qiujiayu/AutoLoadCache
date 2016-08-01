@@ -85,5 +85,6 @@ public @interface Cache {
      * 扩展缓存
      * @return ExCache[]
      */
-    ExCache[] exCache() default @ExCache(expire=-1, key="");
+    ExCache[] exCache() default @ExCache(expire=-1, key="")
+    ;
 }

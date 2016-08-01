@@ -89,8 +89,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             localStringBuilder.append(".");
 
             if((this.ownerType instanceof ParameterizedTypeImpl)) {
-                localStringBuilder.append(this.rawType.getName().replace(
-                    ((ParameterizedTypeImpl)this.ownerType).rawType.getName() + "$", ""));
+                localStringBuilder.append(this.rawType.getName().replace(((ParameterizedTypeImpl)this.ownerType).rawType.getName() + "$", ""));
             } else
                 localStringBuilder.append(this.rawType.getName());
         } else {

@@ -265,8 +265,7 @@ public class AutoLoadHandler {
             // 对于使用频率很低的数据，也可以考虑不用自动加载
             long difFirstRequestTime=now - autoLoadTO.getFirstRequestTime();
             long oneHourSecs=3600000L;
-            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000
-                && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
+            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }

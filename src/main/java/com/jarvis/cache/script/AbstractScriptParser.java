@@ -39,8 +39,7 @@ public abstract class AbstractScriptParser {
      * @param <T> 泛型
      * @throws Exception 异常
      */
-    public abstract <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType)
-        throws Exception;
+    public abstract <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception;
 
     /**
      * 将Spring EL 表达式转换期望的值
@@ -147,8 +146,7 @@ public abstract class AbstractScriptParser {
      */
     public boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
         boolean rv=true;
-        if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition()
-            && cacheDeleteKey.condition().length() > 0) {
+        if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition() && cacheDeleteKey.condition().length() > 0) {
             rv=this.getElValue(cacheDeleteKey.condition(), arguments, retVal, true, Boolean.class);
         }
         return rv;

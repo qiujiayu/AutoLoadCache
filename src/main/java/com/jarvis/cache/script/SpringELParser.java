@@ -25,6 +25,7 @@ public class SpringELParser extends AbstractScriptParser {
     private static Method hash=null;
 
     private static Method empty=null;
+
     static {
         try {
             hash=CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class});
@@ -51,8 +52,7 @@ public class SpringELParser extends AbstractScriptParser {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType)
-        throws Exception {
+    public <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
         if(valueType.equals(String.class)) {
             if(keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {// 如果不是表达式，直接返回字符串
                 return (T)keySpEL;

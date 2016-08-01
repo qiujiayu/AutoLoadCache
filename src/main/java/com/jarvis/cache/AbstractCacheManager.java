@@ -187,8 +187,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         }
     }
 
-    public void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
-        CacheWrapper<Object> cacheWrapper) throws Exception {
+    public void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) throws Exception {
         if(null == cacheKey) {
             return;
         }
@@ -247,8 +246,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param result 执行实际方法的返回值
      * @return CacheKeyTO
      */
-    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
-        Object result, boolean hasRetVal) {
+    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield, Object result, boolean hasRetVal) {
         String key=null;
         String hfield=null;
         if(null != _key && _key.trim().length() > 0) {

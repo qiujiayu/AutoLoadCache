@@ -34,6 +34,7 @@ public class JavaScriptParser extends AbstractScriptParser {
      * 如果使用的是JDK大于1.8版本的，则用 nashorn，否则用javascript
      */
     private final ScriptEngine engine;
+
     static {
         String javaVersion=System.getProperty("java.version");
         int ind=0;

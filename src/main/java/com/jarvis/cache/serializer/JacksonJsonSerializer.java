@@ -68,9 +68,7 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
         if(clazz.isArray()) {
             Object[] arr=(Object[])obj;
 
-            Object[] res=
-                ((Object)clazz == (Object)Object[].class) ? (Object[])new Object[arr.length] : (Object[])Array.newInstance(
-                    clazz.getComponentType(), arr.length);
+            Object[] res=((Object)clazz == (Object)Object[].class) ? (Object[])new Object[arr.length] : (Object[])Array.newInstance(clazz.getComponentType(), arr.length);
             for(int i=0; i < arr.length; i++) {
                 res[i]=deepClone(arr[i], null);
             }
@@ -116,13 +114,10 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
         }
         Type[] genericParameterTypes=method.getGenericParameterTypes();
         if(args.length != genericParameterTypes.length) {
-            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must "
-                + genericParameterTypes.length);
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must " + genericParameterTypes.length);
         }
         Class<?> clazz=args.getClass();
-        Object[] res=
-            ((Object)clazz == (Object)Object[].class) ? (Object[])new Object[args.length] : (Object[])Array.newInstance(
-                clazz.getComponentType(), args.length);
+        Object[] res=((Object)clazz == (Object)Object[].class) ? (Object[])new Object[args.length] : (Object[])Array.newInstance(clazz.getComponentType(), args.length);
         int len=genericParameterTypes.length;
         for(int i=0; i < len; i++) {
             Type genericParameterType=genericParameterTypes[i];

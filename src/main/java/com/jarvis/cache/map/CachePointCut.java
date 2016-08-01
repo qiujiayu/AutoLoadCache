@@ -74,8 +74,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -98,8 +97,7 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == hfield || hfield.length() == 0) {
             cache.put(cacheKey, reference);
         } else {
-            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash=
-                (ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.get(cacheKey);
+            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.get(cacheKey);
             if(null == hash) {
                 hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>();
                 ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> _hash=null;
@@ -115,8 +113,7 @@ public class CachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -190,8 +187,7 @@ public class CachePointCut extends AbstractCacheManager {
                 }
             }
         } else {
-            ConcurrentHashMap<String, CacheWrapper<Object>> hash=
-                (ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
+            ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
             if(null != hash) {
                 Object tmp=hash.remove(hfield);
                 if(null != tmp) {// 如果删除成功

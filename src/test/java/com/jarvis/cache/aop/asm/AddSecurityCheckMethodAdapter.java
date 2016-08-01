@@ -9,7 +9,7 @@ public class AddSecurityCheckMethodAdapter extends MethodVisitor implements Opco
         super(ASM5, mv);
     }
 
-    // 此方法在访问方法的头部时被访问到，仅被访问一次 
+    // 此方法在访问方法的头部时被访问到，仅被访问一次
     @Override
     public void visitCode() {
         int opcode=Opcodes.INVOKESTATIC;

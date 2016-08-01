@@ -20,8 +20,7 @@ public interface ICacheManager {
      * @param args args
      * @throws CacheCenterConnectionException
      */
-    void setCache(final CacheKeyTO cacheKey, final CacheWrapper<Object> result, final Method method, final Object args[])
-        throws CacheCenterConnectionException;
+    void setCache(final CacheKeyTO cacheKey, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException;
 
     /**
      * 根据缓存Key获得缓存中的数据

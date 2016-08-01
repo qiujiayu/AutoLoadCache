@@ -9,6 +9,7 @@ import com.test.Simple;
 public class WeakReferenceTest {
 
     private static final HessianSerializer serializer=new HessianSerializer();
+
     static {
         serializer.addSerializerFactory(new WeakReferenceSerializerFactory());
     }

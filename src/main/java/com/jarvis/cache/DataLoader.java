@@ -36,8 +36,7 @@ public class DataLoader {
 
     private CacheWrapper<Object> cacheWrapper;
 
-    public DataLoader(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache,
-        AbstractCacheManager cacheManager) {
+    public DataLoader(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
         this.pjp=pjp;
         this.autoLoadTO=autoLoadTO;
         this.cacheKey=cacheKey;
@@ -50,8 +49,7 @@ public class DataLoader {
         }
     }
 
-    public DataLoader(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager,
-        Object[] arguments) {
+    public DataLoader(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
         this.pjp=pjp;
         this.cacheKey=cacheKey;
         this.cache=cache;

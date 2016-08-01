@@ -14,6 +14,7 @@ import com.jarvis.cache.serializer.HessionBigDecimalSerializerFactory;
 public class HessianTest {
 
     private static SerializerFactory _serializerFactory=SerializerFactory.createDefault();
+
     static {
         _serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
     }

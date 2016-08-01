@@ -56,8 +56,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
         }
@@ -88,6 +87,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     private static byte[] hashSetScript;
+
     static {
         try {
             String tmpScript="redis.call('HSET', KEYS[1], KEYS[2], ARGV[1]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]));";
@@ -148,8 +148,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[])
-        throws CacheCenterConnectionException {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }
@@ -223,6 +222,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     private static byte[] delScript;
+
     static {
         StringBuilder tmp=new StringBuilder();
         tmp.append("local keys = redis.call('keys', KEYS[1]);\n");
