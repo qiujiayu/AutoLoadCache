@@ -43,6 +43,9 @@ public class Cloning implements ICloner {
 
     @Override
     public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        if(null == args || args.length == 0) {
+            return args;
+        }
         Type[] genericParameterTypes=method.getGenericParameterTypes();
         if(args.length != genericParameterTypes.length) {
             throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must " + genericParameterTypes.length);
