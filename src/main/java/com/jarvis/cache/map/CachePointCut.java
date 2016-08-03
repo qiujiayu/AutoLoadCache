@@ -70,6 +70,8 @@ public class CachePointCut extends AbstractCacheManager {
     public synchronized void destroy() {
         super.destroy();
         cacheTask.destroy();
+        if (thread != null)
+            thread.interrupt();
     }
 
     @SuppressWarnings("unchecked")
