@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
 
 public class AddSecurityCheckClassAdapter extends ClassVisitor implements Opcodes {
 
-    String enhancedSuperName;
+    private String enhancedSuperName;
 
     public AddSecurityCheckClassAdapter(ClassVisitor cv) {
         // Responsechain 的下一个 ClassVisitor，这里我们将传入 ClassWriter，

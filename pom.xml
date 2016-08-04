@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>4.15</version>
+  <version>4.16-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>User Spring AOP and annotation to do with cache.</description>
@@ -163,6 +163,11 @@
       <artifactId>cglib</artifactId>
       <version>3.2.4</version>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-all</artifactId>
+      <version>5.1</version>
     </dependency>
     <dependency>
       <groupId>org.msgpack</groupId>
