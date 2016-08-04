@@ -37,13 +37,13 @@ public class OgnlParser extends AbstractScriptParser {
         if(null == object) {
             String className=CacheUtil.class.getName();
             String exp2=exp.replaceAll("@@" + HASH + "\\(", "@" + className + "@getUniqueHashStr(");
-            exp2=exp.replaceAll("@@" + EMPTY + "\\(", "@" + className + "@isEmpty(");
+            exp2=exp2.replaceAll("@@" + EMPTY + "\\(", "@" + className + "@isEmpty(");
 
             Iterator<Map.Entry<String, Class<?>>> it=funcs.entrySet().iterator();
             while(it.hasNext()) {
                 Map.Entry<String, Class<?>> entry=it.next();
                 className=entry.getValue().getName();
-                exp.replaceAll("@@" + entry.getKey() + "\\(", "@" + className + "@" + entry.getKey() + "(");
+                exp2=exp2.replaceAll("@@" + entry.getKey() + "\\(", "@" + className + "@" + entry.getKey() + "(");
             }
             object=Ognl.parseExpression(exp2);
             expCache.put(exp, object);

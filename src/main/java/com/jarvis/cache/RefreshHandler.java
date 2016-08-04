@@ -95,8 +95,7 @@ public class RefreshHandler {
         refreshThreadPool.shutdownNow();
         try {
             refreshThreadPool.awaitTermination(5, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException e) {
+        } catch(InterruptedException e) {
             e.printStackTrace();
         }
     }
