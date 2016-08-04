@@ -104,6 +104,9 @@ public class CacheTask implements Runnable, CacheChangeListener {
      */
     @SuppressWarnings("unchecked")
     public void loadCache() {
+        if(!cacheManager.isNeedPersist()) {
+            return;
+        }
         File file=getSaveFile();
         if(null == file) {
             return;
