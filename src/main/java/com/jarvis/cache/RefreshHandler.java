@@ -93,6 +93,12 @@ public class RefreshHandler {
 
     public void shutdown() {
         refreshThreadPool.shutdownNow();
+        try {
+            refreshThreadPool.awaitTermination(5, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     class RefreshTask implements Runnable {
