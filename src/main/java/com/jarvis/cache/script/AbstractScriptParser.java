@@ -42,8 +42,8 @@ public abstract class AbstractScriptParser {
     public abstract <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception;
 
     /**
-     * 将Spring EL 表达式转换期望的值
-     * @param keySpEL 生成缓存Key的Spring el表达式
+     * 将表达式转换期望的值
+     * @param keySpEL 生成缓存Key的表达式
      * @param arguments 参数
      * @param valueType 值类型
      * @return T Value 返回值
@@ -56,7 +56,7 @@ public abstract class AbstractScriptParser {
 
     /**
      * 根据请求参数和执行结果值，进行构造缓存Key
-     * @param keySpEL 生成缓存Key的Spring el表达式
+     * @param keySpEL 生成缓存Key的表达式
      * @param arguments 参数
      * @param retVal 结果值
      * @param hasRetVal 是否有retVal

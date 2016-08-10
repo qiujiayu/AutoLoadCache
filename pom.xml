@@ -5,7 +5,7 @@
   <version>4.16</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
-  <description>User Spring AOP and annotation to do with cache.</description>
+  <description>User AOP and annotation to do with cache.</description>
   <url>https://github.com/qiujiayu/AutoLoadCache</url>
   <licenses>
     <license>
