@@ -1,16 +1,20 @@
 package com.jarvis.cache;
 
+import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
-import com.jarvis.cache.serializer.HessianSerializer;
+import com.jarvis.cache.aop.CacheAopProxyChain;
+import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
+import com.jarvis.cache.clone.ICloner;
+import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
@@ -28,40 +32,208 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
-    private final ConcurrentHashMap<String, ProcessingTO> processing=new ConcurrentHashMap<String, ProcessingTO>();
+    public final ConcurrentHashMap<CacheKeyTO, ProcessingTO> processing=new ConcurrentHashMap<CacheKeyTO, ProcessingTO>();
 
-    private AutoLoadHandler autoLoadHandler;
+    private final AutoLoadHandler autoLoadHandler;
 
     private String namespace;
 
     /**
      * 序列化工具，默认使用Hessian2
      */
-    private ISerializer<Object> serializer=new HessianSerializer();
+    private final ISerializer<Object> serializer;
 
-    public AbstractCacheManager(AutoLoadConfig config) {
+    /**
+     * 表达式解析器
+     */
+    private final AbstractScriptParser scriptParser;
+
+    private final RefreshHandler refreshHandler;
+
+    private ICloner cloner;
+
+    public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
-    }
-
-    public ISerializer<Object> getSerializer() {
-        return serializer;
-    }
-
-    public void setSerializer(ISerializer<Object> serializer) {
         this.serializer=serializer;
+        this.cloner=this.serializer;
+        this.scriptParser=scriptParser;
+        registerFunction(config.getFunctions());
+        refreshHandler=new RefreshHandler(this, config);
     }
 
-    @Override
-    public AutoLoadHandler getAutoLoadHandler() {
-        return this.autoLoadHandler;
+    /**
+     * 处理@Cache 拦截
+     * @param pjp 切面
+     * @param cache 注解
+     * @return T 返回值
+     * @throws Exception 异常
+     */
+    public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
+        Object[] arguments=pjp.getArgs();
+        if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
+            DataLoader dataLoader=new DataLoader(pjp, cache, this);
+            Object result=dataLoader.getData();
+            CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
+            if(scriptParser.isCacheable(cache, arguments, result)) {
+                CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
+                AutoLoadTO autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
+                try {
+                    writeCache(pjp, pjp.getArgs(), cache, cacheKey, cacheWrapper);
+                    if(null != autoLoadTO) {
+                        autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
+                            .setExpire(cacheWrapper.getExpire());// 同步过期时间
+                    }
+                } catch(Exception ex) {
+                    logger.error(ex.getMessage(), ex);
+                }
+            }
+            return result;
+        }
+        if(!scriptParser.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
+            return getData(pjp);
+        }
+        CacheKeyTO cacheKey=getCacheKey(pjp, cache);
+        if(null == cacheKey) {
+            return getData(pjp);
+        }
+        Method method=pjp.getMethod();
+        // Type returnType=method.getGenericReturnType();
+        CacheWrapper<Object> cacheWrapper=null;
+        try {
+            cacheWrapper=this.get(cacheKey, method, arguments);// 从缓存中获取数据
+        } catch(Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        }
+        if(null != cacheWrapper && !cacheWrapper.isExpired()) {
+            AutoLoadTO autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
+            if(null != autoLoadTO) {// 同步最后加载时间
+                autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
+                    .setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
+                    .setExpire(cacheWrapper.getExpire());// 同步过期时间
+            } else {// 如果缓存快要失效，则自动刷新
+                refreshHandler.doRefresh(pjp, cache, cacheKey, cacheWrapper);
+            }
+            return cacheWrapper.getCacheObject();
+        }
+        DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, this);
+        CacheWrapper<Object> newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+        AutoLoadTO autoLoadTO=null;
+        if(dataLoader.isFirst()) {
+            autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
+            try {
+                writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
+                if(null != autoLoadTO) {// 同步最后加载时间
+                    autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
+                        .setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
+                        .setExpire(newCacheWrapper.getExpire())// 同步过期时间
+                        .addUseTotalTime(dataLoader.getLoadDataUseTime());// 统计用时
+                }
+            } catch(Exception ex) {
+                logger.error(ex.getMessage(), ex);
+            }
+        }
+
+        return newCacheWrapper.getCacheObject();
     }
 
-    public String getNamespace() {
-        return namespace;
+    /**
+     * 处理@CacheDelete 拦截
+     * @param jp 切点
+     * @param cacheDelete 拦截到的注解
+     * @param retVal 返回值
+     */
+    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) {
+        Object[] arguments=jp.getArgs();
+        CacheDeleteKey[] keys=cacheDelete.value();
+        if(null == keys || keys.length == 0) {
+            return;
+        }
+        for(int i=0; i < keys.length; i++) {
+            CacheDeleteKey keyConfig=keys[i];
+            try {
+                if(!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
+                    continue;
+                }
+                CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
+                if(null != key) {
+                    this.delete(key);
+                }
+            } catch(Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
     }
 
-    public void setNamespace(String namespace) {
-        this.namespace=namespace;
+    /**
+     * 直接加载数据（加载后的数据不往缓存放）
+     * @param pjp CacheAopProxyChain
+     * @return Object
+     * @throws Throwable
+     */
+    private Object getData(CacheAopProxyChain pjp) throws Throwable {
+        try {
+            long startTime=System.currentTimeMillis();
+            Object[] arguments=pjp.getArgs();
+            Object result=pjp.doProxyChain(arguments);
+            long useTime=System.currentTimeMillis() - startTime;
+            AutoLoadConfig config=autoLoadHandler.getConfig();
+            if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
+                String className=pjp.getTargetClass().getName();
+                logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
+            }
+            return result;
+        } catch(Throwable e) {
+            throw e;
+        }
+    }
+
+    public void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) throws Exception {
+        if(null == cacheKey) {
+            return;
+        }
+        Method method=pjp.getMethod();
+        this.setCache(cacheKey, cacheWrapper, method, arguments);
+        ExCache[] exCaches=cache.exCache();
+        if(null == exCaches || exCaches.length == 0) {
+            return;
+        }
+
+        Object result=cacheWrapper.getCacheObject();
+        for(ExCache exCache: exCaches) {
+            try {
+                if(!scriptParser.isCacheable(exCache, arguments, result)) {
+                    continue;
+                }
+                CacheKeyTO exCacheKey=getCacheKey(pjp, arguments, exCache, result);
+                if(null == exCacheKey) {
+                    continue;
+                }
+                Object exResult=null;
+                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                    exResult=result;
+                } else {
+                    exResult=scriptParser.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
+                }
+
+                int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
+                CacheWrapper<Object> exCacheWrapper=new CacheWrapper<Object>(exResult, exCacheExpire);
+                AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
+                this.setCache(exCacheKey, exCacheWrapper, method, arguments);
+                if(null != tmpAutoLoadTO) {
+                    tmpAutoLoadTO.setExpire(exCacheExpire)//
+                        .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
+                }
+            } catch(Exception ex) {
+                logger.error(ex.getMessage(), ex);
+            }
+        }
+
+    }
+
+    public void destroy() {
+        autoLoadHandler.shutdown();
+        refreshHandler.shutdown();
+        logger.info("cache destroy ... ... ...");
     }
 
     /**
@@ -74,14 +246,17 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param result 执行实际方法的返回值
      * @return CacheKeyTO
      */
-    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield,
-        Object result, boolean hasRetVal) {
+    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String _key, String _hfield, Object result, boolean hasRetVal) {
         String key=null;
         String hfield=null;
         if(null != _key && _key.trim().length() > 0) {
-            key=CacheUtil.getDefinedCacheKey(_key, arguments, result, hasRetVal);
-            if(null != _hfield && _hfield.trim().length() > 0) {
-                hfield=CacheUtil.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
+            try {
+                key=scriptParser.getDefinedCacheKey(_key, arguments, result, hasRetVal);
+                if(null != _hfield && _hfield.trim().length() > 0) {
+                    hfield=scriptParser.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
+                }
+            } catch(Exception ex) {
+                logger.error(ex.getMessage(), ex);
             }
         } else {
             key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
@@ -90,11 +265,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             logger.error(className + "." + methodName + "; cache key is empty");
             return null;
         }
-        CacheKeyTO to=new CacheKeyTO();
-        to.setNamespace(namespace);
-        to.setKey(key);
-        to.setHfield(hfield);
-        return to;
+        return new CacheKeyTO(namespace, key, hfield);
     }
 
     /**
@@ -103,9 +274,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cache
      * @return String 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
@@ -119,9 +290,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param result 执行结果值
      * @return 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, Cache cache, Object result) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String _key=cache.key();
         String _hfield=cache.hfield();
@@ -131,22 +302,19 @@ public abstract class AbstractCacheManager implements ICacheManager {
     /**
      * 生成缓存 Key
      * @param pjp
-     * @param cache
+     * @param arguments
+     * @param exCache
      * @param result 执行结果值
      * @return 缓存Key
      */
-    private CacheKeyTO getCacheKey(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, ExCache cache, Object result) {
-        String className=pjp.getTarget().getClass().getName();
-        String methodName=pjp.getSignature().getName();
-        Object[] arguments=pjp.getArgs();
-        if(null != autoLoadTO) {
-            arguments=autoLoadTO.getArgs();
-        }
-        String _key=cache.key();
+    private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Object[] arguments, ExCache exCache, Object result) {
+        String className=pjp.getTargetClass().getName();
+        String methodName=pjp.getMethod().getName();
+        String _key=exCache.key();
         if(null == _key || _key.trim().length() == 0) {
             return null;
         }
-        String _hfield=cache.hfield();
+        String _hfield=exCache.hfield();
         return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
     }
 
@@ -156,10 +324,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @param cacheDeleteKey
      * @param retVal 执行结果值
      * @return 缓存Key
+     * @throws Exception
      */
-    private CacheKeyTO getCacheKey(JoinPoint jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
-        String className=jp.getTarget().getClass().getName();
-        String methodName=jp.getSignature().getName();
+    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+        String className=jp.getTargetClass().getName();
+        String methodName=jp.getMethod().getName();
         Object[] arguments=jp.getArgs();
         String _key=cacheDeleteKey.value();
         String _hfield=cacheDeleteKey.hfield();
@@ -167,238 +336,52 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     }
 
-    /**
-     * 处理@Cache 拦截
-     * @param pjp 切面
-     * @param cache 注解
-     * @return T 返回值
-     * @throws Exception 异常
-     */
-    public Object proceed(ProceedingJoinPoint pjp, Cache cache) throws Throwable {
-        Object[] arguments=pjp.getArgs();
-        // Signature signature=pjp.getSignature();
-        // MethodSignature methodSignature=(MethodSignature)signature;
-        // Class returnType=methodSignature.getReturnType(); // 获取返回值类型
-        // System.out.println("returnType:" + returnType.getName());
-        if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
-            Object result=getData(pjp, null);
-            if(CacheUtil.isCacheable(cache, arguments, result)) {
-                CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
-                writeCache(pjp, null, cache, cacheKey, result);
-            }
-            return result;
-        }
-        if(!CacheUtil.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
-            return getData(pjp, null);
-        }
-        CacheKeyTO cacheKey=getCacheKey(pjp, cache);
-        if(null == cacheKey) {
-            return getData(pjp, null);
-        }
-        AutoLoadTO autoLoadTO=null;
-        if(CacheUtil.isAutoload(cache, arguments)) {
-            autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);
-            if(null == autoLoadTO) {
-                AutoLoadTO tmp=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, serializer);
-                if(null != tmp) {
-                    autoLoadTO=tmp;
-                }
-            }
-            autoLoadTO.setLastRequestTime(System.currentTimeMillis());
-        }
-        CacheWrapper cacheWrapper=this.get(cacheKey);// 从缓存中获取数据
-        if(null != cacheWrapper && !cacheWrapper.isExpired()) {
-            if(null != autoLoadTO && cacheWrapper.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {// 同步最后加载时间
-                autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime());
-            }
-            return cacheWrapper.getCacheObject();
-        }
-        return loadData(pjp, autoLoadTO, cacheKey, cache);// 从DAO加载数据
+    public ISerializer<Object> getSerializer() {
+        return serializer;
     }
 
-    /**
-     * 写缓存
-     * @param pjp ProceedingJoinPoint
-     * @param autoLoadTO AutoLoadTO
-     * @param cache Cache annotation
-     * @param cacheKey Cache Key
-     * @param result cache data
-     * @return CacheWrapper
-     */
-    private CacheWrapper writeCache(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, Cache cache, CacheKeyTO cacheKey, Object result) {
-        if(null == cacheKey) {
-            return null;
-        }
-        CacheWrapper cacheWrapper=new CacheWrapper(result, cache.expire());
-        this.setCache(cacheKey, cacheWrapper);
-        ExCache[] exCaches=cache.exCache();
-        if(null != exCaches && exCaches.length > 0) {
-            Object[] arguments=pjp.getArgs();
-            if(null != autoLoadTO) {
-                arguments=autoLoadTO.getArgs();
-            }
-            for(ExCache exCache: exCaches) {
-                if(!CacheUtil.isCacheable(exCache, arguments, result)) {
-                    continue;
-                }
-                CacheKeyTO exCacheKey=getCacheKey(pjp, autoLoadTO, exCache, result);
-                if(null == exCacheKey) {
-                    continue;
-                }
-                Object exResult=null;
-                if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
-                    exResult=result;
-                } else {
-                    exResult=CacheUtil.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
-                }
-                CacheWrapper exCacheWrapper=new CacheWrapper(exResult, exCache.expire());
-                this.setCache(exCacheKey, exCacheWrapper);
-            }
-        }
-        return cacheWrapper;
+    public AutoLoadHandler getAutoLoadHandler() {
+        return this.autoLoadHandler;
     }
 
-    /**
-     * 通过ProceedingJoinPoint加载数据
-     * @param pjp
-     * @param autoLoadTO
-     * @param cacheKey
-     * @param cache
-     * @return 返回值
-     * @throws Exception
-     */
-    @Override
-    public Object loadData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache) throws Throwable {
-        String fullKey=cacheKey.getFullKey();
-        ProcessingTO isProcessing=processing.get(fullKey);
-        ProcessingTO processingTO=null;
-        if(null == isProcessing) {
-            processingTO=new ProcessingTO();
-            ProcessingTO _isProcessing=processing.putIfAbsent(fullKey, processingTO);// 为发减少数据层的并发，增加等待机制。
-            if(null != _isProcessing) {
-                isProcessing=_isProcessing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
-            }
-        }
-        Object lock=null;
-        Object result=null;
-        // String tname=Thread.currentThread().getName();
-        if(null == isProcessing) {
-            lock=processingTO;
-            try {
-                // System.out.println(tname + " first thread!");
-                result=getData(pjp, autoLoadTO);
-                CacheWrapper cacheWrapper=writeCache(pjp, autoLoadTO, cache, cacheKey, result);
-                processingTO.setCache(cacheWrapper);// 本地缓存
-            } catch(Throwable e) {
-                processingTO.setError(e);
-                throw e;
-            } finally {
-                processingTO.setFirstFinished(true);
-                processing.remove(fullKey);
-                synchronized(lock) {
-                    lock.notifyAll();
-                }
-            }
-        } else {
-            lock=isProcessing;
-            long startWait=isProcessing.getStartTime();
-            CacheWrapper cacheWrapper=null;
-            do {// 等待
-                if(null == isProcessing) {
-                    break;
-                }
-                if(isProcessing.isFirstFinished()) {
-                    cacheWrapper=isProcessing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                    // System.out.println(tname + " do FirstFinished" + " is null :" + (null == cacheWrapper));
-                    if(null != cacheWrapper) {
-                        return cacheWrapper.getCacheObject();
-                    }
-                    Throwable error=isProcessing.getError();
-                    if(null != error) {// 当DAO出错时，直接抛异常
-                        // System.out.println(tname + " do error");
-                        throw error;
-                    }
-                    break;
-                } else {
-                    synchronized(lock) {
-                        // System.out.println(tname + " do wait");
-                        try {
-                            lock.wait(50);// 如果要测试lock对象是否有效，wait时间去掉就可以
-                        } catch(InterruptedException ex) {
-                            logger.error(ex.getMessage(), ex);
-                        }
-                    }
-                }
-            } while(System.currentTimeMillis() - startWait < cache.waitTimeOut());
-            try {
-                result=getData(pjp, autoLoadTO);
-                writeCache(pjp, autoLoadTO, cache, cacheKey, result);
-            } catch(Throwable e) {
-                throw e;
-            } finally {
-                synchronized(lock) {
-                    lock.notifyAll();
-                }
-            }
-        }
-
-        return result;
+    public String getNamespace() {
+        return namespace;
     }
 
-    private Object getData(ProceedingJoinPoint pjp, AutoLoadTO autoLoadTO) throws Throwable {
-        try {
-            long startTime=System.currentTimeMillis();
-            Object[] arguments;
-            if(null == autoLoadTO) {
-                arguments=pjp.getArgs();
-            } else {
-                arguments=autoLoadTO.getArgs();
-            }
-            Object result=pjp.proceed(arguments);
-            long useTime=System.currentTimeMillis() - startTime;
-            AutoLoadConfig config=autoLoadHandler.getConfig();
-            if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
-                String className=pjp.getTarget().getClass().getName();
-                logger.error(className + "." + pjp.getSignature().getName() + ", use time:" + useTime + "ms");
-            }
-            if(null != autoLoadTO) {
-                autoLoadTO.setLastLoadTime(startTime);
-                autoLoadTO.addUseTotalTime(useTime);
-            }
-            return result;
-        } catch(Throwable e) {
-            throw e;
-        }
+    public void setNamespace(String namespace) {
+        this.namespace=namespace;
     }
 
-    /**
-     * 处理@CacheDelete 拦截
-     * @param jp 切点
-     * @param cacheDelete 拦截到的注解
-     * @param retVal 返回值
-     */
-    public void deleteCache(JoinPoint jp, CacheDelete cacheDelete, Object retVal) {
-        Object[] arguments=jp.getArgs();
-        CacheDeleteKey[] keys=cacheDelete.value();
-        if(null == keys || keys.length == 0) {
+    public AbstractScriptParser getScriptParser() {
+        return scriptParser;
+    }
+
+    public ICloner getCloner() {
+        return cloner;
+    }
+
+    public void setCloner(ICloner cloner) {
+        this.cloner=cloner;
+    }
+
+    private void registerFunction(Map<String, String> funcs) {
+        if(null == scriptParser) {
             return;
         }
-        for(int i=0; i < keys.length; i++) {
-            CacheDeleteKey keyConfig=keys[i];
-            if(!CacheUtil.isCanDelete(keyConfig, arguments, retVal)) {
-                continue;
-            }
-            CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
-            if(null != key) {
-                this.delete(key);
+        if(null == funcs || funcs.isEmpty()) {
+            return;
+        }
+        Iterator<Map.Entry<String, String>> it=funcs.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry<String, String> entry=it.next();
+            try {
+                String name=entry.getKey();
+                Class<?> cls=Class.forName(entry.getValue());
+                Method method=cls.getDeclaredMethod(name, new Class[]{Object.class});
+                scriptParser.addFunction(name, method);
+            } catch(Exception e) {
+                logger.error(e.getMessage(), e);
             }
         }
-    }
-
-    @Override
-    public void destroy() {
-        autoLoadHandler.shutdown();
-        autoLoadHandler=null;
-        logger.info("cache destroy ... ... ...");
     }
 }

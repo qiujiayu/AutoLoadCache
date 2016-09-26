@@ -2,18 +2,21 @@ package com.jarvis.cache.to;
 
 import java.io.Serializable;
 
+import lombok.Data;
+
 /**
  * 对缓存数据进行封装
  * @author jiayu.qiu
  */
-public class CacheWrapper implements Serializable {
+@Data
+public class CacheWrapper<T> implements Serializable {
 
     private static final long serialVersionUID=1L;
 
     /**
      * 缓存数据
      */
-    private Object cacheObject;
+    private T cacheObject;
 
     /**
      * 最后加载时间
@@ -28,33 +31,9 @@ public class CacheWrapper implements Serializable {
     public CacheWrapper() {
     }
 
-    public CacheWrapper(Object cacheObject, int expire) {
+    public CacheWrapper(T cacheObject, int expire) {
         this.cacheObject=cacheObject;
         this.lastLoadTime=System.currentTimeMillis();
-        this.expire=expire;
-    }
-
-    public long getLastLoadTime() {
-        return lastLoadTime;
-    }
-
-    public void setLastLoadTime(long lastLoadTime) {
-        this.lastLoadTime=lastLoadTime;
-    }
-
-    public Object getCacheObject() {
-        return cacheObject;
-    }
-
-    public void setCacheObject(Object cacheObject) {
-        this.cacheObject=cacheObject;
-    }
-
-    public int getExpire() {
-        return expire;
-    }
-
-    public void setExpire(int expire) {
         this.expire=expire;
     }
 

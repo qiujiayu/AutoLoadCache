@@ -1,25 +1,30 @@
 package com.jarvis.cache.memcache;
 
+import java.lang.reflect.Method;
+
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 缓存切面，用于拦截数据并调用memcache进行缓存
+ * memcache缓存管理
  */
 public class CachePointCut extends AbstractCacheManager {
 
     private MemcachedClient memcachedClient;
 
-    public CachePointCut(AutoLoadConfig config) {
-        super(config);
+    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -34,8 +39,9 @@ public class CachePointCut extends AbstractCacheManager {
         memcachedClient.set(cacheKey, result.getExpire(), result);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -47,7 +53,7 @@ public class CachePointCut extends AbstractCacheManager {
         if(null != hfield && hfield.length() > 0) {
             throw new RuntimeException("memcached does not support hash cache.");
         }
-        return (CacheWrapper)memcachedClient.get(cacheKey);
+        return (CacheWrapper<Object>)memcachedClient.get(cacheKey);
     }
 
     /**
@@ -55,7 +61,7 @@ public class CachePointCut extends AbstractCacheManager {
      * @param cacheKeyTO 缓存Key
      */
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) {
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
         if(null == memcachedClient || null == cacheKeyTO) {
             return;
         }

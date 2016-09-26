@@ -1,6 +1,8 @@
 package com.jarvis.cache.redis;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,13 +17,16 @@ import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 缓存切面，用于拦截数据并调用Redis进行缓存
+ * Redis缓存管理
  * @author jiayu.qiu
  */
 public class ShardedCachePointCut extends AbstractCacheManager {
@@ -33,7 +38,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private ShardedJedisPool shardedJedisPool;
 
     /**
-     * Hash的缓存时长,默认值为0（永久缓存），设置此项大于0时，主要是为了防止一些已经不用的缓存占用内存。如果hashExpire 小于0则使用@Cache中设置的expire值。
+     * Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）。
      */
     private int hashExpire=-1;
 
@@ -42,8 +47,8 @@ public class ShardedCachePointCut extends AbstractCacheManager {
      */
     private boolean hashExpireByScript=false;
 
-    public ShardedCachePointCut(AutoLoadConfig config) {
-        super(config);
+    public ShardedCachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
@@ -51,7 +56,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, final CacheWrapper result) {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
         }
@@ -82,6 +87,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     private static byte[] hashSetScript;
+
     static {
         try {
             String tmpScript="redis.call('HSET', KEYS[1], KEYS[2], ARGV[1]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[2]));";
@@ -93,7 +99,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     private static final Map<Jedis, byte[]> hashSetScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
 
-    private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper result) throws Exception {
+    private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
         byte[] key=keySerializer.serialize(cacheKey);
         byte[] field=keySerializer.serialize(hfield);
         byte[] val=getSerializer().serialize(result);
@@ -140,8 +146,9 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return null;
         }
@@ -149,7 +156,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return null;
         }
-        CacheWrapper res=null;
+        CacheWrapper<Object> res=null;
         ShardedJedis shardedJedis=null;
         try {
             shardedJedis=shardedJedisPool.getResource();
@@ -161,7 +168,8 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            res=(CacheWrapper)getSerializer().deserialize(bytes);
+            Type returnType=method.getGenericReturnType();
+            res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
@@ -172,10 +180,10 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     /**
      * 根据缓存Key删除缓存
-     * @param cacheKeyTO 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）
+     * @param cacheKeyTO 缓存Key
      */
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) {
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
         if(null == shardedJedisPool || null == cacheKeyTO) {
             return;
         }
@@ -193,6 +201,8 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                     jedis.flushDB();
                 }
             } else if(cacheKey.indexOf("*") != -1) {
+                // 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）,性能非常差，建议使用这种方法。
+                // 建议使用 hash表方缓存需要批量删除的数据。
                 batchDel(shardedJedis, cacheKey);
             } else {
                 Jedis jedis=shardedJedis.getShard(cacheKey);
@@ -212,6 +222,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     }
 
     private static byte[] delScript;
+
     static {
         StringBuilder tmp=new StringBuilder();
         tmp.append("local keys = redis.call('keys', KEYS[1]);\n");

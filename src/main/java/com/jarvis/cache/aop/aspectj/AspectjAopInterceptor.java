@@ -1,4 +1,4 @@
-package com.jarvis.cache.mybatis;
+package com.jarvis.cache.aop.aspectj;
 
 import java.lang.reflect.Method;
 
@@ -12,29 +12,20 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 
 /**
- * 如果要在Mybatis 的mapper上使用@Cache 及@CacheDelete 注解时，需要使用些类获取注解实例 弊端：mapper中的所有方法都会进入此切面 &lt;aop:config proxy-target-class="false"&gt;
- * 配置中 proxy-target-class 必须设置为false
+ * 使用Aspectj 实现AOP拦截 注意：拦截器不能有相同名字的Method
  * @author jiayu.qiu
  */
-public class CachePointCutProxy {
+public class AspectjAopInterceptor {
 
     private AbstractCacheManager cacheManager;
 
-    public AbstractCacheManager getCacheManager() {
-        return cacheManager;
-    }
-
-    public void setCacheManager(AbstractCacheManager cacheManager) {
-        this.cacheManager=cacheManager;
-    }
-
-    public Object proceed(ProceedingJoinPoint pjp) throws Throwable {
+    public Object checkAndProceed(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature=pjp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
         if(method.isAnnotationPresent(Cache.class)) {
             Cache cache=method.getAnnotation(Cache.class);// method.getAnnotationsByType(Cache.class)[0];
-            return cacheManager.proceed(pjp, cache);
+            return this.proceed(pjp, cache);
         }
 
         try {
@@ -44,13 +35,30 @@ public class CachePointCutProxy {
         }
     }
 
-    public void deleteCache(JoinPoint jp, Object retVal) {
+    public void checkAndDeleteCache(JoinPoint jp, Object retVal) {
         Signature signature=jp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
         if(method.isAnnotationPresent(CacheDelete.class)) {
             CacheDelete cacheDelete=method.getAnnotation(CacheDelete.class);
-            cacheManager.deleteCache(jp, cacheDelete, retVal);
+            this.deleteCache(jp, cacheDelete, retVal);
         }
     }
+
+    public Object proceed(ProceedingJoinPoint aopProxyChain, Cache cache) throws Throwable {
+        return cacheManager.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
+    }
+
+    public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) {
+        cacheManager.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
+    }
+
+    public AbstractCacheManager getCacheManager() {
+        return cacheManager;
+    }
+
+    public void setCacheManager(AbstractCacheManager cacheManager) {
+        this.cacheManager=cacheManager;
+    }
+
 }

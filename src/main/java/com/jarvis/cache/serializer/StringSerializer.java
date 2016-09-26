@@ -1,5 +1,7 @@
 package com.jarvis.cache.serializer;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 /**
@@ -25,12 +27,26 @@ public class StringSerializer implements ISerializer<String> {
     }
 
     @Override
-    public String deserialize(byte[] bytes) throws Exception {
+    public String deserialize(byte[] bytes, Type returnType) throws Exception {
         return(bytes == null ? null : new String(bytes, charset));
     }
 
     @Override
     public byte[] serialize(String string) throws Exception {
         return(string == null ? null : string.getBytes(charset));
+    }
+
+    @Override
+    public Object deepClone(Object obj, final Type type) throws Exception {
+        if(null == obj) {
+            return obj;
+        }
+        String str=(String)obj;
+        return String.copyValueOf(str.toCharArray());
+    }
+
+    @Override
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+        return (Object[])deepClone(args, null);
     }
 }

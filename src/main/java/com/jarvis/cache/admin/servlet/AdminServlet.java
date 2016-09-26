@@ -11,12 +11,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
-
 import com.jarvis.cache.AbstractCacheManager;
-import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.lib.util.BeanUtil;
@@ -29,16 +25,16 @@ public class AdminServlet extends HttpServlet {
 
     private static final long serialVersionUID=252742830396906514L;
 
-    private String cacheManagerNames[]=null;
-
     private String user="admin";
 
     private String password="admin";
 
+    private String _cacheManagerConfig;
+
+    private CacheManagerConfig cacheManagerConfig;
+
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
-        String tmpNames=servletConfig.getInitParameter("cacheManagerNames");
-        cacheManagerNames=tmpNames.split(",");
         String _user=servletConfig.getInitParameter("user");
         if(null != _user && _user.length() > 0) {
             user=_user;
@@ -47,31 +43,47 @@ public class AdminServlet extends HttpServlet {
         if(null != _password && _password.length() > 0) {
             password=_password;
         }
+        _cacheManagerConfig=servletConfig.getInitParameter("cacheManagerConfig");
+        if(null != _cacheManagerConfig && _cacheManagerConfig.length() > 0) {
+            try {
+                cacheManagerConfig=(CacheManagerConfig)Class.forName(_cacheManagerConfig).newInstance();
+            } catch(Exception e) {
+                throw new ServletException(e);
+            }
+        } else {
+            throw new ServletException("请设置com.jarvis.cache.admin.servlet.AdminServlet 中的 cacheManagerConfig 参数！");
+        }
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("text/html");
-        String cacheManagerName=req.getParameter("cacheManagerName");
-        if(null == cacheManagerNames || cacheManagerNames.length == 0) {
-            String errMsg="set \"cacheManagerNames\" parameter with bean names of com.jarvis.cache.ICacheManager instance";
-            resp.getWriter().println(errMsg);
-            return;
-        }
-        if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
-            cacheManagerName=cacheManagerNames[0];
-        }
-        printHtmlHead(resp, cacheManagerName);
         try {
-
-            ApplicationContext ctx=
-                WebApplicationContextUtils.getRequiredWebApplicationContext(req.getSession().getServletContext());
-            AbstractCacheManager cacheManager=(AbstractCacheManager)ctx.getBean(cacheManagerName);
-            if(null == cacheManager) {
-                String errMsg=cacheManagerName + " is not exists!";
-                throw new Exception(errMsg);
+            if(null == cacheManagerConfig) {
+                String errMsg="the \"cacheManagerConfig\" is null!";
+                resp.getWriter().println(errMsg);
+                return;
             }
+            String cacheManagerName=req.getParameter("cacheManagerName");
+
+            String cacheManagerNames[]=cacheManagerConfig.getCacheManagerNames(req);
+            if(null == cacheManagerNames || cacheManagerNames.length == 0) {
+                String errMsg="get \"cacheManagerNames\" is empty!";
+                resp.getWriter().println(errMsg);
+                return;
+            }
+            if(null == cacheManagerName || cacheManagerName.trim().length() == 0) {
+                cacheManagerName=cacheManagerNames[0];
+            }
+            AbstractCacheManager cacheManager=cacheManagerConfig.getCacheManagerByName(req, cacheManagerName);
+            if(null == cacheManager) {
+                String errMsg="get cacheManager by '" + cacheManagerName + "' is null!";
+                resp.getWriter().println(errMsg);
+                return;
+            }
+            printHtmlHead(resp, cacheManagerName);
+
             HttpSession session=req.getSession();
             String logined=(String)session.getAttribute("LOGINED");
             String act=req.getParameter("act");
@@ -98,7 +110,7 @@ public class AdminServlet extends HttpServlet {
                 if(null != act) {
                     doServices(req, resp, cacheManager);
                 } else {
-                    printForm(resp, cacheManagerName);
+                    printForm(resp, cacheManagerName, cacheManagerNames);
                     printList(req, resp, cacheManager, cacheManagerName);
                 }
             }
@@ -114,11 +126,8 @@ public class AdminServlet extends HttpServlet {
         String act=req.getParameter("act");
         String cacheKey=req.getParameter("cacheKey");
         String hfield=req.getParameter("hfield");
-        CacheKeyTO to=new CacheKeyTO();
+        CacheKeyTO to=new CacheKeyTO(cacheManager.getNamespace(), cacheKey, hfield);
 
-        to.setNamespace(cacheManager.getNamespace());
-        to.setHfield(hfield);
-        to.setKey(cacheKey);
         if("removeCache".equals(act)) {
             cacheManager.delete(to);
             resp.getWriter().println("处理成功！");
@@ -152,7 +161,8 @@ public class AdminServlet extends HttpServlet {
         html.append("<html>").append("<head>").append("<title>Cache Admin</title>");
         html.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />");
         html.append("<style type=\"text/css\">");
-        html.append("th {text-align: center; line-height: 24px; border-top: 1px solid #555555; border-bottom: 1px solid #555555; border-right: 1px solid #555555; word-wrap: break-word; }");
+        html.append(
+            "th {text-align: center; line-height: 24px; border-top: 1px solid #555555; border-bottom: 1px solid #555555; border-right: 1px solid #555555; word-wrap: break-word; }");
         html.append("table { border-left: 1px solid #555555; }");
         html.append("td { border-right: 1px solid #555555; border-bottom: 1px solid #555555; text-align: center; line-height: 24px; word-wrap: break-word; }");
         html.append("</style>");
@@ -202,19 +212,19 @@ public class AdminServlet extends HttpServlet {
         resp.getWriter().println(html.toString());
     }
 
-    private void printForm(HttpServletResponse resp, String cacheManagerName) throws IOException {
+    private void printForm(HttpServletResponse resp, String cacheManagerName, String cacheManagerNames[]) throws IOException {
         StringBuilder html=new StringBuilder();
         html.append("<form  action=\"\" method=\"get\">");
         html.append("cache manager bean name:");
         html.append("<select name=\"cacheManagerName\">");
         for(String tmpName: cacheManagerNames) {
-            html.append("  <option value=\"" + tmpName + "\" " + (tmpName.equals(cacheManagerName) ? "selected" : "") + " >"
-                + tmpName + "</option>");
+            html.append("  <option value=\"" + tmpName + "\" " + (tmpName.equals(cacheManagerName) ? "selected" : "") + " >" + tmpName + "</option>");
         }
         html.append("</select>");
         html.append("<input type=\"submit\" value=\"更改缓存\"></input>");
         html.append("</form>");
-        html.append("cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
+        html.append(
+            "cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
         html.append("<form id=\"updateCacheForm\" action=\"\" method=\"get\" target=\"_blank\">");
         html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheKey\" name=\"cacheKey\" value=\"\" />");
@@ -224,8 +234,7 @@ public class AdminServlet extends HttpServlet {
         resp.getWriter().println(html.toString());
     }
 
-    private void printList(HttpServletRequest req, HttpServletResponse resp, ICacheManager cacheManager, String cacheManagerName)
-        throws IOException {
+    private void printList(HttpServletRequest req, HttpServletResponse resp, AbstractCacheManager cacheManager, String cacheManagerName) throws IOException {
         AutoLoadTO queue[]=cacheManager.getAutoLoadHandler().getAutoLoadQueue();
         if(null == queue || queue.length == 0) {
             resp.getWriter().println("自动加载队列中无数据！");
@@ -253,9 +262,9 @@ public class AdminServlet extends HttpServlet {
         html.append("  </tr>");
 
         for(AutoLoadTO tmpTO: queue) {
-            ProceedingJoinPoint pjp=tmpTO.getJoinPoint();
-            String className=pjp.getTarget().getClass().getName();
-            String methodName=pjp.getSignature().getName();
+            CacheAopProxyChain pjp=tmpTO.getJoinPoint();
+            String className=pjp.getTargetClass().getName();
+            String methodName=pjp.getMethod().getName();
             CacheKeyTO cacheKeyTO=tmpTO.getCacheKey();
             String _key=cacheKeyTO.getKey();
             String _hfield=cacheKeyTO.getHfield();
@@ -270,23 +279,19 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime()) + "</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getFirstRequestTime()) + "</td>");
             html.append("    <td>" + tmpTO.getRequestTimes() + "次</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getCache().expire() * 1000) + "("
-                + tmpTO.getCache().expire() + "秒)</td>");
-            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getCache().requestTimeout() * 1000) + "("
-                + tmpTO.getCache().requestTimeout() + "秒)</td>");
+            html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getCache().expire() * 1000) + "(" + tmpTO.getCache().expire() + "秒)</td>");
+            html.append(
+                "    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getCache().requestTimeout() * 1000) + "(" + tmpTO.getCache().requestTimeout() + "秒)</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime()) + "</td>");
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
             html.append("    <td>" + tmpTO.getAverageUseTime() + "毫秒</td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeCache('" + _key + "','" + _hfield
-                + "')\">删除缓存</a></td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeAutoloadTO('" + _key + "','" + _hfield
-                + "')\">移除 AutoloadTO</a></td>");
-            html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + _key + "','" + _hfield
-                + "')\">重置最后加载时间</a></td>");
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeCache('" + _key + "','" + _hfield + "')\">删除缓存</a></td>");
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"removeAutoloadTO('" + _key + "','" + _hfield + "')\">移除 AutoloadTO</a></td>");
+            html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + _key + "','" + _hfield + "')\">重置最后加载时间</a></td>");
             html.append("<td>");
             if(null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
-                html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName="
-                    + cacheManagerName + "&cacheKey=" + _key + "&hfield=" + _hfield + "\" target=\"_blank\">show args values</a>");
+                html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName=" + cacheManagerName + "&cacheKey=" + _key
+                    + "&hfield=" + _hfield + "\" target=\"_blank\">show args values</a>");
             }
             html.append("</td>");
             html.append("  </tr>");

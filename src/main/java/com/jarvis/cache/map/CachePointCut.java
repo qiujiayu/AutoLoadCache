@@ -1,101 +1,83 @@
 package com.jarvis.cache.map;
 
-import java.util.Iterator;
-import java.util.Map.Entry;
+import java.lang.ref.SoftReference;
+import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
-
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-public class CachePointCut extends AbstractCacheManager implements Runnable {
-
-    private static final Logger logger=Logger.getLogger(CachePointCut.class);
+/**
+ * 使用ConcurrentHashMap管理缓存
+ * @author jiayu.qiu
+ */
+public class CachePointCut extends AbstractCacheManager {
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
-    private int period=2 * 60 * 1000; // 2Minutes
+    private CacheChangeListener changeListener;
 
-    private volatile boolean running=false;
+    /**
+     * 允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
+     */
+    private int unpersistMaxSize=0;
 
     private Thread thread=null;
 
-    public void start() {
+    private CacheTask cacheTask=null;
+
+    /**
+     * 缓存持久化文件
+     */
+    private String persistFile;
+
+    /**
+     * 是否在持久化:为true时，允许持久化，false，不允许持久化
+     */
+    private boolean needPersist=true;
+
+    /**
+     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     */
+    private boolean copyValue=false;
+
+    /**
+     * 清除和持久化的时间间隔
+     */
+    private int clearAndPersistPeriod=60 * 1000; // 1Minutes
+
+    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
+        config.setCheckFromCacheBeforeLoad(false);
+        cacheTask=new CacheTask(this);
+        changeListener=cacheTask;
+    }
+
+    public synchronized void start() {
         if(null == thread) {
-            thread=new Thread(this);
-        }
-        if(!this.running) {
-            this.running=true;
+            thread=new Thread(cacheTask);
+            cacheTask.start();
             thread.start();
         }
     }
 
     @Override
-    public void destroy() {
+    public synchronized void destroy() {
         super.destroy();
-        this.running=false;
-    }
-
-    public void run() {
-        while(running) {
-            try {
-                cleanCache();
-            } catch(Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-            try {
-                Thread.sleep(period);
-            } catch(InterruptedException e) {
-                logger.error(e.getMessage(), e);
-            }
+        cacheTask.destroy();
+        if(thread != null) {
+            thread.interrupt();
         }
-    }
-
-    /**
-     * 清除过期缓存
-     */
-    @SuppressWarnings("unchecked")
-    private void cleanCache() {
-        Iterator<Entry<String, Object>> iterator=cache.entrySet().iterator();
-        while(iterator.hasNext()) {
-            Object value=iterator.next().getValue();
-            if(value instanceof CacheWrapper) {
-                CacheWrapper tmp=(CacheWrapper)value;
-                if(tmp.isExpired()) {
-                    iterator.remove();
-                }
-            } else {
-                ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)value;
-                Iterator<Entry<String, CacheWrapper>> iterator2=hash.entrySet().iterator();
-                while(iterator2.hasNext()) {
-                    CacheWrapper tmp=iterator2.next().getValue();
-                    if(tmp.isExpired()) {
-                        iterator2.remove();
-                    }
-                }
-                if(hash.isEmpty()) {
-                    iterator.remove();
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        this.running=false;
-    }
-
-    public CachePointCut(AutoLoadConfig config) {
-        super(config);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(CacheKeyTO cacheKeyTO, CacheWrapper result) {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -103,27 +85,38 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
+        CacheWrapper<Object> value=null;
+        if(copyValue) {
+            try {
+                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可以是设置@ExCache缓存
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            value=result;
+        }
+        SoftReference<CacheWrapper<Object>> reference=new SoftReference<CacheWrapper<Object>>(value);
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            cache.put(cacheKey, result);
+            cache.put(cacheKey, reference);
         } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
+            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.get(cacheKey);
             if(null == hash) {
-                hash=new ConcurrentHashMap<String, CacheWrapper>();
-                ConcurrentHashMap<String, CacheWrapper> _hash=
-                    (ConcurrentHashMap<String, CacheWrapper>)cache.putIfAbsent(cacheKey, hash);
+                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>();
+                ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> _hash=null;
+                _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
                 }
             }
-            hash.put(hfield, result);
+            hash.put(hfield, reference);
         }
-
+        this.changeListener.cacheChange();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper get(CacheKeyTO cacheKeyTO) {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[]) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return null;
         }
@@ -136,17 +129,45 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
             return null;
         }
         String hfield=cacheKeyTO.getHfield();
+        CacheWrapper<Object> value=null;
         if(null == hfield || hfield.length() == 0) {
-            return (CacheWrapper)obj;
+            if(obj instanceof SoftReference) {
+                SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)obj;
+                if(null != reference) {
+                    value=reference.get();
+                }
+            } else if(obj instanceof CacheWrapper) {// 兼容老版本
+                value=(CacheWrapper<Object>)obj;
+            }
         } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)obj;
-            return hash.get(hfield);
+            ConcurrentHashMap<String, Object> hash=(ConcurrentHashMap<String, Object>)obj;
+            Object tmp=hash.get(hfield);
+            if(tmp instanceof SoftReference) {
+                SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)tmp;
+                if(null != reference) {
+                    value=reference.get();
+                }
+            } else if(tmp instanceof CacheWrapper) {// 兼容老版本
+                value=(CacheWrapper<Object>)tmp;
+            }
         }
+        if(copyValue) {
+            try {
+                CacheWrapper<Object> res=new CacheWrapper<Object>();
+                res.setExpire(value.getExpire());
+                res.setLastLoadTime(value.getLastLoadTime());
+                res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
+                return res;
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return value;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) {
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
         if(null == cacheKeyTO) {
             return;
         }
@@ -154,19 +175,76 @@ public class CachePointCut extends AbstractCacheManager implements Runnable {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
-        if("*".equals(cacheKey)) {
-            cache.clear();
-        }
         String hfield=cacheKeyTO.getHfield();
         if(null == hfield || hfield.length() == 0) {
-            cache.remove(cacheKey);
-        } else {
-            ConcurrentHashMap<String, CacheWrapper> hash=(ConcurrentHashMap<String, CacheWrapper>)cache.get(cacheKey);
-            if(null == hash) {
+            Object tmp=cache.remove(cacheKey);
+            if(null == tmp) {// 如果删除失败
                 return;
             }
-            hash.remove(hfield);
+            if(tmp instanceof CacheWrapper) {
+                this.changeListener.cacheChange();
+            } else if(tmp instanceof ConcurrentHashMap) {
+                ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)tmp;
+                if(hash.size() > 0) {
+                    this.changeListener.cacheChange(hash.size());
+                }
+            }
+        } else {
+            ConcurrentHashMap<String, CacheWrapper<Object>> hash=(ConcurrentHashMap<String, CacheWrapper<Object>>)cache.get(cacheKey);
+            if(null != hash) {
+                Object tmp=hash.remove(hfield);
+                if(null != tmp) {// 如果删除成功
+                    this.changeListener.cacheChange();
+                }
+            }
         }
 
     }
+
+    public ConcurrentHashMap<String, Object> getCache() {
+        return cache;
+    }
+
+    public String getPersistFile() {
+        return persistFile;
+    }
+
+    public void setPersistFile(String persistFile) {
+        this.persistFile=persistFile;
+    }
+
+    public boolean isNeedPersist() {
+        return needPersist;
+    }
+
+    public void setNeedPersist(boolean needPersist) {
+        this.needPersist=needPersist;
+    }
+
+    public int getUnpersistMaxSize() {
+        return unpersistMaxSize;
+    }
+
+    public void setUnpersistMaxSize(int unpersistMaxSize) {
+        if(unpersistMaxSize > 0) {
+            this.unpersistMaxSize=unpersistMaxSize;
+        }
+    }
+
+    public boolean isCopyValue() {
+        return copyValue;
+    }
+
+    public void setCopyValue(boolean copyValue) {
+        this.copyValue=copyValue;
+    }
+
+    public int getClearAndPersistPeriod() {
+        return clearAndPersistPeriod;
+    }
+
+    public void setClearAndPersistPeriod(int clearAndPersistPeriod) {
+        this.clearAndPersistPeriod=clearAndPersistPeriod;
+    }
+
 }

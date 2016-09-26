@@ -22,13 +22,25 @@ public @interface Cache {
     int expire();
 
     /**
-     * 自定义缓存Key，支持Spring EL表达式
+     * 动态获取缓存过期时间的表达式
+     * @return 时间
+     */
+    String expireExpression() default "";
+
+    /**
+     * 预警自动刷新时间(单位：秒)，必须满足 0 &lt; alarmTime &lt; expire才有效 当缓存在alarmTime 时间内即将过期的话，会自动刷新缓存内容；
+     * @return 时间
+     */
+    int alarmTime() default 0;
+
+    /**
+     * 自定义缓存Key，支持表达式
      * @return String 自定义缓存Key
      */
     String key();
 
     /**
-     * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持Spring EL表达式
+     * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持表达式
      * @return String
      */
     String hfield() default "";
@@ -71,7 +83,8 @@ public @interface Cache {
 
     /**
      * 扩展缓存
-     * @return
+     * @return ExCache[]
      */
-    ExCache[] exCache() default @ExCache(expire=-1, key="");
+    ExCache[] exCache() default @ExCache(expire=-1, key="")
+    ;
 }

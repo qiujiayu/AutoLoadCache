@@ -7,7 +7,6 @@ import java.io.ObjectOutputStream;
 
 import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
 
 public class JdkSerializerTest {
 
@@ -16,7 +15,7 @@ public class JdkSerializerTest {
         CacheWrapper wrapper=new CacheWrapper();
         wrapper.setCacheObject(Simple.getSimple());
 
-        BeanUtil.deepClone(wrapper, new JdkSerializer());
+        new JdkSerializer().deepClone(wrapper, null);
         byte[] data=null;
         for(int i=0; i < 1000; i++) {
             data=write(wrapper);

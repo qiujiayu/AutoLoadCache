@@ -2,9 +2,8 @@ package com.jarvis.cache.to;
 
 import java.io.Serializable;
 
-import org.aspectj.lang.ProceedingJoinPoint;
-
 import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.aop.CacheAopProxyChain;
 
 /**
  * 用于处理自动加载数据到缓存
@@ -14,19 +13,24 @@ public class AutoLoadTO implements Serializable {
 
     private static final long serialVersionUID=1L;
 
-    private ProceedingJoinPoint joinPoint;
+    private final CacheAopProxyChain joinPoint;
 
-    private Object args[];
+    private final Object args[];
 
     /**
      * 缓存注解
      */
-    private Cache cache;
+    private final Cache cache;
+
+    /**
+     * 缓存时长
+     */
+    private int expire;
 
     /**
      * 缓存Key
      */
-    private CacheKeyTO cacheKey;
+    private final CacheKeyTO cacheKey;
 
     /**
      * 上次从DAO加载数据时间
@@ -60,14 +64,15 @@ public class AutoLoadTO implements Serializable {
      */
     private long useTotalTime=0L;
 
-    public AutoLoadTO(CacheKeyTO cacheKey, ProceedingJoinPoint joinPoint, Object args[], Cache cache) {
+    public AutoLoadTO(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Object args[], Cache cache, int expire) {
         this.cacheKey=cacheKey;
         this.joinPoint=joinPoint;
         this.args=args;
         this.cache=cache;
+        this.expire=expire;
     }
 
-    public ProceedingJoinPoint getJoinPoint() {
+    public CacheAopProxyChain getJoinPoint() {
         return joinPoint;
     }
 
@@ -75,7 +80,7 @@ public class AutoLoadTO implements Serializable {
         return lastRequestTime;
     }
 
-    public void setLastRequestTime(long lastRequestTime) {
+    public AutoLoadTO setLastRequestTime(long lastRequestTime) {
         synchronized(this) {
             this.lastRequestTime=lastRequestTime;
             if(firstRequestTime == 0) {
@@ -83,6 +88,7 @@ public class AutoLoadTO implements Serializable {
             }
             requestTimes++;
         }
+        return this;
     }
 
     public long getFirstRequestTime() {
@@ -101,8 +107,15 @@ public class AutoLoadTO implements Serializable {
         return lastLoadTime;
     }
 
-    public void setLastLoadTime(long lastLoadTime) {
-        this.lastLoadTime=lastLoadTime;
+    /**
+     * @param lastLoadTime last load time
+     * @return this
+     */
+    public AutoLoadTO setLastLoadTime(long lastLoadTime) {
+        if(lastLoadTime > this.lastLoadTime) {
+            this.lastLoadTime=lastLoadTime;
+        }
+        return this;
     }
 
     public CacheKeyTO getCacheKey() {
@@ -113,16 +126,17 @@ public class AutoLoadTO implements Serializable {
         return loading;
     }
 
-    public void setLoading(boolean loading) {
+    /**
+     * @param loading
+     * @return this
+     */
+    public AutoLoadTO setLoading(boolean loading) {
         this.loading=loading;
+        return this;
     }
 
     public Object[] getArgs() {
         return args;
-    }
-
-    public static long getSerialversionuid() {
-        return serialVersionUID;
     }
 
     public long getLoadCnt() {
@@ -136,12 +150,14 @@ public class AutoLoadTO implements Serializable {
     /**
      * 记录用时
      * @param useTime 用时
+     * @return this
      */
-    public void addUseTotalTime(long useTime) {
+    public AutoLoadTO addUseTotalTime(long useTime) {
         synchronized(this) {
             this.loadCnt++;
             this.useTotalTime+=useTotalTime;
         }
+        return this;
     }
 
     /**
@@ -154,4 +170,18 @@ public class AutoLoadTO implements Serializable {
         }
         return this.useTotalTime / this.loadCnt;
     }
+
+    public int getExpire() {
+        return expire;
+    }
+
+    /**
+     * @param expire expire
+     * @return @return this
+     */
+    public AutoLoadTO setExpire(int expire) {
+        this.expire=expire;
+        return this;
+    }
+
 }
