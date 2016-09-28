@@ -82,14 +82,14 @@ public class BeanUtil {
             Iterator it=tempMap.entrySet().iterator();
             while(it.hasNext()) {
                 Map.Entry entry=(Entry)it.next();
-                if(it.hasNext()) {
-                    r+=",";
-                }
                 Object key=entry.getKey();
                 r+=toString(key);
                 r+="=";
                 Object val=entry.getValue();
                 r+=toString(val);
+                if(it.hasNext()) {
+                    r+=",";
+                }
             }
             return r + "}";
         } else if(obj instanceof Class) {
