@@ -4,6 +4,8 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.log4j.Logger;
+
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
@@ -17,6 +19,8 @@ import com.jarvis.cache.to.CacheWrapper;
  * @author jiayu.qiu
  */
 public class CachePointCut extends AbstractCacheManager {
+    
+    private static final Logger logger=Logger.getLogger(CachePointCut.class);
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
@@ -100,13 +104,21 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == hfield || hfield.length() == 0) {
             cache.put(cacheKey, reference);
         } else {
-            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.get(cacheKey);
-            if(null == hash) {
+            Object tmpObj=cache.get(cacheKey);
+            ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash;
+            if(null == tmpObj) {
                 hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>();
                 ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> _hash=null;
                 _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.putIfAbsent(cacheKey, hash);
                 if(null != _hash) {
                     hash=_hash;
+                }
+            } else {
+                if(tmpObj instanceof ConcurrentHashMap) {
+                    hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)tmpObj;
+                } else {
+                    logger.error(method.getClass().getName()+"."+method.getName()+"中key为"+cacheKey+"的缓存，已经被占用，请删除缓存再试。");
+                    return;
                 }
             }
             hash.put(hfield, reference);
