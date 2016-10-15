@@ -66,3 +66,12 @@
 脚本性能测试代码：com.test.script.ScriptTest，通过这个测试发现OGNL的性能最优。
 
 已经实现了SpringEL、OGNL、JavaScript三种表达式的支持。
+
+
+### 几种常用表达式的例子
+
+parse 解析器| 取retVal中的值(Map类型) |取retVal中的值(javaBean类型) | 使用hash函数 | 使用 empty 判断 |
+------------ | ------------- |-------------  |-------------  |------------- 
+spring | `#retVal.get('rid')` |`#retVal.rid`  | `#hash(#args)`  | `#empty(#args[0])`  |
+javascript | `retVal.get('rid')` |  `retVal.rid` |  `hash(args)` | `empty(args[0])`  |
+ognl|`#retVal.rid` | `#retVal.rid`  |  `@@hash(#args)` |  `@@empty(#args[0])` |
