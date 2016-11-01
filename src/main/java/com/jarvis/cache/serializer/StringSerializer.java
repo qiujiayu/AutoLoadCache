@@ -5,8 +5,7 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 
 /**
- * Simple String to byte[] (and back) serializer. Converts Strings into bytes and vice-versa using the specified charset (by default
- * UTF-8).
+ * Simple String to byte[] (and back) serializer. Converts Strings into bytes and vice-versa using the specified charset (by default UTF-8).
  * <p>
  * Useful when the interaction with the Redis happens mainly through Strings.
  * </p>

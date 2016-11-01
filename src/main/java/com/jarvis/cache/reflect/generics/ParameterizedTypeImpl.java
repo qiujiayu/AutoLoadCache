@@ -64,8 +64,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             Type localType1=localParameterizedType.getOwnerType();
             Type localType2=localParameterizedType.getRawType();
 
-            return (this.ownerType == null ? localType1 == null : this.ownerType.equals(localType1))
-                && (this.rawType == null ? localType2 == null : this.rawType.equals(localType2))
+            return (this.ownerType == null ? localType1 == null : this.ownerType.equals(localType1)) && (this.rawType == null ? localType2 == null : this.rawType.equals(localType2))
                 && (Arrays.equals(this.actualTypeArguments, localParameterizedType.getActualTypeArguments()));
         }
 
@@ -73,8 +72,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     }
 
     public int hashCode() {
-        return Arrays.hashCode(this.actualTypeArguments) ^ (this.ownerType == null ? 0 : this.ownerType.hashCode())
-            ^ (this.rawType == null ? 0 : this.rawType.hashCode());
+        return Arrays.hashCode(this.actualTypeArguments) ^ (this.ownerType == null ? 0 : this.ownerType.hashCode()) ^ (this.rawType == null ? 0 : this.rawType.hashCode());
     }
 
     public String toString() {

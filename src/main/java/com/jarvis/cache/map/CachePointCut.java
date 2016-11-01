@@ -19,7 +19,7 @@ import com.jarvis.cache.to.CacheWrapper;
  * @author jiayu.qiu
  */
 public class CachePointCut extends AbstractCacheManager {
-    
+
     private static final Logger logger=Logger.getLogger(CachePointCut.class);
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
@@ -117,7 +117,7 @@ public class CachePointCut extends AbstractCacheManager {
                 if(tmpObj instanceof ConcurrentHashMap) {
                     hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)tmpObj;
                 } else {
-                    logger.error(method.getClass().getName()+"."+method.getName()+"中key为"+cacheKey+"的缓存，已经被占用，请删除缓存再试。");
+                    logger.error(method.getClass().getName() + "." + method.getName() + "中key为" + cacheKey + "的缓存，已经被占用，请删除缓存再试。");
                     return;
                 }
             }

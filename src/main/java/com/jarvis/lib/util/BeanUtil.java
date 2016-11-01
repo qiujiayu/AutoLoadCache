@@ -28,9 +28,8 @@ public class BeanUtil {
      * @return boolean true or false
      */
     public static boolean isPrimitive(Object obj) {
-        boolean rv=obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long || obj instanceof Byte
-            || obj instanceof Character || obj instanceof Boolean || obj instanceof Short || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal
-            || obj instanceof BigInteger;
+        boolean rv=obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean
+            || obj instanceof Short || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal || obj instanceof BigInteger;
         return rv;
     }
 

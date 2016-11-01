@@ -161,8 +161,7 @@ public class AdminServlet extends HttpServlet {
         html.append("<html>").append("<head>").append("<title>Cache Admin</title>");
         html.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />");
         html.append("<style type=\"text/css\">");
-        html.append(
-            "th {text-align: center; line-height: 24px; border-top: 1px solid #555555; border-bottom: 1px solid #555555; border-right: 1px solid #555555; word-wrap: break-word; }");
+        html.append("th {text-align: center; line-height: 24px; border-top: 1px solid #555555; border-bottom: 1px solid #555555; border-right: 1px solid #555555; word-wrap: break-word; }");
         html.append("table { border-left: 1px solid #555555; }");
         html.append("td { border-right: 1px solid #555555; border-bottom: 1px solid #555555; text-align: center; line-height: 24px; word-wrap: break-word; }");
         html.append("</style>");
@@ -223,8 +222,7 @@ public class AdminServlet extends HttpServlet {
         html.append("</select>");
         html.append("<input type=\"submit\" value=\"更改缓存\"></input>");
         html.append("</form>");
-        html.append(
-            "cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
+        html.append("cache key:<input type=\"text\" id=\"deleteCacheKey\"/> <input type=\"button\" onclick=\"removeCache(document.getElementById('deleteCacheKey').value)\" value=\"删除缓存\"/>");
         html.append("<form id=\"updateCacheForm\" action=\"\" method=\"get\" target=\"_blank\">");
         html.append("<input type=\"hidden\" id=\"act\" name=\"act\" value=\"\" />");
         html.append("<input type=\"hidden\" id=\"cacheKey\" name=\"cacheKey\" value=\"\" />");
@@ -280,8 +278,7 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td>" + getDateFormat(tmpTO.getFirstRequestTime()) + "</td>");
             html.append("    <td>" + tmpTO.getRequestTimes() + "次</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime() + tmpTO.getCache().expire() * 1000) + "(" + tmpTO.getCache().expire() + "秒)</td>");
-            html.append(
-                "    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getCache().requestTimeout() * 1000) + "(" + tmpTO.getCache().requestTimeout() + "秒)</td>");
+            html.append("    <td>" + getDateFormat(tmpTO.getLastRequestTime() + tmpTO.getCache().requestTimeout() * 1000) + "(" + tmpTO.getCache().requestTimeout() + "秒)</td>");
             html.append("    <td>" + getDateFormat(tmpTO.getLastLoadTime()) + "</td>");
             html.append("    <td>" + tmpTO.getLoadCnt() + "次</td>");
             html.append("    <td>" + tmpTO.getAverageUseTime() + "毫秒</td>");
@@ -290,8 +287,8 @@ public class AdminServlet extends HttpServlet {
             html.append("    <td><a href=\"javascript:void()\" onclick=\"resetLastLoadTime('" + _key + "','" + _hfield + "')\">重置最后加载时间</a></td>");
             html.append("<td>");
             if(null != tmpTO.getArgs() && tmpTO.getArgs().length > 0) {
-                html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName=" + cacheManagerName + "&cacheKey=" + _key
-                    + "&hfield=" + _hfield + "\" target=\"_blank\">show args values</a>");
+                html.append("<a href=\"" + req.getContextPath() + req.getServletPath() + "?act=showArgs&cacheManagerName=" + cacheManagerName + "&cacheKey=" + _key + "&hfield=" + _hfield
+                    + "\" target=\"_blank\">show args values</a>");
             }
             html.append("</td>");
             html.append("  </tr>");
