@@ -1,7 +1,7 @@
-##使用方法
+## 使用方法
 
 
-###1. Maven dependency:
+### 1. Maven dependency:
 
     <dependency>
       <groupId>com.github.qiujiayu</groupId>
@@ -9,9 +9,9 @@
       <version>${version}</version>
     </dependency>
 
-###2. [AutoLoadConfig 配置说明](AutoLoadConfig.md)
+### 2. [AutoLoadConfig 配置说明](AutoLoadConfig.md)
 
-###3. 序列化工具：
+### 3. 序列化工具：
 
 序列化工具主要用于深度复杂，以及缓存中数据与Java对象的转换。框架中已经实现如下几种序列化工具:
 
@@ -31,13 +31,13 @@
       <constructor-arg ref="hessianSerializer" />
     </bean>
 
-###4. 表达式解析器
+### 4. 表达式解析器
 
 缓存Key及一些条件表达式，都是通过表达式与Java对象进行交互的，框架中已经内置了使用Spring El和Javascript两种表达的解析器，分别的：com.jarvis.cache.script.SpringELParser 和 com.jarvis.cache.script.JavaScriptParser，如果需要扩展，需要继承com.jarvis.cache.script.AbstractScriptParser 这个抽象类。
 
     <bean id="scriptParser" class="com.jarvis.cache.script.SpringELParser" />
 
-###5.缓存配置
+### 5.缓存配置
 
 框架已经支持 Redis、Memcache以及ConcurrentHashMap 三种缓存：
 
@@ -46,7 +46,7 @@
 * [ConcurrentHashMap 配置](ConcurrentHashMap.md)
 
 
-###6.AOP 配置：
+### 6.AOP 配置：
 
     <bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
       <property name="cacheManager" ref="cacheManager" />
@@ -66,7 +66,7 @@
 如果不同的数据，要使用不同的缓存的话，可以通过配置多个AOP来进行共区分。
 
 
-###7. 在需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解
+### 7. 在需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解
 
 更多的配置可以参照[实例代码](https://github.com/qiujiayu/cache-example)
 

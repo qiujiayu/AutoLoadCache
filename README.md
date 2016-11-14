@@ -8,30 +8,30 @@
 现在使用的缓存技术很多，比如*Redis*、 *Memcache* 、 *EhCache*等，甚至还有使用*ConcurrentHashMap* 或 *HashTable* 来实现缓存。但在缓存的使用上，每个人都有自己的实现方式，大部分是直接与业务代码绑定，随着业务的变化，要更换缓存方案时，非常麻烦。接下来我们就使用**AOP + Annotation** 来解决这个问题，同时使用**自动加载机制** 来实现数据“**常驻内存**”。
 
 
-###[设计思想及原理](./doc/idea.md)
+### [设计思想及原理](./doc/idea.md)
 
-###[使用方法](./doc/use.md)
+### [使用方法](./doc/use.md)
 
-###[注解（Annotation）说明](./doc/annotations.md)
+### [注解（Annotation）说明](./doc/annotations.md)
 
-###[表达式的应用](./doc/script.md)
+### [表达式的应用](./doc/script.md)
 
-###[缓存删除](./doc/deleteCache.md)
+### [缓存删除](./doc/deleteCache.md)
 
-###[注意事项](./doc/warning.md)
+### [注意事项](./doc/warning.md)
 
-###[缓存管理页面](./doc/admin.md)
+### [缓存管理页面](./doc/admin.md)
 
-###[与Spring Cache的区别](./doc/SpringCache.md)
+### [与Spring Cache的区别](./doc/SpringCache.md)
 
-###源码阅读
+### 源码阅读
 
 已经实现基于aspectj，代码在com.jarvis.cache.aop.aspectj.AspectjAopInterceptor。想通过阅读代码了解详细细节，可以以此为入口。
 
 
 ### [更新日志](./doc/changesLog.md)
 
-###未来计划：
+### 未来计划：
 希望未来能更好适应高并发的环境，更方便运维，欢迎有这方面经验的人能参与进来，让更多的人受益。
 
 在异步刷新缓存时，增加尝试多次去数据层加载数据，以适应解决有多个数据源，而其中部分数据源出问题情况。通过这种尝试机制，也许能获取到新的数据。

@@ -1,9 +1,9 @@
-##注意事项
+## 注意事项
 
-###1. 当@Cache中 **autoload** 设置为 **ture** 时，对应方法的参数必须都是Serializable的。
+### 1. 当@Cache中 **autoload** 设置为 **ture** 时，对应方法的参数必须都是Serializable的。
 AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
-###2. 参数中只设置必要的属性值，在DAO中用不到的属性值尽量不要设置，这样能避免生成不同的缓存Key，降低缓存的使用率。
+### 2. 参数中只设置必要的属性值，在DAO中用不到的属性值尽量不要设置，这样能避免生成不同的缓存Key，降低缓存的使用率。
 例如：
 
         public CollectionTO<AccountTO> getAccountByCriteria(AccountCriteriaTO criteria)  {
@@ -24,7 +24,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
             }
         }
 
-###3. 注意AOP失效的情况;
+### 3. 注意AOP失效的情况;
 例如：
 
         TempDAO {
@@ -41,7 +41,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
 通过 new TempDAO().a() 调用b方法时，AOP失效，也无法进行缓存相关操作。
 
-###4. 自动加载缓存时，不能在缓存方法内叠加查询参数值;
+### 4. 自动加载缓存时，不能在缓存方法内叠加查询参数值;
 例如：
 
         @Cache(expire=600, autoload=true, key="'myKey'+#hash(#args[0])")
@@ -56,14 +56,14 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 因为自动加载时，AutoLoadHandler 缓存了查询参数，执行自动加载时，每次执行时 threshold 都会乘以10，这样threshold的值就会越来越大。
 
 
-###5. 对于一些比较耗时的方法尽量使用自动加载。
+### 5. 对于一些比较耗时的方法尽量使用自动加载。
 
-###6. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
+### 6. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
 比如，根据用户输入的关键字进行搜索数据的方法，不建议使用自动加载。
 
-###7. 如果DAO方法中需要从ThreadLocal 获取数据时，不能使用自动加载机制（@Cache的autoload值不能设置为true）。自动加载是用新的线程中模拟用户请求的，这时ThreadLocal的数据都是空的。
+### 7. 如果DAO方法中需要从ThreadLocal 获取数据时，不能使用自动加载机制（@Cache的autoload值不能设置为true）。自动加载是用新的线程中模拟用户请求的，这时ThreadLocal的数据都是空的。
 
-###8. 使用 @Cache(opType=CacheOpType.WRITE)的坑
+### 8. 使用 @Cache(opType=CacheOpType.WRITE)的坑
 因为AutoloadCache是不支持事务回滚的，所以在如下情况时，会出现缓存中的数据不正确的情况：
 
     public class UserDAO {
@@ -77,7 +77,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 
 如果事务提交失败时，此时缓存中的数据无法回滚，所以使用时要注意。
 
-##在事务环境中，如何减少“脏读”
+## 在事务环境中，如何减少“脏读”
 
 1. 不要从缓存中取数据，然后应用到修改数据的SQL语句中
 

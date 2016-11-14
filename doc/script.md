@@ -1,8 +1,8 @@
-##表达式的应用
+## 表达式的应用
 
 以下是以Spring EL表达式为例子，如果使用其它表达式，需要注意语法的不同。
 
-###缓存Key的生成
+### 缓存Key的生成
 
  在@Cache中设置key，可以是字符串或Spring EL表达式:
 
@@ -20,21 +20,21 @@
     在拼缓存Key时，各项数据最好都用特殊字符进行分隔，否则缓存的Key有可能会乱的。比如：a,b 两个变量a=1,b=11,如果a=11,b=1,两个变量中间不加特殊字符，拼在一块，值是一样的。
   Spring EL表达式支持调整类的static 变量和方法，比如："T(java.lang.Math).PI"。
 
-###提供的SpEL上下文数据
+### 提供的SpEL上下文数据
 
 | 名字 | 描述 | 示例 |
 | ------------- | ------------- | ------------- |
 | args | 当前被调用的方法的参数列表 | #args[0] |
 | retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),expireExpression,autoloadCondition,@ExCache() | #retVal |
 
-###提供的SpEL函数
+### 提供的SpEL函数
 
 | 名字 | 描述 | 示例 |
 | ------------- | ------------- | ------------- |
 | hash | 将Object 对象转换为唯一的Hash字符串 | #hash(#args) |
 | empty | 判断Object对象是否为空 | #empty(#args[0]) |
 
-###自定义SpEL函数
+### 自定义SpEL函数
 通过AutoLoadConfig 的functions 注册自定义函数，例如：
 
     <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">

@@ -1,4 +1,4 @@
-###Memcache配置
+### Memcache配置
 
     <bean id="memcachedClient" class="net.spy.memcached.spring.MemcachedClientFactoryBean">
         <property name="servers" value="192.138.11.165:11211,192.138.11.166:11211" />

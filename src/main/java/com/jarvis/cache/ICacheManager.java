@@ -18,7 +18,7 @@ public interface ICacheManager {
      * @param result 缓存数据
      * @param method Method
      * @param args args
-     * @throws CacheCenterConnectionException
+     * @throws CacheCenterConnectionException 缓存异常
      */
     void setCache(final CacheKeyTO cacheKey, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException;
 

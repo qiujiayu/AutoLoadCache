@@ -1,4 +1,4 @@
-###ConcurrentHashMap配置
+### ConcurrentHashMap配置
 
     <bean id="cacheManager" class="com.jarvis.cache.map.CachePointCut" init-method="start" destroy-method="destroy">
       <constructor-arg ref="autoLoadConfig" />
