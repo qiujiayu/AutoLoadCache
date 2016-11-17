@@ -61,7 +61,7 @@ AutoLoadHandler中需要缓存通过**深度复制**后的参数。
 ### 6. 对于查询条件变化比较剧烈的，不要使用自动加载机制。
 比如，根据用户输入的关键字进行搜索数据的方法，不建议使用自动加载。
 
-### 7. 如果DAO方法中需要从ThreadLocal 获取数据时，不能使用自动加载机制（@Cache的autoload值不能设置为true）。自动加载是用新的线程中模拟用户请求的，这时ThreadLocal的数据都是空的。
+### 7. DAO方法中不能从ThreadLocal 获取数据，自动加载及异步刷新缓存数据是在别的线程池中进行的，会取不到ThreadLocal中的数据。
 
 ### 8. 使用 @Cache(opType=CacheOpType.WRITE)的坑
 因为AutoloadCache是不支持事务回滚的，所以在如下情况时，会出现缓存中的数据不正确的情况：

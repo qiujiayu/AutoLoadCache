@@ -11,5 +11,8 @@ public enum CacheOpType {
     READ_WRITE, /**
                  * 只往缓存写数据，不从缓存中读数据
                  */
-    WRITE;
+    WRITE, /**
+            * 只从缓存中读取，用于其它地方往缓存写，这里只读的场景。
+            */
+    READ_ONLY;
 }

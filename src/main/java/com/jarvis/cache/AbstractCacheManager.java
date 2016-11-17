@@ -104,6 +104,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
+        if(null != cache.opType() && cache.opType() == CacheOpType.READ_ONLY) {// 如果是只读，则直接返回
+            return null == cacheWrapper ? null : cacheWrapper.getCacheObject();
+        }
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
             if(null != autoLoadTO) {// 同步最后加载时间
