@@ -1,18 +1,20 @@
-package com.test;
+package com.test.hessian;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
 import com.jarvis.cache.serializer.HessionBigDecimalSerializerFactory;
-import com.test.hessian.MyTO;
 
 public class HessianTest {
 
     private static SerializerFactory _serializerFactory=SerializerFactory.createDefault();
+
     static {
         _serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
     }
@@ -21,6 +23,11 @@ public class HessianTest {
         long start=System.currentTimeMillis();
         MyTO to=new MyTO();
         to.setId("111");
+        List<String> list=new ArrayList<String>();
+        list.add("111");
+        list.add("222");
+        to.setList(list);
+
         byte[] data=null;
         for(int i=0; i < 1000; i++) {
             data=write(to);

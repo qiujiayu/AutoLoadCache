@@ -7,18 +7,17 @@ import com.jarvis.cache.comparator.AutoLoadRequestTimesComparator;
 import com.jarvis.cache.to.AutoLoadTO;
 
 public enum AutoLoadQueueSortType {
-    /**
-     * 默认顺序
-     */
-    NONE(0, null),
-    /**
-     * 越接近过期时间，越耗时的排在最前
-     */
+        /**
+         * 默认顺序
+         */
+    NONE(0, null), /**
+                    * 越接近过期时间，越耗时的排在最前
+                    */
     OLDEST_FIRST(1, new AutoLoadOldestComparator()),
 
-    /**
-     * 根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。
-     */
+        /**
+         * 根据请求次数，倒序排序，请求次数越多，说明使用频率越高，造成并发的可能越大。
+         */
     REQUEST_TIMES_DESC(2, new AutoLoadRequestTimesComparator());
 
     private Integer id;

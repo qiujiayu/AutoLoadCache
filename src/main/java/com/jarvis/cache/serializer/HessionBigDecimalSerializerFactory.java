@@ -16,7 +16,7 @@ public class HessionBigDecimalSerializerFactory extends AbstractSerializerFactor
     private static final BigDecimalDeserializer bigDecimalDeserializer=new BigDecimalDeserializer();
 
     @Override
-    public Serializer getSerializer(Class cl) throws HessianProtocolException {
+    public Serializer getSerializer(@SuppressWarnings("rawtypes") Class cl) throws HessianProtocolException {
         if(BigDecimal.class.isAssignableFrom(cl)) {
             return bigDecimalSerializer;
         }
@@ -24,7 +24,7 @@ public class HessionBigDecimalSerializerFactory extends AbstractSerializerFactor
     }
 
     @Override
-    public Deserializer getDeserializer(Class cl) throws HessianProtocolException {
+    public Deserializer getDeserializer(@SuppressWarnings("rawtypes") Class cl) throws HessianProtocolException {
         if(BigDecimal.class.isAssignableFrom(cl)) {
             return bigDecimalDeserializer;
         }

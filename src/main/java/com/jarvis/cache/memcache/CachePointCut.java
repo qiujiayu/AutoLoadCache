@@ -1,48 +1,85 @@
 package com.jarvis.cache.memcache;
 
-import java.io.Serializable;
+import java.lang.reflect.Method;
 
 import net.spy.memcached.MemcachedClient;
 
 import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.exception.CacheCenterConnectionException;
+import com.jarvis.cache.script.AbstractScriptParser;
+import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
+import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 /**
- * 缓存切面，用于拦截数据并调用memcache进行缓存
+ * memcache缓存管理
  */
-public class CachePointCut extends AbstractCacheManager<Serializable> {
+public class CachePointCut extends AbstractCacheManager {
 
     private MemcachedClient memcachedClient;
 
-    public CachePointCut(AutoLoadConfig config) {
-        super(config);
+    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+        super(config, serializer, scriptParser);
     }
 
     @Override
-    public void setCache(String cacheKey, CacheWrapper<Serializable> result, int expire) {
-        result.setLastLoadTime(System.currentTimeMillis());
-        memcachedClient.set(cacheKey, expire, result);
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method, final Object args[]) throws CacheCenterConnectionException {
+        if(null == cacheKeyTO) {
+            return;
+        }
+        String cacheKey=cacheKeyTO.getCacheKey();
+        if(null == cacheKey || cacheKey.length() == 0) {
+            return;
+        }
+        String hfield=cacheKeyTO.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
+        memcachedClient.set(cacheKey, result.getExpire(), result);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Serializable> get(String cacheKey) {
-        return (CacheWrapper<Serializable>)memcachedClient.get(cacheKey);
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, Method method, final Object args[]) throws CacheCenterConnectionException {
+        if(null == cacheKeyTO) {
+            return null;
+        }
+        String cacheKey=cacheKeyTO.getCacheKey();
+        if(null == cacheKey || cacheKey.length() == 0) {
+            return null;
+        }
+        String hfield=cacheKeyTO.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
+        return (CacheWrapper<Object>)memcachedClient.get(cacheKey);
     }
 
     /**
      * 通过组成Key直接删除
-     * @param cacheKey 缓存Key
+     * @param cacheKeyTO 缓存Key
      */
     @Override
-    public void delete(String cacheKey) {
-        if(null == memcachedClient || null == cacheKey) {
+    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
+        if(null == memcachedClient || null == cacheKeyTO) {
             return;
         }
+        String cacheKey=cacheKeyTO.getCacheKey();
+        if(null == cacheKey || cacheKey.length() == 0) {
+            return;
+        }
+        String hfield=cacheKeyTO.getHfield();
+        if(null != hfield && hfield.length() > 0) {
+            throw new RuntimeException("memcached does not support hash cache.");
+        }
         try {
-            memcachedClient.delete(cacheKey);
-            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKey);
+            if("*".equals(cacheKey)) {
+                memcachedClient.flush();
+            } else {
+                memcachedClient.delete(cacheKey);
+            }
+            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
         } catch(Exception e) {
         }
     }

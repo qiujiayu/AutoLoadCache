@@ -5,29 +5,32 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.jarvis.cache.serializer.ISerializer;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author jiayu.qiu
  */
 public class BeanUtil {
 
+    @SuppressWarnings("rawtypes")
+    private static final ConcurrentHashMap<Class, Field[]> fieldsCahce=new ConcurrentHashMap<Class, Field[]>();
+
     /**
      * 是否为基础数据类型
      * @param obj Object
      * @return boolean true or false
      */
-    private static boolean isPrimitive(Object obj) {
-        return obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long
-            || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean || obj instanceof Short
-            || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal;
+    public static boolean isPrimitive(Object obj) {
+        boolean rv=obj.getClass().isPrimitive() || obj instanceof String || obj instanceof Integer || obj instanceof Long || obj instanceof Byte || obj instanceof Character || obj instanceof Boolean
+            || obj instanceof Short || obj instanceof Float || obj instanceof Double || obj instanceof BigDecimal || obj instanceof BigInteger;
+        return rv;
     }
 
     /**
@@ -78,21 +81,30 @@ public class BeanUtil {
             Iterator it=tempMap.entrySet().iterator();
             while(it.hasNext()) {
                 Map.Entry entry=(Entry)it.next();
-                if(it.hasNext()) {
-                    r+=",";
-                }
                 Object key=entry.getKey();
                 r+=toString(key);
                 r+="=";
                 Object val=entry.getValue();
                 r+=toString(val);
+                if(it.hasNext()) {
+                    r+=",";
+                }
             }
             return r + "}";
+        } else if(obj instanceof Class) {
+            Class tmpCls=(Class)obj;
+            return tmpCls.getName();
         }
         String r=cl.getName();
         do {
-            Field[] fields=cl.getDeclaredFields();
-            AccessibleObject.setAccessible(fields, true);
+            Field[] fields=fieldsCahce.get(cl);
+            if(null == fields) {
+                fields=cl.getDeclaredFields();
+                if(null != fields) {
+                    AccessibleObject.setAccessible(fields, true);
+                }
+                fieldsCahce.put(cl, fields);
+            }
             if(null == fields || fields.length == 0) {
                 cl=cl.getSuperclass();
                 continue;
@@ -125,13 +137,4 @@ public class BeanUtil {
         return r;
     }
 
-    /**
-     * 通过序列化进行深度复制
-     * @param obj Object
-     * @param serializer ISerializer
-     * @throws Exception Exception
-     */
-    public static <T> T deepClone(T obj, ISerializer<T> serializer) throws Exception {
-        return serializer.deserialize(serializer.serialize(obj));
-    }
 }

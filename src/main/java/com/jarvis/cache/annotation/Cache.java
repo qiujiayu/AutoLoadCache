@@ -1,6 +1,8 @@
 package com.jarvis.cache.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -9,22 +11,42 @@ import com.jarvis.cache.type.CacheOpType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Inherited
+@Documented
 public @interface Cache {
 
     /**
-     * 缓存的过期时间，单位：秒
+     * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
      * @return 时间
      */
     int expire();
 
     /**
-     * 自定义缓存Key,如果不设置使用系统默认生成缓存Key的方法
-     * @return String 自定义缓存Key
+     * 动态获取缓存过期时间的表达式
+     * @return 时间
      */
-    String key() default "";
+    String expireExpression() default "";
 
     /**
-     * 是否启用自动加载缓存
+     * 预警自动刷新时间(单位：秒)，必须满足 0 &lt; alarmTime &lt; expire才有效 当缓存在alarmTime 时间内即将过期的话，会自动刷新缓存内容；
+     * @return 时间
+     */
+    int alarmTime() default 0;
+
+    /**
+     * 自定义缓存Key，支持表达式
+     * @return String 自定义缓存Key
+     */
+    String key();
+
+    /**
+     * 设置哈希表中的字段，如果设置此项，则用哈希表进行存储，支持表达式
+     * @return String
+     */
+    String hfield() default "";
+
+    /**
+     * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
      * @return boolean
      */
     boolean autoload() default false;
@@ -42,12 +64,6 @@ public @interface Cache {
     long requestTimeout() default 36000L;
 
     /**
-     * 使用SpEL，将缓存key，根据业务需要进行二次分组（使用默认缓存Key的时候才有效）
-     * @return String
-     */
-    String subKeySpEL() default "";
-
-    /**
      * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
      * @return String
      */
@@ -58,4 +74,17 @@ public @interface Cache {
      * @return CacheOpType
      */
     CacheOpType opType() default CacheOpType.READ_WRITE;
+
+    /**
+     * 并发等待时间(毫秒),等待正在DAO中加载数据的线程返回的等待时间。
+     * @return 时间
+     */
+    int waitTimeOut() default 500;
+
+    /**
+     * 扩展缓存
+     * @return ExCache[]
+     */
+    ExCache[] exCache() default @ExCache(expire=-1, key="")
+    ;
 }

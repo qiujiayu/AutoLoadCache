@@ -1,15 +1,9 @@
 package com.jarvis.cache;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
 
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
-
-import com.jarvis.cache.annotation.Cache;
-import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -19,13 +13,29 @@ public class CacheUtil {
 
     private static final String SPLIT_STR="_";
 
-    private static final String ARGS="args";
-
-    private static final String RET_VAL="retVal";
-
-    private static final ExpressionParser parser=new SpelExpressionParser();
-
-    private static final Pattern pattern_hash=Pattern.compile("(\\+?)\\$hash\\((.[^)]*)\\)");
+    @SuppressWarnings("rawtypes")
+    public static boolean isEmpty(Object obj) {
+        if(null == obj) {
+            return true;
+        }
+        if(obj instanceof String) {
+            return ((String)obj).length() == 0;
+        }
+        Class cl=obj.getClass();
+        if(cl.isArray()) {
+            int len=Array.getLength(obj);
+            return len == 0;
+        }
+        if(obj instanceof Collection) {
+            Collection tempCol=(Collection)obj;
+            return tempCol.isEmpty();
+        }
+        if(obj instanceof Map) {
+            Map tempMap=(Map)obj;
+            return tempMap.isEmpty();
+        }
+        return false;
+    }
 
     /**
      * 生成字符串的HashCode
@@ -76,69 +86,6 @@ public class CacheUtil {
     }
 
     /**
-     * 将Spring EL 表达式转换期望的值
-     * @param keySpEL 生成缓存Key的Spring el表达式
-     * @param arguments 参数
-     * @param valueType 值类型
-     * @return T Value 返回值
-     * @param <T> 泛型
-     */
-    public static <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) {
-        return getElValue(keySpEL, arguments, null, valueType);
-    }
-
-    /**
-     * 将Spring EL 表达式转换期望的值
-     * @param keySpEL 生成缓存Key的Spring el表达式
-     * @param arguments 参数
-     * @param valueType 值类型
-     * @param retVal 结果值
-     * @return T value 返回值
-     * @param <T> 泛型
-     */
-    public static <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, Class<T> valueType) {
-        Matcher m=pattern_hash.matcher(keySpEL);
-        StringBuffer sb=new StringBuffer();
-        while(m.find()) {
-            m.appendReplacement(sb, "$1T(com.jarvis.cache.CacheUtil).getUniqueHashStr($2)");
-        }
-        m.appendTail(sb);
-        EvaluationContext context=new StandardEvaluationContext();
-        context.setVariable(ARGS, arguments);
-        context.setVariable(RET_VAL, retVal);
-        return parser.parseExpression(sb.toString()).getValue(context, valueType);
-    }
-
-    /**
-     * 生成自定义缓存Key
-     * @param keySpEL 生成缓存Key的Spring el表达式
-     * @param arguments 参数
-     * @return cacheKey 生成的缓存Key
-     */
-    public static String getDefinedCacheKey(String keySpEL, Object[] arguments) {
-        if(keySpEL.indexOf("#" + ARGS) != -1) {
-            return getElValue(keySpEL, arguments, String.class);
-        } else {
-            return keySpEL;
-        }
-    }
-
-    /**
-     * 根据请求参数和执行结果值，进行构造缓存Key
-     * @param keySpEL 生成缓存Key的Spring el表达式
-     * @param arguments 参数
-     * @param retVal 结果值
-     * @return CacheKey 缓存Key
-     */
-    public static String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal) {
-        if(keySpEL.indexOf("#" + ARGS) != -1 || keySpEL.indexOf("#" + RET_VAL) != -1) {
-            return getElValue(keySpEL, arguments, retVal, String.class);
-        } else {
-            return keySpEL;
-        }
-    }
-
-    /**
      * 生成缓存Key
      * @param className 类名称
      * @param method 方法名称
@@ -147,24 +94,7 @@ public class CacheUtil {
      */
     public static String getDefaultCacheKey(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
-        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, null));
-        if(null != arguments && arguments.length > 0) {
-            sb.append(getUniqueHashStr(arguments));
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 生成缓存Key
-     * @param className 类名称
-     * @param method 方法名称
-     * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
-     * @return CacheKey 缓存Key
-     */
-    public static String getDefaultCacheKey(String className, String method, Object[] arguments, String subKeySpEL) {
-        StringBuilder sb=new StringBuilder();
-        sb.append(getDefaultCacheKeyPrefix(className, method, arguments, subKeySpEL));
+        sb.append(getDefaultCacheKeyPrefix(className, method, arguments));
         if(null != arguments && arguments.length > 0) {
             sb.append(getUniqueHashStr(arguments));
         }
@@ -176,78 +106,15 @@ public class CacheUtil {
      * @param className 类名称
      * @param method 方法名称
      * @param arguments 参数
-     * @param subKeySpEL SpringEL表达式 ，arguments 在SpringEL表达式中的名称为args，第一个参数为#args[0],第二个为参数为#args[1]，依此类推。
      * @return CacheKey 缓存Key
      */
-    public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments, String subKeySpEL) {
+    public static String getDefaultCacheKeyPrefix(String className, String method, Object[] arguments) {
         StringBuilder sb=new StringBuilder();
-        sb.append(className).append(".").append(method);
-        if(null != arguments && arguments.length > 0 && null != subKeySpEL && subKeySpEL.indexOf("#" + ARGS) != -1) {
-            String subKey=getElValue(subKeySpEL, arguments, String.class);
-            if(null != subKey && subKey.trim().length() > 0) {
-                sb.append(".").append(subKey);
-            }
+        sb.append(className);
+        if(null != method && method.length() > 0) {
+            sb.append(".").append(method);
         }
-        sb.append(":");
         return sb.toString();
     }
 
-    /**
-     * 是否可以缓存
-     * @param cache Cache
-     * @param arguments 参数
-     * @return cacheAble 是否可以进行缓存
-     */
-    public static boolean isCacheable(Cache cache, Object[] arguments) {
-        boolean rv=true;
-        if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
-            rv=getElValue(cache.condition(), arguments, Boolean.class);
-        }
-        return rv;
-    }
-
-    /**
-     * 是否可以缓存
-     * @param cache Cache
-     * @param arguments 参数
-     * @param result 执行结果
-     * @return cacheAble 是否可以进行缓存
-     */
-    public static boolean isCacheable(Cache cache, Object[] arguments, Object result) {
-        boolean rv=true;
-        if(null != arguments && arguments.length > 0 && null != cache.condition() && cache.condition().length() > 0) {
-            rv=getElValue(cache.condition(), arguments, result, Boolean.class);
-        }
-        return rv;
-    }
-
-    /**
-     * 是否可以自动加载
-     * @param cache Cache 注解
-     * @param arguments 参数
-     * @return autoload 是否自动加载
-     */
-    public static boolean isAutoload(Cache cache, Object[] arguments) {
-        boolean autoload=cache.autoload();
-        if(null != arguments && arguments.length > 0 && null != cache.autoloadCondition() && cache.autoloadCondition().length() > 0) {
-            autoload=getElValue(cache.autoloadCondition(), arguments, Boolean.class);
-        }
-        return autoload;
-    }
-
-    /**
-     * 是否可以删除缓存
-     * @param cacheDeleteKey CacheDeleteKey注解
-     * @param arguments 参数
-     * @param retVal 结果值
-     * @return Can Delete
-     */
-    public static boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) {
-        boolean rv=true;
-        if(null != arguments && arguments.length > 0 && null != cacheDeleteKey.condition()
-            && cacheDeleteKey.condition().length() > 0) {
-            rv=getElValue(cacheDeleteKey.condition(), arguments, retVal, Boolean.class);
-        }
-        return rv;
-    }
 }

@@ -15,7 +15,7 @@ public class ReflectUtils {
      * @param <T> 类型参数
      * @param clazz 超类类型
      */
-    public static <T> Class<T> getClassGenricType(final Class clazz) {
+    public static Class<?> getClassGenricType(final Class<?> clazz) {
         return getClassGenricType(clazz, 0);
     }
 
@@ -24,7 +24,7 @@ public class ReflectUtils {
      * @param clazz 超类类型
      * @param index 索引
      */
-    public static Class getClassGenricType(final Class clazz, final int index) {
+    public static Class<?> getClassGenricType(final Class<?> clazz, final int index) {
         Type genType=clazz.getGenericSuperclass();
         if(!(genType instanceof ParameterizedType)) {
             return Object.class;
@@ -36,6 +36,6 @@ public class ReflectUtils {
         if(!(params[index] instanceof Class)) {
             return Object.class;
         }
-        return (Class)params[index];
+        return (Class<?>)params[index];
     }
 }

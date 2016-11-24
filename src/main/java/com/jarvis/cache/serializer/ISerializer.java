@@ -1,20 +1,26 @@
 package com.jarvis.cache.serializer;
 
-public interface ISerializer<T> {
+import java.lang.reflect.Type;
+
+import com.jarvis.cache.clone.ICloner;
+
+public interface ISerializer<T> extends ICloner {
 
     /**
      * Serialize the given object to binary data.
-     * @param t object to serialize
+     * @param obj object to serialize
      * @return the equivalent binary data
      * @throws Exception 异常
      */
-    byte[] serialize(T t) throws Exception;
+    byte[] serialize(final T obj) throws Exception;
 
     /**
      * Deserialize an object from the given binary data.
      * @param bytes object binary representation
+     * @param returnType the GenericReturnType of AOP Method
      * @return the equivalent object instance
      * @throws Exception 异常
      */
-    T deserialize(byte[] bytes) throws Exception;
+    T deserialize(final byte[] bytes, final Type returnType) throws Exception;
+
 }

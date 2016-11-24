@@ -1,5 +1,7 @@
 package com.jarvis.cache.to;
 
+import java.util.Map;
+
 import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
@@ -37,6 +39,33 @@ public class AutoLoadConfig {
      * 加载数据之前去缓存服务器中检查，数据是否快过期，如果应用程序部署的服务器数量比较少，设置为false, 如果部署的服务器比较多，可以考虑设置为true
      */
     private boolean checkFromCacheBeforeLoad=false;
+
+    /**
+     * 单个线程中执行自动加载的时间间隔
+     */
+    private int autoLoadPeriod=50;
+
+    /**
+     * 异步刷新缓存线程池的 corePoolSize
+     */
+    private int refreshThreadPoolSize=2;
+
+    /**
+     * 异步刷新缓存线程池的 maximumPoolSize
+     */
+    private int refreshThreadPoolMaxSize=20;
+
+    /**
+     * 异步刷新缓存线程池的 keepAliveTime
+     */
+    private int refreshThreadPoolkeepAliveTime=20;// 单位：分钟
+
+    /**
+     * 异步刷新缓存队列容量
+     */
+    private int refreshQueueCapacity=2000;
+
+    private Map<String, String> functions;
 
     public int getThreadCnt() {
         return threadCnt;
@@ -93,6 +122,72 @@ public class AutoLoadConfig {
 
     public void setCheckFromCacheBeforeLoad(boolean checkFromCacheBeforeLoad) {
         this.checkFromCacheBeforeLoad=checkFromCacheBeforeLoad;
+    }
+
+    public int getAutoLoadPeriod() {
+        return autoLoadPeriod;
+    }
+
+    public void setAutoLoadPeriod(int autoLoadPeriod) {
+        if(autoLoadPeriod < 5) {
+            return;
+        }
+        this.autoLoadPeriod=autoLoadPeriod;
+    }
+
+    /**
+     * 为表达式注册自定义函数
+     * @param funcs 函数
+     */
+    public void setFunctions(Map<String, String> funcs) {
+        if(null == funcs || funcs.isEmpty()) {
+            return;
+        }
+        functions=funcs;
+    }
+
+    public Map<String, String> getFunctions() {
+        return functions;
+    }
+
+    public int getRefreshThreadPoolSize() {
+        return refreshThreadPoolSize;
+    }
+
+    public void setRefreshThreadPoolSize(int refreshThreadPoolSize) {
+        if(refreshThreadPoolSize > 1) {
+            this.refreshThreadPoolSize=refreshThreadPoolSize;
+        }
+    }
+
+    public int getRefreshThreadPoolMaxSize() {
+        return refreshThreadPoolMaxSize;
+    }
+
+    public void setRefreshThreadPoolMaxSize(int refreshThreadPoolMaxSize) {
+        if(refreshThreadPoolMaxSize > 1) {
+            this.refreshThreadPoolMaxSize=refreshThreadPoolMaxSize;
+        }
+    }
+
+    public int getRefreshThreadPoolkeepAliveTime() {
+        return refreshThreadPoolkeepAliveTime;
+    }
+
+    public void setRefreshThreadPoolkeepAliveTime(int refreshThreadPoolkeepAliveTime) {
+        if(refreshThreadPoolkeepAliveTime > 1) {
+            this.refreshThreadPoolkeepAliveTime=refreshThreadPoolkeepAliveTime;
+        }
+    }
+
+    public int getRefreshQueueCapacity() {
+        return refreshQueueCapacity;
+    }
+
+    public void setRefreshQueueCapacity(int refreshQueueCapacity) {
+        if(refreshQueueCapacity > 1) {
+            this.refreshQueueCapacity=refreshQueueCapacity;
+        }
     }
 
 }

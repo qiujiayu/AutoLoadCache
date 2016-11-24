@@ -1,46 +1,25 @@
 package com.test;
 
-import java.lang.reflect.Field;
-import java.util.Calendar;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-import com.jarvis.cache.redis.ShardedCachePointCut;
-import com.jarvis.cache.to.AutoLoadConfig;
-import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.junit.Test;
 
 public class BeanTest {
 
-    public static void main(String args[]) {
+    private static final ConcurrentHashMap<String, Boolean> processing=new ConcurrentHashMap<String, Boolean>();
 
-        AutoLoadConfig config=new AutoLoadConfig();
-        Class configClass=config.getClass();
-        Field fields[]=configClass.getDeclaredFields();
-        for(Field field: fields) {
-            field.setAccessible(true);
-            System.out.println(field.getType().getName());
-        }
-        System.out.println(ShardedCachePointCut.class.getSuperclass().getSuperclass().getName());
-        Calendar now=Calendar.getInstance();
-        String str=BeanUtil.toString(now.getTime().getTime());
-        System.out.println(now.toString());
-        System.out.println(String.valueOf(now));
-        System.out.println(str);
+    @Test
+    public void testputIfAbsent() {
+        Boolean isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        assertNull(isProcessing);
+        System.out.println("isProcessing1==" + isProcessing);
+        isProcessing=processing.putIfAbsent("k1", Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+        System.out.println("isProcessing2==" + isProcessing);
+        assertEquals(isProcessing, Boolean.TRUE);
 
-        CacheWrapper<Simple> wrapper=new CacheWrapper<Simple>();
-        wrapper.setCacheObject(Simple.getSimple());
-        getService();
     }
 
-    public static void getService() {
-        try {
-
-            Class entityClass=ReflectUtils.getClassGenricType(SimpleWrapper.class);
-            System.out.println("entityClass==" + entityClass);
-            // System.out.println("getOwnerType==" + type.getOwnerType());
-            // System.out.println("getRawType==" + type.getRawType());
-        } catch(Exception e) {
-            e.printStackTrace();
-            System.out.println("Factory error!!!\n" + e.getMessage());
-        }
-    }
 }
