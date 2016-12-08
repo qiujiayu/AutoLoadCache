@@ -122,14 +122,18 @@ public class RefreshHandler {
 
         @Override
         public void run() {
-            DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, cacheManager, arguments);
+            DataLoaderFactory factory=DataLoaderFactory.getInstance();
+            DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
+                dataLoader.init(pjp, cacheKey, cache, cacheManager, arguments);
                 newCacheWrapper=dataLoader.loadData().getCacheWrapper();
             } catch(Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
-            if(dataLoader.isFirst() || null == newCacheWrapper) {
+            boolean isFirst=dataLoader.isFirst();
+            factory.returnObject(dataLoader);
+            if(isFirst) {
                 if(null == newCacheWrapper && null != cacheWrapper) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=cacheWrapper.getExpire() / 2;
                     if(newExpire < 120) {

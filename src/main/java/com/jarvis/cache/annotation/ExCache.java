@@ -42,7 +42,7 @@ public @interface ExCache {
     String hfield() default "";
 
     /**
-     * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+     * 缓存的条件表达式，返回 true 或者 false，只有为 true 才进行缓存
      * @return String
      */
     String condition() default "";

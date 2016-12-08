@@ -71,7 +71,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
-            DataLoader dataLoader=new DataLoader(pjp, cache, this);
+            DataLoaderFactory factory=DataLoaderFactory.getInstance();
+            DataLoader dataLoader=factory.getDataLoader();
+            dataLoader.init(pjp, cache, this);
             Object result=dataLoader.getData();
             CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
             if(scriptParser.isCacheable(cache, arguments, result)) {
@@ -118,10 +120,24 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
             return cacheWrapper.getCacheObject();
         }
-        DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, this);
-        CacheWrapper<Object> newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+        DataLoaderFactory factory=DataLoaderFactory.getInstance();
+        DataLoader dataLoader=factory.getDataLoader();
+        CacheWrapper<Object> newCacheWrapper=null;
+        long loadDataUseTime=0;
+        boolean isFirst;
+        try {
+            dataLoader.init(pjp, cacheKey, cache, this);
+            newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+            isFirst=dataLoader.isFirst();
+            loadDataUseTime=dataLoader.getLoadDataUseTime();
+        } catch(Throwable e) {
+            throw e;
+        } finally {
+            factory.returnObject(dataLoader);
+        }
         AutoLoadTO autoLoadTO=null;
-        if(dataLoader.isFirst()) {
+
+        if(isFirst) {
             autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
@@ -129,7 +145,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                     autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
                         .setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
                         .setExpire(newCacheWrapper.getExpire())// 同步过期时间
-                        .addUseTotalTime(dataLoader.getLoadDataUseTime());// 统计用时
+                        .addUseTotalTime(loadDataUseTime);// 统计用时
                 }
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);

@@ -51,8 +51,5 @@
 
 guava cache的研究和使用。参考Spring 中org.springframework.cache.guava.GuavaCacheManager相关代码。
 
-优化ConcurrentHashMap 缓存的持久化功能。
-
-redis3.0 集群研究以及使用
 
 QQ群：429274886

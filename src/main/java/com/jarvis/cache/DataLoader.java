@@ -18,17 +18,17 @@ public class DataLoader {
 
     private static final Logger logger=Logger.getLogger(DataLoader.class);
 
-    private final AbstractCacheManager cacheManager;
+    private AbstractCacheManager cacheManager;
 
-    private final CacheAopProxyChain pjp;
+    private CacheAopProxyChain pjp;
 
-    private final CacheKeyTO cacheKey;
+    private CacheKeyTO cacheKey;
 
-    private final Cache cache;
+    private Cache cache;
 
-    private final Object[] arguments;
+    private Object[] arguments;
 
-    private final AutoLoadTO autoLoadTO;
+    private AutoLoadTO autoLoadTO;
 
     private boolean isFirst=true;
 
@@ -36,34 +36,42 @@ public class DataLoader {
 
     private CacheWrapper<Object> cacheWrapper;
 
-    public DataLoader(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
-        this.pjp=pjp;
-        this.autoLoadTO=autoLoadTO;
-        this.cacheKey=cacheKey;
-        this.cache=cache;
-        this.cacheManager=cacheManager;
-        if(null == autoLoadTO) {// 用户请求
-            arguments=pjp.getArgs();
-        } else {// 来自AutoLoadHandler的请求
-            arguments=autoLoadTO.getArgs();
-        }
+    public DataLoader() {
+
     }
 
-    public DataLoader(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
+    public void init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
+        this.cacheManager=cacheManager;
         this.pjp=pjp;
         this.cacheKey=cacheKey;
         this.cache=cache;
+        this.autoLoadTO=autoLoadTO;
+        if(null == autoLoadTO) {// 用户请求
+            this.arguments=pjp.getArgs();
+        } else {// 来自AutoLoadHandler的请求
+            this.arguments=autoLoadTO.getArgs();
+        }
+        this.isFirst=true;
+        this.loadDataUseTime=0;
+    }
+
+    public void init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
         this.cacheManager=cacheManager;
+        this.pjp=pjp;
+        this.cacheKey=cacheKey;
+        this.cache=cache;
         this.arguments=arguments;
         this.autoLoadTO=null;
+        this.isFirst=true;
+        this.loadDataUseTime=0;
     }
 
-    public DataLoader(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
-        this(pjp, null, null, cache, cacheManager);
+    public void init(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
+        init(pjp, null, null, cache, cacheManager);
     }
 
-    public DataLoader(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
-        this(pjp, null, cacheKey, cache, cacheManager);
+    public void init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
+        init(pjp, null, cacheKey, cache, cacheManager);
     }
 
     public DataLoader loadData() throws Throwable {

@@ -52,8 +52,8 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
-     * 自动缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
-     * @return String SpEL表达式
+     * 自动缓存的条件，可以为空，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null != #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
+     * @return String 表达式
      */
     String autoloadCondition() default "";
 
@@ -64,7 +64,7 @@ public @interface Cache {
     long requestTimeout() default 36000L;
 
     /**
-     * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+     * 缓存的条件表达式，可以为空，返回 true 或者 false，只有为 true 才进行缓存
      * @return String
      */
     String condition() default "";

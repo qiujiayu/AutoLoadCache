@@ -147,7 +147,7 @@ public class AutoLoadHandler {
             return null;
         }
         int expire=cacheWrapper.getExpire();
-        if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
+        if(expire >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
                 arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
@@ -312,14 +312,19 @@ public class AutoLoadHandler {
             }
             CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
             CacheKeyTO cacheKey=autoLoadTO.getCacheKey();
-            DataLoader dataLoader=new DataLoader(pjp, autoLoadTO, cacheKey, cache, cacheManager);
+            DataLoaderFactory factory=DataLoaderFactory.getInstance();
+            DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
+                dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheManager);
                 newCacheWrapper=dataLoader.loadData().getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
             }
-            if(dataLoader.isFirst() || null == newCacheWrapper) {
+            long loadDataUseTime=dataLoader.getLoadDataUseTime();
+            boolean isFirst=dataLoader.isFirst();
+            factory.returnObject(dataLoader);
+            if(isFirst) {
                 if(null == newCacheWrapper && null != result) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=AUTO_LOAD_MIN_EXPIRE + 60;
                     newCacheWrapper=new CacheWrapper<Object>(result.getCacheObject(), newExpire);
@@ -329,7 +334,7 @@ public class AutoLoadHandler {
                         cacheManager.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
                         autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
                             .setExpire(newCacheWrapper.getExpire())// 同步过期时间
-                            .addUseTotalTime(dataLoader.getLoadDataUseTime());
+                            .addUseTotalTime(loadDataUseTime);
                     }
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);
