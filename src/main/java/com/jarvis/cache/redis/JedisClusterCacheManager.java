@@ -1,8 +1,11 @@
 package com.jarvis.cache.redis;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -45,6 +48,11 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
      * Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）。
      */
     private int hashExpire=-1;
+
+    /**
+     * 是否通过脚本来设置 Hash的缓存时长
+     */
+    private boolean hashExpireByScript=true;
 
     public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         super(config, serializer, scriptParser);
@@ -101,7 +109,6 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-
                     jedisCluster.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
                 } else {
                     jedisCluster.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
@@ -112,6 +119,17 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
+        }
+    }
+
+    private static byte[] hashSetScript;
+
+    static {
+        try {
+            String tmpScript="redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[3]));";
+            hashSetScript=tmpScript.getBytes("UTF-8");
+        } catch(UnsupportedEncodingException ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 
@@ -128,8 +146,19 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
         if(hExpire == 0) {
             jedisCluster.hset(key, field, val);
         } else {
-            jedisCluster.hset(key, field, val);
-            jedisCluster.expire(key, hExpire);
+            if(hashExpireByScript) {
+                List<byte[]> keys=new ArrayList<byte[]>();
+                keys.add(key);
+
+                List<byte[]> args=new ArrayList<byte[]>();
+                args.add(field);
+                args.add(val);
+                args.add(keySerializer.serialize(String.valueOf(hExpire)));
+                jedisCluster.eval(hashSetScript, keys, args);
+            } else {
+                jedisCluster.hset(key, field, val);
+                jedisCluster.expire(key, hExpire);
+            }
         }
     }
 
