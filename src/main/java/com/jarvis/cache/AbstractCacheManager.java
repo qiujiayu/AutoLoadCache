@@ -18,6 +18,7 @@ import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
+import com.jarvis.cache.to.CacheConfigTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
@@ -61,6 +62,29 @@ public abstract class AbstractCacheManager implements ICacheManager {
         refreshHandler=new RefreshHandler(this, config);
     }
 
+    private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
+        DataLoaderFactory factory=DataLoaderFactory.getInstance();
+        DataLoader dataLoader=factory.getDataLoader();
+        dataLoader.init(pjp, cache, this);
+        Object result=dataLoader.getData();
+        CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
+        Object[] arguments=pjp.getArgs();
+        if(scriptParser.isCacheable(cache, arguments, result)) {
+            CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
+            AutoLoadTO autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
+            try {
+                writeCache(pjp, pjp.getArgs(), cache, cacheKey, cacheWrapper);
+                if(null != autoLoadTO) {
+                    autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
+                        .setExpire(cacheWrapper.getExpire());// 同步过期时间
+                }
+            } catch(Exception ex) {
+                logger.error(ex.getMessage(), ex);
+            }
+        }
+        return result;
+    }
+
     /**
      * 处理@Cache 拦截
      * @param pjp 切面
@@ -69,28 +93,17 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception 异常
      */
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
-        Object[] arguments=pjp.getArgs();
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
-            DataLoaderFactory factory=DataLoaderFactory.getInstance();
-            DataLoader dataLoader=factory.getDataLoader();
-            dataLoader.init(pjp, cache, this);
-            Object result=dataLoader.getData();
-            CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
-            if(scriptParser.isCacheable(cache, arguments, result)) {
-                CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
-                AutoLoadTO autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
-                try {
-                    writeCache(pjp, pjp.getArgs(), cache, cacheKey, cacheWrapper);
-                    if(null != autoLoadTO) {
-                        autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
-                            .setExpire(cacheWrapper.getExpire());// 同步过期时间
-                    }
-                } catch(Exception ex) {
-                    logger.error(ex.getMessage(), ex);
-                }
-            }
-            return result;
+            return writeOnly(pjp, cache);
         }
+        CacheConfigTO config=CacheHelper.getLocalConfig();
+        if(config != null) {
+            CacheHelper.clearLocalConfig();
+            if(!config.isCacheAble()) {
+                return getData(pjp);
+            }
+        }
+        Object[] arguments=pjp.getArgs();
         if(!scriptParser.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp);
         }
