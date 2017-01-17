@@ -16,6 +16,7 @@ public class HessianTest {
 
     private static SerializerFactory _serializerFactory=SerializerFactory.createDefault();
     static {
+        //BigDecimal序列化
         _serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
     }
 
