@@ -4,13 +4,9 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.InitializingBean;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -21,28 +17,19 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 
 /**
  * Redis缓存管理
  * @author jiayu.qiu
  */
-public class JedisClusterCacheManager extends AbstractCacheManager implements InitializingBean {
+public class JedisClusterCacheManager extends AbstractCacheManager {
 
     private static final Logger logger=Logger.getLogger(JedisClusterCacheManager.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
 
     private JedisCluster jedisCluster;
-
-    private Integer timeout;
-
-    private Integer maxRedirections;
-
-    private String redisUrls;
-
-    private GenericObjectPoolConfig genericObjectPoolConfig;
 
     /**
      * Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）。
@@ -54,45 +41,13 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
      */
     private boolean hashExpireByScript=true;
 
-    public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+    public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser, JedisCluster jedisCluster) {
         super(config, serializer, scriptParser);
+        this.jedisCluster=jedisCluster;
     }
 
-    private Set<HostAndPort> parseHostAndPort() throws Exception {
-        if(null == redisUrls || redisUrls.length() == 0) {
-            return null;
-        }
-        try {
-            String reids[]=redisUrls.split(";");
-            Set<HostAndPort> haps=new HashSet<HostAndPort>();
-            for(String redis: reids) {
-
-                String[] ipAndPort=redis.split(":");
-
-                try {
-                    HostAndPort hap=new HostAndPort(ipAndPort[0], Integer.parseInt(ipAndPort[1]));
-                    haps.add(hap);
-                } catch(Exception ex) {
-                    logger.error(ex);
-                }
-            }
-
-            return haps;
-        } catch(IllegalArgumentException ex) {
-            throw ex;
-        } catch(Exception ex) {
-            throw new Exception("解析 jedis 配置失败", ex);
-        }
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        Set<HostAndPort> haps=this.parseHostAndPort();
-        if(null == haps || null == timeout || null == maxRedirections || null == genericObjectPoolConfig) {
-            return;
-        }
-        logger.debug("new JedisCluster");
-        jedisCluster=new JedisCluster(haps, timeout, maxRedirections, genericObjectPoolConfig);
+    public void setJedisCluster(JedisCluster jedisCluster) {
+        this.jedisCluster=jedisCluster;
     }
 
     @Override
@@ -231,38 +186,6 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
             return;
         }
         this.hashExpire=hashExpire;
-    }
-
-    public Integer getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(Integer timeout) {
-        this.timeout=timeout;
-    }
-
-    public Integer getMaxRedirections() {
-        return maxRedirections;
-    }
-
-    public void setMaxRedirections(Integer maxRedirections) {
-        this.maxRedirections=maxRedirections;
-    }
-
-    public String getRedisUrls() {
-        return redisUrls;
-    }
-
-    public void setRedisUrls(String redisUrls) {
-        this.redisUrls=redisUrls;
-    }
-
-    public GenericObjectPoolConfig getGenericObjectPoolConfig() {
-        return genericObjectPoolConfig;
-    }
-
-    public void setGenericObjectPoolConfig(GenericObjectPoolConfig genericObjectPoolConfig) {
-        this.genericObjectPoolConfig=genericObjectPoolConfig;
     }
 
 }
