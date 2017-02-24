@@ -28,6 +28,8 @@
 
 已经实现基于aspectj，代码在com.jarvis.cache.aop.aspectj.AspectjAopInterceptor。想通过阅读代码了解详细细节，可以以此为入口。
 
+注意：有些类hashCode()， toString() equals()等方法是使用 lombok 自动生成的，所以使用Eclipse 和 IntelliJ IDEA 时，需要先安装lombok。
+
 
 ### [更新日志](./doc/changesLog.md)
 
