@@ -23,7 +23,7 @@ public @interface CacheDeleteKey {
      * 删除缓存的Key表达式, 当value有值时，是自定义缓存key（删除缓存不支持默认缓存key）。
      * @return String
      */
-    String[] values();
+    String[] value();
 
     /**
      * 哈希表中的字段表达式
