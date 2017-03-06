@@ -180,15 +180,22 @@ public abstract class AbstractCacheManager implements ICacheManager {
         if(null == keys || keys.length == 0) {
             return;
         }
+        String className=jp.getTargetClass().getName();
+        String methodName=jp.getMethod().getName();
+
         for(int i=0; i < keys.length; i++) {
             CacheDeleteKey keyConfig=keys[i];
             try {
+                String _keys[]=keyConfig.values();
+                String _hfield=keyConfig.hfield();
                 if(!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
                     continue;
                 }
-                CacheKeyTO key=getCacheKey(jp, keyConfig, retVal);
-                if(null != key) {
-                    this.delete(key);
+                for(String _key: _keys) {
+                    CacheKeyTO key=getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
+                    if(null != key) {
+                        this.delete(key);
+                    }
                 }
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
@@ -348,24 +355,6 @@ public abstract class AbstractCacheManager implements ICacheManager {
         }
         String _hfield=exCache.hfield();
         return getCacheKey(className, methodName, arguments, _key, _hfield, result, true);
-    }
-
-    /**
-     * 生成缓存 Key
-     * @param jp
-     * @param cacheDeleteKey
-     * @param retVal 执行结果值
-     * @return 缓存Key
-     * @throws Exception
-     */
-    private CacheKeyTO getCacheKey(DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
-        String className=jp.getTargetClass().getName();
-        String methodName=jp.getMethod().getName();
-        Object[] arguments=jp.getArgs();
-        String _key=cacheDeleteKey.value();
-        String _hfield=cacheDeleteKey.hfield();
-        return getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
-
     }
 
     public ISerializer<Object> getSerializer() {
