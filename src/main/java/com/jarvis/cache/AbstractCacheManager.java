@@ -186,7 +186,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         for(int i=0; i < keys.length; i++) {
             CacheDeleteKey keyConfig=keys[i];
             try {
-                String _keys[]=keyConfig.values();
+                String _keys[]=keyConfig.value();
                 String _hfield=keyConfig.hfield();
                 if(!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
                     continue;
