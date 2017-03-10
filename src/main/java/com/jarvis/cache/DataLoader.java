@@ -1,6 +1,7 @@
 package com.jarvis.cache;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -16,7 +17,7 @@ import com.jarvis.cache.to.ProcessingTO;
  */
 public class DataLoader {
 
-    private static final Logger logger=Logger.getLogger(DataLoader.class);
+    private static final Logger logger=LoggerFactory.getLogger(DataLoader.class);
 
     private AbstractCacheManager cacheManager;
 

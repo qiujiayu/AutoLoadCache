@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import net.sf.cglib.beans.BeanCopier;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.jarvis.cache.clone.Cloning;
@@ -22,6 +20,8 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.JacksonJsonSerializer;
 import com.jarvis.cache.serializer.JdkSerializer;
 import com.test.Stopwatch;
+
+import net.sf.cglib.beans.BeanCopier;
 
 public class DeepCloneTest {
 

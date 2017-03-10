@@ -10,7 +10,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.CacheUtil;
 
@@ -20,7 +21,7 @@ import com.jarvis.cache.CacheUtil;
  */
 public class JavaScriptParser extends AbstractScriptParser {
 
-    private static final Logger logger=Logger.getLogger(JavaScriptParser.class);
+    private static final Logger logger=LoggerFactory.getLogger(JavaScriptParser.class);
 
     private final ScriptEngineManager manager=new ScriptEngineManager();
 

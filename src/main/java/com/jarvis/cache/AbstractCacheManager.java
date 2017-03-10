@@ -5,7 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
@@ -30,7 +31,7 @@ import com.jarvis.cache.type.CacheOpType;
  */
 public abstract class AbstractCacheManager implements ICacheManager {
 
-    private static final Logger logger=Logger.getLogger(AbstractCacheManager.class);
+    private static final Logger logger=LoggerFactory.getLogger(AbstractCacheManager.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
     public final ConcurrentHashMap<CacheKeyTO, ProcessingTO> processing=new ConcurrentHashMap<CacheKeyTO, ProcessingTO>();

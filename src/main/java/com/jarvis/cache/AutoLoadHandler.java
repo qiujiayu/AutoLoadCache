@@ -6,7 +6,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -21,7 +22,7 @@ import com.jarvis.cache.to.CacheWrapper;
  */
 public class AutoLoadHandler {
 
-    private static final Logger logger=Logger.getLogger(AutoLoadHandler.class);
+    private static final Logger logger=LoggerFactory.getLogger(AutoLoadHandler.class);
 
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 

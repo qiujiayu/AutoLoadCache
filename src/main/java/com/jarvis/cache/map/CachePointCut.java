@@ -4,7 +4,8 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -20,7 +21,7 @@ import com.jarvis.cache.to.CacheWrapper;
  */
 public class CachePointCut extends AbstractCacheManager {
 
-    private static final Logger logger=Logger.getLogger(CachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(CachePointCut.class);
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 

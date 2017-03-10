@@ -9,12 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.ShardedJedis;
-import redis.clients.jedis.ShardedJedisPool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -25,13 +21,18 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.ShardedJedis;
+import redis.clients.jedis.ShardedJedisPool;
+
 /**
  * Redis缓存管理
  * @author jiayu.qiu
  */
 public class ShardedCachePointCut extends AbstractCacheManager {
 
-    private static final Logger logger=Logger.getLogger(ShardedCachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(ShardedCachePointCut.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
 

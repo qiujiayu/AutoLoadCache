@@ -8,7 +8,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -18,7 +19,7 @@ import com.jarvis.cache.to.CacheWrapper;
 
 public class RefreshHandler {
 
-    private static final Logger logger=Logger.getLogger(RefreshHandler.class);
+    private static final Logger logger=LoggerFactory.getLogger(RefreshHandler.class);
 
     /**
      * 刷新缓存线程池

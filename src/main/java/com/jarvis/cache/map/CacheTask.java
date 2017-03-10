@@ -12,7 +12,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
@@ -21,7 +22,7 @@ import com.jarvis.lib.util.OsUtil;
 
 public class CacheTask implements Runnable, CacheChangeListener {
 
-    private static final Logger logger=Logger.getLogger(CacheTask.class);
+    private static final Logger logger=LoggerFactory.getLogger(CacheTask.class);
 
     /**
      * 缓存被修改的个数

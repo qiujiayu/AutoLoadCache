@@ -2,8 +2,6 @@ package com.jarvis.cache.memcache;
 
 import java.lang.reflect.Method;
 
-import net.spy.memcached.MemcachedClient;
-
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
@@ -11,6 +9,8 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+
+import net.spy.memcached.MemcachedClient;
 
 /**
  * memcache缓存管理
