@@ -1,6 +1,7 @@
 package com.test;
 
 import com.jarvis.cache.CacheUpdateHandler;
+import com.jarvis.cache.annotation.Cache;
 
 import java.util.ArrayList;
 
@@ -46,5 +47,46 @@ public class CacheUpdateHandlerTest {
                                 //System.out.println(2);
                             }
                         });
+    }
+
+}
+
+class User{
+    int id;
+    String name;
+    int authorCode;
+}
+
+class UserInfoDao{
+
+    @Cache(expire = 100,key = "'user_id_'+#args[0]")
+    public User getUserById(int id){
+        return new User();
+    }
+
+    @Cache(expire = 100,key = "'user_name_'+#args[0]")
+    public User getUserByName(String name){
+        return new User();
+    }
+
+    public void updateUser(User user){
+    }
+}
+
+class UserAuthorService{
+
+    UserInfoDao userInfoDao;
+
+    public void updateUserAuthor(int id, int authorCode){
+        //update
+        User user = null; //查询db  db.getUserId(int);
+        user.authorCode = authorCode;
+        userInfoDao.updateUser(user);
+
+        //clear
+        CacheUpdateHandler
+                .mark(CacheUpdateHandler.Operation.CLEAR)
+                .batchs(userInfoDao.getUserById(user.id),
+                        userInfoDao.getUserByName(user.name));
     }
 }
