@@ -94,7 +94,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception 异常
      */
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
-        if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
+        if((null != cache.opType() && cache.opType() == CacheOpType.WRITE) || CacheUpdateHandler.isUpdate()) {// 更新缓存操作
             return writeOnly(pjp, cache);
         }
         CacheConfigTO config=CacheHelper.getLocalConfig();
@@ -111,6 +111,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
         CacheKeyTO cacheKey=getCacheKey(pjp, cache);
         if(null == cacheKey) {
             return getData(pjp);
+        }
+        //缓存批处理工具
+        if(CacheUpdateHandler.isClear()){
+            this.delete(cacheKey);
+            return null;
         }
         Method method=pjp.getMethod();
         // Type returnType=method.getGenericReturnType();
