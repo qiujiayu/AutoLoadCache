@@ -74,18 +74,25 @@ public class AutoLoadHandler {
     public AutoLoadHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
         this.cacheManager=cacheManager;
         this.config=config;
-        this.running=true;
-        this.threads=new Thread[this.config.getThreadCnt()];
-        this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
-        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
-        this.sortThread=new Thread(new SortRunnable());
-        this.sortThread.setDaemon(true);
-        this.sortThread.start();
-        for(int i=0; i < this.config.getThreadCnt(); i++) {
-            this.threads[i]=new Thread(new AutoLoadRunnable());
-            this.threads[i].setName("autoLoadThread-" + i);
-            this.threads[i].setDaemon(true);
-            this.threads[i].start();
+        if(this.config.getThreadCnt() > 0) {
+            this.running=true;
+            this.threads=new Thread[this.config.getThreadCnt()];
+            this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
+            this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
+            this.sortThread=new Thread(new SortRunnable());
+            this.sortThread.setDaemon(true);
+            this.sortThread.start();
+            for(int i=0; i < this.config.getThreadCnt(); i++) {
+                this.threads[i]=new Thread(new AutoLoadRunnable());
+                this.threads[i].setName("autoLoadThread-" + i);
+                this.threads[i].setDaemon(true);
+                this.threads[i].start();
+            }
+        } else {
+            this.threads=null;
+            this.autoLoadMap=null;
+            this.autoLoadQueue=null;
+            this.sortThread=null;
         }
     }
 
@@ -119,6 +126,9 @@ public class AutoLoadHandler {
      * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
+        if(null == autoLoadMap) {
+            return;
+        }
         AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
         if(null != autoLoadTO && !autoLoadTO.isLoading()) {
             autoLoadTO.setLastLoadTime(1L);
@@ -127,7 +137,9 @@ public class AutoLoadHandler {
 
     public void shutdown() {
         running=false;
-        autoLoadMap.clear();
+        if(null != autoLoadMap) {
+            autoLoadMap.clear();
+        }
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 

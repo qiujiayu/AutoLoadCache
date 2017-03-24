@@ -31,7 +31,7 @@ public class AspectjAopInterceptor {
         try {
             return pjp.proceed();
         } catch(Throwable e) {
-            throw new Exception(e);
+            throw e;
         }
     }
 
