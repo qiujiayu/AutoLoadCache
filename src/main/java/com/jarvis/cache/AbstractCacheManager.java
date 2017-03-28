@@ -94,6 +94,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
      * @throws Exception 异常
      */
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
+        logger.debug("AbstractCacheManager.proceed");
         if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
             return writeOnly(pjp, cache);
         }
