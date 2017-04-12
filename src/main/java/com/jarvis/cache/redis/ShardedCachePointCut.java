@@ -74,7 +74,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
                     jedis.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
-                } else {
+                } else if(expire > 0) {
                     jedis.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
             } else {
@@ -112,7 +112,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         }
         if(hExpire == 0) {
             jedis.hset(key, field, val);
-        } else {
+        } else if(hExpire > 0) {
             if(hashExpireByScript) {
                 byte[] sha=hashSetScriptSha.get(jedis);
                 if(null == sha) {

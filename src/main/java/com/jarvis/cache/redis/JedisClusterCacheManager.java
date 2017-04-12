@@ -66,7 +66,7 @@ public class JedisClusterCacheManager extends AbstractCacheManager {
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
                     jedisCluster.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
-                } else {
+                } else if(expire > 0) {
                     jedisCluster.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
             } else {
@@ -101,7 +101,7 @@ public class JedisClusterCacheManager extends AbstractCacheManager {
         }
         if(hExpire == 0) {
             jedisCluster.hset(key, field, val);
-        } else {
+        } else if(hExpire > 0) {
             if(hashExpireByScript) {
                 List<byte[]> keys=new ArrayList<byte[]>();
                 keys.add(key);

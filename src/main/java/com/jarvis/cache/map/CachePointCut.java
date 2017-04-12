@@ -86,6 +86,9 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == cacheKeyTO) {
             return;
         }
+        if(result.getExpire() < 0) {
+            return;
+        }
         String cacheKey=cacheKeyTO.getCacheKey();
         if(null == cacheKey || cacheKey.length() == 0) {
             return;

@@ -233,7 +233,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
             return;
         }
         Method method=pjp.getMethod();
-        this.setCache(cacheKey, cacheWrapper, method, arguments);
+        if(cacheWrapper.getExpire() >= 0) {
+            this.setCache(cacheKey, cacheWrapper, method, arguments);
+        }
         ExCache[] exCaches=cache.exCache();
         if(null == exCaches || exCaches.length == 0) {
             return;
@@ -259,11 +261,14 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
                 CacheWrapper<Object> exCacheWrapper=new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO=this.autoLoadHandler.getAutoLoadTO(exCacheKey);
-                this.setCache(exCacheKey, exCacheWrapper, method, arguments);
-                if(null != tmpAutoLoadTO) {
-                    tmpAutoLoadTO.setExpire(exCacheExpire)//
-                        .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
+                if(exCacheExpire >= 0) {
+                    this.setCache(exCacheKey, exCacheWrapper, method, arguments);
+                    if(null != tmpAutoLoadTO) {
+                        tmpAutoLoadTO.setExpire(exCacheExpire)//
+                            .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
+                    }
                 }
+
             } catch(Exception ex) {
                 logger.error(ex.getMessage(), ex);
             }
