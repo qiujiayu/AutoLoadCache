@@ -1,6 +1,6 @@
-##Annotation
+## Annotation
 
-###@Cache
+### @Cache
 
     public @interface Cache {
 
@@ -74,7 +74,7 @@
         ExCache[] exCache() default @ExCache(expire=-1, key="");
     }
 
-###@ExCache
+### @ExCache
 
   使用场景举例：如果系统中用getUserById和getUserByName,两种方法来获取用户信息，我们可以在getUserById 时把 getUserByName 的缓存也生成。反过来getUserByName 时，也可以把getUserById 的缓存生成：
 
@@ -127,14 +127,14 @@
  
     }
 
-###@CacheDelete
+### @CacheDelete
 
     public @interface CacheDelete {
 
         CacheDeleteKey[] value();// 支持删除多个缓存
     }
 
-###@CacheDeleteKey
+### @CacheDeleteKey
 
     public @interface CacheDeleteKey {
 
