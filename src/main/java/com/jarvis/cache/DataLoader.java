@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
+import com.jarvis.cache.exception.LoadDataTimeOutException;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -37,6 +38,8 @@ public class DataLoader {
 
     private CacheWrapper<Object> cacheWrapper;
 
+    private int tryCnt=0;
+
     public DataLoader() {
 
     }
@@ -54,6 +57,7 @@ public class DataLoader {
         }
         this.isFirst=true;
         this.loadDataUseTime=0;
+        this.tryCnt=0;
     }
 
     public void init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
@@ -65,6 +69,7 @@ public class DataLoader {
         this.autoLoadTO=null;
         this.isFirst=true;
         this.loadDataUseTime=0;
+        this.tryCnt=0;
     }
 
     public void init(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
@@ -141,16 +146,12 @@ public class DataLoader {
             if(null == cacheWrapper) {
                 cacheWrapper=cacheManager.get(cacheKey, pjp.getMethod(), this.arguments);
             }
-            try {
-                if(null == cacheWrapper) {
-                    Object result=getData();
-                    buildCacheWrapper(result);
-                }
-            } catch(Throwable e) {
-                throw e;
-            } finally {
-                synchronized(lock) {
-                    lock.notifyAll();
+            if(null == cacheWrapper) {
+                if(tryCnt == 0) {
+                    tryCnt++;
+                    loadData();
+                } else {
+                    throw new LoadDataTimeOutException();
                 }
             }
         }
