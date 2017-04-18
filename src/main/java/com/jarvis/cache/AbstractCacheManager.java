@@ -41,6 +41,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private String namespace;
 
     /**
+     * 加载数据重试次数，默认值为1：
+     */
+    private int loadDataTryCnt=1;
+
+    /**
      * 序列化工具，默认使用Hessian2
      */
     private final ISerializer<Object> serializer;
@@ -378,6 +383,16 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     public void setNamespace(String namespace) {
         this.namespace=namespace;
+    }
+
+    public int getLoadDataTryCnt() {
+        return loadDataTryCnt;
+    }
+
+    public void setLoadDataTryCnt(int loadDataTryCnt) {
+        if(loadDataTryCnt >= 0 && loadDataTryCnt < 5) {
+            this.loadDataTryCnt=loadDataTryCnt;
+        }
     }
 
     public AbstractScriptParser getScriptParser() {

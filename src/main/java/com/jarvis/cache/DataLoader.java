@@ -147,11 +147,11 @@ public class DataLoader {
                 cacheWrapper=cacheManager.get(cacheKey, pjp.getMethod(), this.arguments);
             }
             if(null == cacheWrapper) {
-                if(tryCnt == 0) {
+                if(tryCnt < cacheManager.getLoadDataTryCnt()) {
                     tryCnt++;
                     loadData();
                 } else {
-                    throw new LoadDataTimeOutException();
+                    throw new LoadDataTimeOutException("cache for key \"" + cacheKey.getCacheKey() + "\" loaded " + tryCnt + " times.");
                 }
             }
         }

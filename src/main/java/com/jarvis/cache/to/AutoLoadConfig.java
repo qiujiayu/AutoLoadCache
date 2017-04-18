@@ -5,7 +5,7 @@ import java.util.Map;
 import com.jarvis.cache.type.AutoLoadQueueSortType;
 
 /**
- * AutoLoadHandler 配置
+ * 缓存处理的相关 配置
  * @author jiayu.qiu
  */
 public class AutoLoadConfig {
@@ -189,5 +189,4 @@ public class AutoLoadConfig {
             this.refreshQueueCapacity=refreshQueueCapacity;
         }
     }
-
 }
