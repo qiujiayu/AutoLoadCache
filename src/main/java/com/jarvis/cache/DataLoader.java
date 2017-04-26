@@ -124,14 +124,17 @@ public class DataLoader {
             long startWait=processingTO.getStartTime();
             do {
                 if(distributedLock.tryLock(lockKey, cache.lockExpire())) {// 获得分布式锁
+                    long start=System.currentTimeMillis();
                     try {
                         getData();
                     } finally {
-                        distributedLock.unlock(lockKey);
+                        if(System.currentTimeMillis() - start < cache.lockExpire() * 1000) {// 当锁没过期才需要释放锁
+                            distributedLock.unlock(lockKey);
+                        }
                     }
                     break;
                 }
-                for(int i=0; i < 10; i++) {
+                for(int i=0; i < 10; i++) {// 没有获得锁时，定时缓存尝试获取数据
                     cacheWrapper=cacheManager.get(cacheKey, pjp.getMethod(), this.arguments);
                     if(null != cacheWrapper) {
                         break;
