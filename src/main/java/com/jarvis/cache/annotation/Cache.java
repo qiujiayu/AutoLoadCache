@@ -87,4 +87,10 @@ public @interface Cache {
      */
     ExCache[] exCache() default @ExCache(expire=-1, key="")
     ;
+
+    /**
+     * 分布式锁的缓存时间（单位：秒），在设置分布式锁的前提下，如果此项值大于0，则会使用分布式锁，如果小于等于0，则不会使用分布式锁。
+     * @return
+     */
+    int lockExpire() default 30;
 }

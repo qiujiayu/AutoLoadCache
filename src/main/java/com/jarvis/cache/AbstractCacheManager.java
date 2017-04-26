@@ -15,6 +15,7 @@ import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.clone.ICloner;
+import com.jarvis.cache.lock.ILock;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -59,6 +60,11 @@ public abstract class AbstractCacheManager implements ICacheManager {
 
     private ICloner cloner;
 
+    /**
+     * 分布式锁
+     */
+    private ILock lock;
+
     public AbstractCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         autoLoadHandler=new AutoLoadHandler(this, config);
         this.serializer=serializer;
@@ -72,8 +78,9 @@ public abstract class AbstractCacheManager implements ICacheManager {
         DataLoaderFactory factory=DataLoaderFactory.getInstance();
         DataLoader dataLoader=factory.getDataLoader();
         dataLoader.init(pjp, cache, this);
-        Object result=dataLoader.getData();
-        CacheWrapper<Object> cacheWrapper=dataLoader.buildCacheWrapper(result).getCacheWrapper();
+        dataLoader.getData();
+        CacheWrapper<Object> cacheWrapper=dataLoader.getCacheWrapper();
+        Object result=cacheWrapper.getCacheObject();
         Object[] arguments=pjp.getArgs();
         if(scriptParser.isCacheable(cache, arguments, result)) {
             CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
@@ -427,4 +434,13 @@ public abstract class AbstractCacheManager implements ICacheManager {
             }
         }
     }
+
+    public ILock getLock() {
+        return lock;
+    }
+
+    public void setLock(ILock lock) {
+        this.lock=lock;
+    }
+
 }
