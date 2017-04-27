@@ -2,6 +2,7 @@ package com.jarvis.cache;
 
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.AbandonedConfig;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -11,7 +12,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
  */
 public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
 
-    private static DataLoaderFactory instance;
+    private static volatile DataLoaderFactory instance;
 
     private final GenericObjectPool<DataLoader> factory;
 
@@ -21,7 +22,12 @@ public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
         config.setMaxIdle(50);
         config.setMinIdle(8);
         config.setBlockWhenExhausted(false);// 当Pool中没有对象时不等待，而是直接new个新的
-        factory=new GenericObjectPool<DataLoader>(this, config);
+
+        AbandonedConfig abandonConfig=new AbandonedConfig();
+        abandonConfig.setRemoveAbandonedTimeout(300);
+        abandonConfig.setRemoveAbandonedOnBorrow(true);
+        abandonConfig.setRemoveAbandonedOnMaintenance(true);
+        factory=new GenericObjectPool<DataLoader>(this, config, abandonConfig);
     }
 
     public static DataLoaderFactory getInstance() {
