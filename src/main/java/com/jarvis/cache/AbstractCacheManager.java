@@ -77,9 +77,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         DataLoaderFactory factory=DataLoaderFactory.getInstance();
         DataLoader dataLoader=factory.getDataLoader();
-        dataLoader.init(pjp, cache, this);
-        dataLoader.getData();
-        CacheWrapper<Object> cacheWrapper=dataLoader.getCacheWrapper();
+        CacheWrapper<Object> cacheWrapper=dataLoader.init(pjp, cache, this).getData().getCacheWrapper();
         Object result=cacheWrapper.getCacheObject();
         Object[] arguments=pjp.getArgs();
         if(scriptParser.isCacheable(cache, arguments, result)) {
@@ -153,8 +151,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
         long loadDataUseTime=0;
         boolean isFirst;
         try {
-            dataLoader.init(pjp, cacheKey, cache, this);
-            newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+            newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, this).loadData().getCacheWrapper();
             isFirst=dataLoader.isFirst();
             loadDataUseTime=dataLoader.getLoadDataUseTime();
         } catch(Throwable e) {

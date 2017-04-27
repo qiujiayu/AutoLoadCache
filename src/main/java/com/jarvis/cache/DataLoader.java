@@ -45,7 +45,7 @@ public class DataLoader {
 
     }
 
-    public void init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
+    public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
         this.cacheManager=cacheManager;
         this.pjp=pjp;
         this.cacheKey=cacheKey;
@@ -59,26 +59,28 @@ public class DataLoader {
         this.isFirst=true;
         this.loadDataUseTime=0;
         this.tryCnt=0;
+        return this;
     }
 
-    public void init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
+    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
         this.cacheManager=cacheManager;
         this.pjp=pjp;
         this.cacheKey=cacheKey;
         this.cache=cache;
-        this.arguments=arguments;
         this.autoLoadTO=null;
+        this.arguments=arguments;
         this.isFirst=true;
         this.loadDataUseTime=0;
         this.tryCnt=0;
+        return this;
     }
 
-    public void init(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
-        init(pjp, null, null, cache, cacheManager);
+    public DataLoader init(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
+        return init(pjp, null, null, cache, cacheManager);
     }
 
-    public void init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
-        init(pjp, null, cacheKey, cache, cacheManager);
+    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
+        return init(pjp, null, cacheKey, cache, cacheManager);
     }
 
     public DataLoader loadData() throws Throwable {
@@ -128,7 +130,7 @@ public class DataLoader {
                     try {
                         getData();
                     } finally {
-                        if(System.currentTimeMillis() - start < cache.lockExpire() * 1000) {// 当锁没过期才需要释放锁
+                        if(System.currentTimeMillis() - start < cache.lockExpire() * 1000) {// 当锁没过期才需要释放锁,避免释放他人的锁
                             distributedLock.unlock(lockKey);
                         }
                     }
@@ -202,7 +204,7 @@ public class DataLoader {
         return isFirst;
     }
 
-    public void getData() throws Throwable {
+    public DataLoader getData() throws Throwable {
         try {
             if(null != autoLoadTO) {
                 autoLoadTO.setLoading(true);
@@ -223,6 +225,7 @@ public class DataLoader {
                 autoLoadTO.setLoading(false);
             }
         }
+        return this;
     }
 
     private void buildCacheWrapper(Object result) {

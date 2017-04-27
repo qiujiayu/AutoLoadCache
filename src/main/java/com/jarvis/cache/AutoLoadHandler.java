@@ -329,8 +329,7 @@ public class AutoLoadHandler {
             DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheManager);
-                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheManager).loadData().getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
             }

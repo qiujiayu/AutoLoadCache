@@ -127,8 +127,7 @@ public class RefreshHandler {
             DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                dataLoader.init(pjp, cacheKey, cache, cacheManager, arguments);
-                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheManager, arguments).loadData().getCacheWrapper();
             } catch(Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
