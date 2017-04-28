@@ -10,6 +10,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import com.jarvis.cache.AbstractCacheManager;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
+import com.jarvis.cache.annotation.CacheDeleteTransactional;
 
 /**
  * 使用Aspectj 实现AOP拦截 注意：拦截器不能有相同名字的Method
@@ -45,12 +46,31 @@ public class AspectjAopInterceptor {
         }
     }
 
+    public Object checkAndDeleteCacheTransactional(ProceedingJoinPoint pjp) throws Throwable {
+        Signature signature=pjp.getSignature();
+        MethodSignature methodSignature=(MethodSignature)signature;
+        Method method=methodSignature.getMethod();
+        if(method.isAnnotationPresent(CacheDeleteTransactional.class)) {
+            CacheDeleteTransactional cache=method.getAnnotation(CacheDeleteTransactional.class);// method.getAnnotationsByType(Cache.class)[0];
+            return this.deleteCacheTransactional(pjp, cache);
+        }
+        try {
+            return pjp.proceed();
+        } catch(Throwable e) {
+            throw e;
+        }
+    }
+
     public Object proceed(ProceedingJoinPoint aopProxyChain, Cache cache) throws Throwable {
         return cacheManager.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
     }
 
     public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) {
         cacheManager.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
+    }
+
+    public Object deleteCacheTransactional(ProceedingJoinPoint aopProxyChain, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
+        return cacheManager.proceedDeleteCacheTransactional(new AspectjCacheAopProxyChain(aopProxyChain), cacheDeleteTransactional);
     }
 
     public AbstractCacheManager getCacheManager() {

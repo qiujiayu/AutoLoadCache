@@ -3,6 +3,7 @@ package com.jarvis.cache;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
@@ -204,7 +206,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 }
                 for(String _key: _keys) {
                     CacheKeyTO key=getCacheKey(className, methodName, arguments, _key, _hfield, retVal, true);
-                    if(null != key) {
+                    if(null != key && !CacheHelper.addDeleteCacheKey(key)) {
                         this.delete(key);
                     }
                 }
@@ -212,6 +214,36 @@ public abstract class AbstractCacheManager implements ICacheManager {
                 logger.error(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * 处理事务环境下删除缓存
+     * @param pjp
+     * @param cacheDeleteTransactional
+     * @return
+     * @throws Throwable
+     */
+    public Object proceedDeleteCacheTransactional(CacheAopProxyChain pjp, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
+        Object[] arguments=pjp.getArgs();
+        Object result=null;
+        try {
+            CacheHelper.initDeleteCacheKeysSet();// 初始化Set
+            result=pjp.doProxyChain(arguments);
+        } catch(Throwable e) {
+            throw e;
+        } finally {
+        }
+        Set<CacheKeyTO> set=CacheHelper.getDeleteCacheKeysSet();
+        if(null != set && set.size() > 0) {
+            try {
+                for(CacheKeyTO key: set) {
+                    this.delete(key);
+                }
+            } catch(Throwable e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+        return result;
     }
 
     /**

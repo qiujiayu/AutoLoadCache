@@ -180,7 +180,7 @@ public class DataLoader {
                 synchronized(lock) {
                     logger.debug(tname + " do wait");
                     try {
-                        lock.wait(50);// 如果要测试lock对象是否有效，wait时间去掉就可以
+                        lock.wait(10);// 如果要测试lock对象是否有效，wait时间去掉就可以
                     } catch(InterruptedException ex) {
                         logger.error(ex.getMessage(), ex);
                     }

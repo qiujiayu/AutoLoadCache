@@ -7,14 +7,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-@Inherited
-@Documented
 /**
  * 对@Cache进行扩展，实现一次请求生成多个缓存数，减少与DAO的交互次数
  * @author jiayu.qiu
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Inherited
+@Documented
 public @interface ExCache {
 
     /**

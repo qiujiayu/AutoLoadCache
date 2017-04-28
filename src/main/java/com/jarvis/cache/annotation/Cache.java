@@ -9,6 +9,10 @@ import java.lang.annotation.Target;
 
 import com.jarvis.cache.type.CacheOpType;
 
+/**
+ * 缓存注解
+ * @author jiayu.qiu
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @Inherited
