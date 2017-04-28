@@ -217,7 +217,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
     }
 
     /**
-     * 处理事务环境下删除缓存
+     * 用于处理事务下，事务处理完后才删除缓存，避免因事务失败造成缓存中的数据不一致问题。
      * @param pjp
      * @param cacheDeleteTransactional
      * @return
@@ -238,6 +238,7 @@ public abstract class AbstractCacheManager implements ICacheManager {
             try {
                 for(CacheKeyTO key: set) {
                     this.delete(key);
+                    logger.debug("proceedDeleteCacheTransactional delete-->" + key);
                 }
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
