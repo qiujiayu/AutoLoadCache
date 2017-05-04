@@ -14,6 +14,8 @@
 
 ### [注解（Annotation）说明](./doc/annotations.md)
 
+### [分布式锁支持](./doc/lock.md)
+
 ### [表达式的应用](./doc/script.md)
 
 ### [缓存删除](./doc/deleteCache.md)
@@ -25,6 +27,8 @@
 ### [与Spring Cache的区别](./doc/SpringCache.md)
 
 ### [最佳实战](./doc/suggest.md)
+
+### [Spring boot demo](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
 
 ### 源码阅读
 
