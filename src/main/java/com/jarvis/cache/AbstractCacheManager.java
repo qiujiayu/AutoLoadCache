@@ -226,6 +226,8 @@ public abstract class AbstractCacheManager implements ICacheManager {
     public Object proceedDeleteCacheTransactional(CacheAopProxyChain pjp, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
         Object[] arguments=pjp.getArgs();
         Object result=null;
+        Set<CacheKeyTO> set0=CacheHelper.getDeleteCacheKeysSet();
+        boolean isStart=null == set0;
         try {
             CacheHelper.initDeleteCacheKeysSet();// 初始化Set
             result=pjp.doProxyChain(arguments);
@@ -234,15 +236,18 @@ public abstract class AbstractCacheManager implements ICacheManager {
         } finally {
         }
         Set<CacheKeyTO> set=CacheHelper.getDeleteCacheKeysSet();
-        if(null != set && set.size() > 0) {
-            try {
-                for(CacheKeyTO key: set) {
-                    this.delete(key);
-                    logger.debug("proceedDeleteCacheTransactional delete-->" + key);
+        if(isStart) {
+            if(null != set && set.size() > 0) {
+                try {
+                    for(CacheKeyTO key: set) {
+                        this.delete(key);
+                        logger.debug("proceedDeleteCacheTransactional delete-->" + key);
+                    }
+                } catch(Throwable e) {
+                    logger.error(e.getMessage(), e);
                 }
-            } catch(Throwable e) {
-                logger.error(e.getMessage(), e);
             }
+            CacheHelper.clearDeleteCacheKeysSet();
         }
         return result;
     }

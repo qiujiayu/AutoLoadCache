@@ -57,4 +57,8 @@ public class CacheHelper {
         }
         return false;
     }
+
+    public static void clearDeleteCacheKeysSet() {
+        DELETE_CACHE_KEYS.remove();
+    }
 }
