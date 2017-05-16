@@ -189,4 +189,12 @@ public class JedisClusterCacheManager extends AbstractCacheManager {
         this.hashExpire=hashExpire;
     }
 
+    public boolean isHashExpireByScript() {
+        return hashExpireByScript;
+    }
+
+    public void setHashExpireByScript(boolean hashExpireByScript) {
+        this.hashExpireByScript=hashExpireByScript;
+    }
+
 }
