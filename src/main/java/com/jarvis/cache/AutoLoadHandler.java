@@ -26,6 +26,8 @@ public class AutoLoadHandler {
 
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 
+    public static final String THREAD_NAME_PREFIX="autoLoadThread-";
+
     /**
      * 自动加载队列
      */
@@ -84,7 +86,7 @@ public class AutoLoadHandler {
             this.sortThread.start();
             for(int i=0; i < this.config.getThreadCnt(); i++) {
                 this.threads[i]=new Thread(new AutoLoadRunnable());
-                this.threads[i].setName("autoLoadThread-" + i);
+                this.threads[i].setName(THREAD_NAME_PREFIX + i);
                 this.threads[i].setDaemon(true);
                 this.threads[i].start();
             }

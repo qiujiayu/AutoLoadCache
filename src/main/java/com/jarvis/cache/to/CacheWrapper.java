@@ -50,7 +50,10 @@ public class CacheWrapper<T> implements Serializable, Cloneable {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+        @SuppressWarnings("unchecked")
+        CacheWrapper<T> tmp=(CacheWrapper<T>)super.clone();
+        tmp.setCacheObject(this.cacheObject);
+        return tmp;
     }
 
 }

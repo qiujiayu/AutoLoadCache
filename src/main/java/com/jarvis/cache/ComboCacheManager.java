@@ -71,6 +71,7 @@ public class ComboCacheManager implements ICacheManager {
 
     private void setLocalCache(LocalCache lCache, CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args) {
         try {
+            @SuppressWarnings("unchecked")
             CacheWrapper<Object> localResult=(CacheWrapper<Object>)result.clone();
             localResult.setLastLoadTime(System.currentTimeMillis());
             int expire=scriptParser.getRealExpire(lCache.expire(), lCache.expireExpression(), args, result.getCacheObject());
@@ -83,6 +84,10 @@ public class ComboCacheManager implements ICacheManager {
 
     @Override
     public CacheWrapper<Object> get(CacheKeyTO key, Method method, Object[] args) throws CacheCenterConnectionException {
+        String threadName=Thread.currentThread().getName();
+        if(threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {// 如果是自动加载线程，则只从远程缓存获取。
+            return remoteCache.get(key, method, args);
+        }
         CacheWrapper<Object> result=null;
         LocalCache lCache=null;
         if(method.isAnnotationPresent(LocalCache.class)) {
