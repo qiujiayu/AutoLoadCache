@@ -13,6 +13,7 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.cache.to.LocalCacheWrapper;
 
 /**
  * 组合多种缓存管理方案，本地保存短期缓存，远程保存长期缓存
@@ -71,11 +72,14 @@ public class ComboCacheManager implements ICacheManager {
 
     private void setLocalCache(LocalCache lCache, CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args) {
         try {
-            @SuppressWarnings("unchecked")
-            CacheWrapper<Object> localResult=(CacheWrapper<Object>)result.clone();
+            LocalCacheWrapper<Object> localResult=new LocalCacheWrapper<Object>();
             localResult.setLastLoadTime(System.currentTimeMillis());
             int expire=scriptParser.getRealExpire(lCache.expire(), lCache.expireExpression(), args, result.getCacheObject());
             localResult.setExpire(expire);
+            localResult.setCacheObject(result.getCacheObject());
+
+            localResult.setRemoteExpire(result.getExpire());
+            localResult.setRemoteLastLoadTime(result.getLastLoadTime());
             localCache.setCache(cacheKey, result, method, args);
         } catch(Exception e) {
             logger.error(e.getMessage(), e);

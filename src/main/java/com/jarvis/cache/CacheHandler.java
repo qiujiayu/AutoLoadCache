@@ -58,6 +58,8 @@ public class CacheHandler implements ICacheManager {
      */
     private ILock lock;
 
+    private ChangeListener changeListener;
+
     public CacheHandler(ICacheManager cacheManager, AbstractScriptParser scriptParser) {
         this.cacheManager=cacheManager;
         this.config=cacheManager.getAutoLoadConfig();
@@ -443,6 +445,9 @@ public class CacheHandler implements ICacheManager {
     @Override
     public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args) throws CacheCenterConnectionException {
         cacheManager.setCache(cacheKey, result, method, args);
+        if(null != changeListener) {
+            changeListener.update(cacheKey);
+        }
     }
 
     @Override
@@ -453,6 +458,9 @@ public class CacheHandler implements ICacheManager {
     @Override
     public void delete(CacheKeyTO key) throws CacheCenterConnectionException {
         cacheManager.delete(key);
+        if(null != changeListener) {
+            changeListener.delete(key);
+        }
     }
 
     @Override
@@ -468,4 +476,13 @@ public class CacheHandler implements ICacheManager {
     public AutoLoadConfig getAutoLoadConfig() {
         return this.config;
     }
+
+    public ChangeListener getChangeListener() {
+        return changeListener;
+    }
+
+    public void setChangeListener(ChangeListener changeListener) {
+        this.changeListener=changeListener;
+    }
+
 }
