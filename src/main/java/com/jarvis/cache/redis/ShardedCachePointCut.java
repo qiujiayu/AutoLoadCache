@@ -12,7 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
@@ -30,11 +31,17 @@ import redis.clients.jedis.ShardedJedisPool;
  * Redis缓存管理
  * @author jiayu.qiu
  */
-public class ShardedCachePointCut extends AbstractCacheManager {
+public class ShardedCachePointCut implements ICacheManager {
 
     private static final Logger logger=LoggerFactory.getLogger(ShardedCachePointCut.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
+
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
 
     private ShardedJedisPool shardedJedisPool;
 
@@ -49,7 +56,9 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private boolean hashExpireByScript=false;
 
     public ShardedCachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
+        this.config=config;
+        this.serializer=serializer;
+        this.cloner=serializer;
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
@@ -213,7 +222,6 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                 } else {
                     jedis.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
                 }
-                this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
             }
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -299,5 +307,20 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     public void setHashExpireByScript(boolean hashExpireByScript) {
         this.hashExpireByScript=hashExpireByScript;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
+    }
+
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
+    }
+
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 }

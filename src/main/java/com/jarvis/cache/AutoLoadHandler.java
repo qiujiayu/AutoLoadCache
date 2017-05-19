@@ -31,7 +31,7 @@ public class AutoLoadHandler {
      */
     private final ConcurrentHashMap<CacheKeyTO, AutoLoadTO> autoLoadMap;
 
-    private final AbstractCacheManager cacheManager;
+    private final CacheHandler cacheHandler;
 
     /**
      * 缓存池
@@ -68,11 +68,11 @@ public class AutoLoadHandler {
     };
 
     /**
-     * @param cacheManager 缓存的set,get方法实现类
+     * @param cacheHandler 缓存的set,get方法实现类
      * @param config 配置
      */
-    public AutoLoadHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
-        this.cacheManager=cacheManager;
+    public AutoLoadHandler(CacheHandler cacheHandler, AutoLoadConfig config) {
+        this.cacheHandler=cacheHandler;
         this.config=config;
         if(this.config.getThreadCnt() > 0) {
             this.running=true;
@@ -94,10 +94,6 @@ public class AutoLoadHandler {
             this.autoLoadQueue=null;
             this.sortThread=null;
         }
-    }
-
-    public AutoLoadConfig getConfig() {
-        return config;
     }
 
     public int getSize() {
@@ -152,7 +148,7 @@ public class AutoLoadHandler {
             return autoLoadTO;
         }
         try {
-            if(!cacheManager.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
+            if(!cacheHandler.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
                 return null;
             }
         } catch(Exception e) {
@@ -163,7 +159,7 @@ public class AutoLoadHandler {
         if(expire >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
+                arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
@@ -311,7 +307,7 @@ public class AutoLoadHandler {
                 try {
                     Method method=autoLoadTO.getJoinPoint().getMethod();
                     // Type returnType=method.getGenericReturnType();
-                    result=cacheManager.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
+                    result=cacheHandler.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
                 } catch(Exception ex) {
 
                 }
@@ -329,7 +325,7 @@ public class AutoLoadHandler {
             DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                newCacheWrapper=dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheManager).loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData().getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
             }
@@ -343,7 +339,7 @@ public class AutoLoadHandler {
                 }
                 try {
                     if(null != newCacheWrapper) {
-                        cacheManager.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
+                        cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
                         autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
                             .setExpire(newCacheWrapper.getExpire())// 同步过期时间
                             .addUseTotalTime(loadDataUseTime);

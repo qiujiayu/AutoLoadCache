@@ -21,7 +21,7 @@ public class DataLoader {
 
     private static final Logger logger=LoggerFactory.getLogger(DataLoader.class);
 
-    private AbstractCacheManager cacheManager;
+    private CacheHandler cacheHandler;
 
     private CacheAopProxyChain pjp;
 
@@ -45,8 +45,8 @@ public class DataLoader {
 
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
-        this.cacheManager=cacheManager;
+    public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler) {
+        this.cacheHandler=cacheHandler;
         this.pjp=pjp;
         this.cacheKey=cacheKey;
         this.cache=cache;
@@ -62,8 +62,8 @@ public class DataLoader {
         return this;
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager, Object[] arguments) {
-        this.cacheManager=cacheManager;
+    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler, Object[] arguments) {
+        this.cacheHandler=cacheHandler;
         this.pjp=pjp;
         this.cacheKey=cacheKey;
         this.cache=cache;
@@ -75,20 +75,20 @@ public class DataLoader {
         return this;
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, Cache cache, AbstractCacheManager cacheManager) {
-        return init(pjp, null, null, cache, cacheManager);
+    public DataLoader init(CacheAopProxyChain pjp, Cache cache, CacheHandler cacheHandler) {
+        return init(pjp, null, null, cache, cacheHandler);
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, AbstractCacheManager cacheManager) {
-        return init(pjp, null, cacheKey, cache, cacheManager);
+    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler) {
+        return init(pjp, null, cacheKey, cache, cacheHandler);
     }
 
     public DataLoader loadData() throws Throwable {
-        ProcessingTO processing=cacheManager.processing.get(cacheKey);
+        ProcessingTO processing=cacheHandler.processing.get(cacheKey);
         ProcessingTO processingTO=null;
         if(null == processing) {
             processingTO=new ProcessingTO();
-            ProcessingTO _processing=cacheManager.processing.putIfAbsent(cacheKey, processingTO);// 为发减少数据层的并发，增加等待机制。
+            ProcessingTO _processing=cacheHandler.processing.putIfAbsent(cacheKey, processingTO);// 为发减少数据层的并发，增加等待机制。
             if(null != _processing) {
                 processing=_processing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
             }
@@ -106,7 +106,7 @@ public class DataLoader {
                 throw e;
             } finally {
                 processingTO.setFirstFinished(true);
-                cacheManager.processing.remove(cacheKey);
+                cacheHandler.processing.remove(cacheKey);
                 synchronized(lock) {
                     lock.notifyAll();
                 }
@@ -120,7 +120,7 @@ public class DataLoader {
     }
 
     private void doFirstRequest(ProcessingTO processingTO) throws Throwable {
-        ILock distributedLock=cacheManager.getLock();
+        ILock distributedLock=cacheHandler.getLock();
         if(null != distributedLock && cache.lockExpire() > 0) {// 开启分布式锁
             String lockKey=cacheKey.getLockKey();
             long startWait=processingTO.getStartTime();
@@ -137,7 +137,7 @@ public class DataLoader {
                     break;
                 }
                 for(int i=0; i < 10; i++) {// 没有获得锁时，定时缓存尝试获取数据
-                    cacheWrapper=cacheManager.get(cacheKey, pjp.getMethod(), this.arguments);
+                    cacheWrapper=cacheHandler.get(cacheKey, pjp.getMethod(), this.arguments);
                     if(null != cacheWrapper) {
                         break;
                     }
@@ -188,10 +188,11 @@ public class DataLoader {
             }
         } while(System.currentTimeMillis() - startWait < cache.waitTimeOut());
         if(null == cacheWrapper) {
-            cacheWrapper=cacheManager.get(cacheKey, pjp.getMethod(), this.arguments);
+            cacheWrapper=cacheHandler.get(cacheKey, pjp.getMethod(), this.arguments);
         }
         if(null == cacheWrapper) {
-            if(tryCnt < cacheManager.getLoadDataTryCnt()) {
+            AutoLoadConfig config=cacheHandler.getAutoLoadConfig();
+            if(tryCnt < config.getLoadDataTryCnt()) {
                 tryCnt++;
                 loadData();
             } else {
@@ -212,7 +213,7 @@ public class DataLoader {
             long loadDataStartTime=System.currentTimeMillis();
             Object result=pjp.doProxyChain(arguments);
             loadDataUseTime=System.currentTimeMillis() - loadDataStartTime;
-            AutoLoadConfig config=cacheManager.getAutoLoadHandler().getConfig();
+            AutoLoadConfig config=cacheHandler.getAutoLoadConfig();
             if(config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
                 String className=pjp.getTargetClass().getName();
                 logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + loadDataUseTime + "ms");
@@ -231,7 +232,7 @@ public class DataLoader {
     private void buildCacheWrapper(Object result) {
         int expire=cache.expire();
         try {
-            expire=cacheManager.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
+            expire=cacheHandler.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
         } catch(Exception e) {
             logger.error(e.getMessage(), e);
         }

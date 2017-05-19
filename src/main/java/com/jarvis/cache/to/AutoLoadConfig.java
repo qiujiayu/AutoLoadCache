@@ -11,6 +11,11 @@ import com.jarvis.cache.type.AutoLoadQueueSortType;
 public class AutoLoadConfig {
 
     /**
+     * 命名空间
+     */
+    private String namespace;
+
+    /**
      * 处理自动加载队列的线程数量
      */
     private Integer threadCnt=10;
@@ -66,6 +71,19 @@ public class AutoLoadConfig {
     private int refreshQueueCapacity=2000;
 
     private Map<String, String> functions;
+
+    /**
+     * 加载数据重试次数，默认值为1：
+     */
+    private int loadDataTryCnt=1;
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace=namespace;
+    }
 
     public int getThreadCnt() {
         return threadCnt;
@@ -187,6 +205,16 @@ public class AutoLoadConfig {
     public void setRefreshQueueCapacity(int refreshQueueCapacity) {
         if(refreshQueueCapacity > 1) {
             this.refreshQueueCapacity=refreshQueueCapacity;
+        }
+    }
+
+    public int getLoadDataTryCnt() {
+        return loadDataTryCnt;
+    }
+
+    public void setLoadDataTryCnt(int loadDataTryCnt) {
+        if(loadDataTryCnt >= 0 && loadDataTryCnt < 5) {
+            this.loadDataTryCnt=loadDataTryCnt;
         }
     }
 }

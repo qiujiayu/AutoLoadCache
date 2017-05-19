@@ -7,9 +7,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -19,13 +19,19 @@ import com.jarvis.cache.to.CacheWrapper;
  * 使用ConcurrentHashMap管理缓存
  * @author jiayu.qiu
  */
-public class CachePointCut extends AbstractCacheManager {
+public class MapCacheManager implements ICacheManager {
 
-    private static final Logger logger=LoggerFactory.getLogger(CachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(MapCacheManager.class);
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
-    private CacheChangeListener changeListener;
+    private final CacheChangeListener changeListener;
+
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
 
     /**
      * 允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
@@ -56,9 +62,11 @@ public class CachePointCut extends AbstractCacheManager {
      */
     private int clearAndPersistPeriod=60 * 1000; // 1Minutes
 
-    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
-        config.setCheckFromCacheBeforeLoad(false);
+    public MapCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
+        this.config=config;
+        this.config.setCheckFromCacheBeforeLoad(false);
+        this.serializer=serializer;
+        this.cloner=serializer;
         cacheTask=new CacheTask(this);
         changeListener=cacheTask;
     }
@@ -71,9 +79,7 @@ public class CachePointCut extends AbstractCacheManager {
         }
     }
 
-    @Override
     public synchronized void destroy() {
-        super.destroy();
         cacheTask.destroy();
         if(thread != null) {
             thread.interrupt();
@@ -261,6 +267,21 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setClearAndPersistPeriod(int clearAndPersistPeriod) {
         this.clearAndPersistPeriod=clearAndPersistPeriod;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
+    }
+
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
+    }
+
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 
 }

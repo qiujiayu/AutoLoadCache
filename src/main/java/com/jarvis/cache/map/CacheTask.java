@@ -29,7 +29,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
      */
     private AtomicInteger cacheChanged=new AtomicInteger(0);
 
-    private CachePointCut cacheManager;
+    private MapCacheManager cacheManager;
 
     private volatile boolean running=false;
 
@@ -37,7 +37,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
 
     private ISerializer<Object> persistSerializer;
 
-    public CacheTask(CachePointCut cacheManager) {
+    public CacheTask(MapCacheManager cacheManager) {
         this.cacheManager=cacheManager;
     }
 
@@ -66,7 +66,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
             return persistFile;
         }
         String path="/tmp/autoload-cache/";
-        String nsp=cacheManager.getNamespace();
+        String nsp=cacheManager.getAutoLoadConfig().getNamespace();
         if(null != nsp && nsp.trim().length() > 0) {
             path+=nsp.trim() + "/";
         }

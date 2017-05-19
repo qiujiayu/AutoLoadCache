@@ -2,9 +2,9 @@ package com.jarvis.cache.memcache;
 
 import java.lang.reflect.Method;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -15,12 +15,20 @@ import net.spy.memcached.MemcachedClient;
 /**
  * memcache缓存管理
  */
-public class CachePointCut extends AbstractCacheManager {
+public class MemcachedCacheManager implements ICacheManager {
 
     private MemcachedClient memcachedClient;
 
-    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
+
+    public MemcachedCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
+        this.config=config;
+        this.serializer=serializer;
+        this.cloner=serializer;
     }
 
     @Override
@@ -81,7 +89,6 @@ public class CachePointCut extends AbstractCacheManager {
             } else {
                 memcachedClient.delete(cacheKey);
             }
-            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
         } catch(Exception e) {
         }
     }
@@ -92,6 +99,21 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setMemcachedClient(MemcachedClient memcachedClient) {
         this.memcachedClient=memcachedClient;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
+    }
+
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
+    }
+
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 
 }

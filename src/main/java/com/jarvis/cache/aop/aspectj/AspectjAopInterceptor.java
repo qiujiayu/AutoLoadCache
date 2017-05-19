@@ -7,7 +7,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.CacheHandler;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteTransactional;
@@ -18,7 +18,11 @@ import com.jarvis.cache.annotation.CacheDeleteTransactional;
  */
 public class AspectjAopInterceptor {
 
-    private AbstractCacheManager cacheManager;
+    private final CacheHandler cacheHandler;
+
+    public AspectjAopInterceptor(CacheHandler cacheHandler) {
+        this.cacheHandler=cacheHandler;
+    }
 
     public Object checkAndProceed(ProceedingJoinPoint pjp) throws Throwable {
         Signature signature=pjp.getSignature();
@@ -62,23 +66,19 @@ public class AspectjAopInterceptor {
     }
 
     public Object proceed(ProceedingJoinPoint aopProxyChain, Cache cache) throws Throwable {
-        return cacheManager.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
+        return cacheHandler.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
     }
 
     public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) {
-        cacheManager.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
+        cacheHandler.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
     }
 
     public Object deleteCacheTransactional(ProceedingJoinPoint aopProxyChain, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
-        return cacheManager.proceedDeleteCacheTransactional(new AspectjCacheAopProxyChain(aopProxyChain), cacheDeleteTransactional);
+        return cacheHandler.proceedDeleteCacheTransactional(new AspectjCacheAopProxyChain(aopProxyChain), cacheDeleteTransactional);
     }
 
-    public AbstractCacheManager getCacheManager() {
-        return cacheManager;
-    }
-
-    public void setCacheManager(AbstractCacheManager cacheManager) {
-        this.cacheManager=cacheManager;
+    public CacheHandler getCacheHandler() {
+        return cacheHandler;
     }
 
 }

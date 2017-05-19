@@ -31,10 +31,10 @@ public class RefreshHandler {
      */
     private final ConcurrentHashMap<CacheKeyTO, Byte> refreshing;
 
-    private final AbstractCacheManager cacheManager;
+    private final CacheHandler cacheHandler;
 
-    public RefreshHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
-        this.cacheManager=cacheManager;
+    public RefreshHandler(CacheHandler cacheHandler, AutoLoadConfig config) {
+        this.cacheHandler=cacheHandler;
         int corePoolSize=config.getRefreshThreadPoolSize();// 线程池的基本大小
         int maximumPoolSize=config.getRefreshThreadPoolMaxSize();// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
         int keepAliveTime=config.getRefreshThreadPoolkeepAliveTime();
@@ -118,7 +118,7 @@ public class RefreshHandler {
             this.cache=cache;
             this.cacheKey=cacheKey;
             this.cacheWrapper=cacheWrapper;
-            this.arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+            this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
         }
 
         @Override
@@ -127,7 +127,7 @@ public class RefreshHandler {
             DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheManager, arguments).loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheHandler, arguments).loadData().getCacheWrapper();
             } catch(Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
@@ -143,7 +143,7 @@ public class RefreshHandler {
                 }
                 try {
                     if(null != newCacheWrapper) {
-                        cacheManager.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
+                        cacheHandler.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
                     }
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);
