@@ -55,7 +55,12 @@ public class MapCacheManager implements ICacheManager {
     /**
      * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
      */
-    private boolean copyValue=false;
+    private boolean copyValueOnGet=false;
+
+    /**
+     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     */
+    private boolean copyValueOnSet=false;
 
     /**
      * 清除和持久化的时间间隔
@@ -100,9 +105,9 @@ public class MapCacheManager implements ICacheManager {
             return;
         }
         CacheWrapper<Object> value=null;
-        if(copyValue) {
+        if(copyValueOnSet) {
             try {
-                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可以是设置@ExCache缓存
+                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可能是设置@ExCache缓存
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -173,15 +178,18 @@ public class MapCacheManager implements ICacheManager {
                 value=(CacheWrapper<Object>)tmp;
             }
         }
-        if(copyValue) {
-            try {
-                CacheWrapper<Object> res=new CacheWrapper<Object>();
-                res.setExpire(value.getExpire());
-                res.setLastLoadTime(value.getLastLoadTime());
-                res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
-                return res;
-            } catch(Exception e) {
-                e.printStackTrace();
+        if(null != value) {
+            if(value.isExpired()) {
+                return null;
+            }
+            if(copyValueOnGet) {
+                try {
+                    CacheWrapper<Object> res=(CacheWrapper<Object>)value.clone();
+                    res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
+                    return res;
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         return value;
@@ -253,12 +261,20 @@ public class MapCacheManager implements ICacheManager {
         }
     }
 
-    public boolean isCopyValue() {
-        return copyValue;
+    public boolean isCopyValueOnGet() {
+        return copyValueOnGet;
     }
 
-    public void setCopyValue(boolean copyValue) {
-        this.copyValue=copyValue;
+    public void setCopyValueOnGet(boolean copyValueOnGet) {
+        this.copyValueOnGet=copyValueOnGet;
+    }
+
+    public boolean isCopyValueOnSet() {
+        return copyValueOnSet;
+    }
+
+    public void setCopyValueOnSet(boolean copyValueOnSet) {
+        this.copyValueOnSet=copyValueOnSet;
     }
 
     public int getClearAndPersistPeriod() {

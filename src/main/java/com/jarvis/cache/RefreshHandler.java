@@ -16,7 +16,6 @@ import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.cache.to.LocalCacheWrapper;
 
 public class RefreshHandler {
 
@@ -61,7 +60,7 @@ public class RefreshHandler {
 
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
         int expire=cacheWrapper.getExpire();
-        if(expire < 120 || cacheWrapper instanceof LocalCacheWrapper) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+        if(expire < 120) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
             return;
         }
         // 计算超时时间

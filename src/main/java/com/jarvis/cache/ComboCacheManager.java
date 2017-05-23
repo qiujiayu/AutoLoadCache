@@ -59,9 +59,6 @@ public class ComboCacheManager implements ICacheManager {
         LocalCache lCache=null;
         if(method.isAnnotationPresent(LocalCache.class)) {
             lCache=method.getAnnotation(LocalCache.class);
-        }
-
-        if(null != lCache) {
             setLocalCache(lCache, cacheKey, result, method, args);
             if(lCache.localOnly()) {// 只本地缓存
                 return;
@@ -92,17 +89,26 @@ public class ComboCacheManager implements ICacheManager {
         if(threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {// 如果是自动加载线程，则只从远程缓存获取。
             return remoteCache.get(key, method, args);
         }
-        CacheWrapper<Object> result=null;
         LocalCache lCache=null;
         if(method.isAnnotationPresent(LocalCache.class)) {
-            result=localCache.get(key, method, args);
+            CacheWrapper<Object> result=localCache.get(key, method, args);
             lCache=method.getAnnotation(LocalCache.class);
-        }
-        if(result == null) {
-            result=remoteCache.get(key, method, args);
-            if(null != lCache && result != null) { // 如果取到了则先放到本地缓存里
-                setLocalCache(lCache, key, result, method, args);
+            if(null != result) {
+                if(result instanceof LocalCacheWrapper) {
+                    LocalCacheWrapper<Object> localResult=(LocalCacheWrapper<Object>)result;
+                    CacheWrapper<Object> result2=new CacheWrapper<Object>();
+                    result2.setCacheObject(localResult.getCacheObject());
+                    result2.setExpire(localResult.getRemoteExpire());
+                    result2.setLastLoadTime(localResult.getRemoteLastLoadTime());
+                    return result2;
+                } else {
+                    return result;
+                }
             }
+        }
+        CacheWrapper<Object> result=remoteCache.get(key, method, args);
+        if(null != lCache && result != null) { // 如果取到了则先放到本地缓存里
+            setLocalCache(lCache, key, result, method, args);
         }
         return result;
     }
