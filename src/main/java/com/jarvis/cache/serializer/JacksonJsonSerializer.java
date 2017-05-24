@@ -1,5 +1,6 @@
 package com.jarvis.cache.serializer;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -11,8 +12,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.springframework.util.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
@@ -23,6 +32,41 @@ import com.jarvis.lib.util.BeanUtil;
 public class JacksonJsonSerializer implements ISerializer<Object> {
 
     private static final ObjectMapper mapper=new ObjectMapper();
+    
+    public JacksonJsonSerializer(){
+        //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new SimpleModule().addSerializer(new JacksonJsonSerializer.NullValueSerializer((String)null)));
+        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+    }
+    
+    private class NullValueSerializer extends StdSerializer<NullValue> {
+
+        private static final long serialVersionUID = 1999052150548658808L;
+        private final String classIdentifier;
+
+        /**
+         * @param classIdentifier can be {@literal null} and will be defaulted to {@code @class}.
+         */
+        NullValueSerializer(String classIdentifier) {
+
+            super(NullValue.class);
+            this.classIdentifier = StringUtils.hasText(classIdentifier) ? classIdentifier : "@class";
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider)
+         */
+        @Override
+        public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider)
+                throws IOException {
+
+            jgen.writeStartObject();
+            jgen.writeStringField(classIdentifier, NullValue.class.getName());
+            jgen.writeEndObject();
+        }
+    }
 
     @Override
     public byte[] serialize(final Object obj) throws Exception {
