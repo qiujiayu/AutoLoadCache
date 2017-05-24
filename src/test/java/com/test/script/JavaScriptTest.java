@@ -1,14 +1,13 @@
 package com.test.script;
 
-import junit.framework.TestCase;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.script.JavaScriptParser;
-import com.jarvis.cache.script.OgnlParser;
 import com.test.Simple;
+
+import junit.framework.TestCase;
 
 public class JavaScriptTest extends TestCase {
 

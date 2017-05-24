@@ -4,11 +4,12 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -18,13 +19,19 @@ import com.jarvis.cache.to.CacheWrapper;
  * 使用ConcurrentHashMap管理缓存
  * @author jiayu.qiu
  */
-public class CachePointCut extends AbstractCacheManager {
+public class MapCacheManager implements ICacheManager {
 
-    private static final Logger logger=Logger.getLogger(CachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(MapCacheManager.class);
 
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
-    private CacheChangeListener changeListener;
+    private final CacheChangeListener changeListener;
+
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
 
     /**
      * 允许不持久化变更数(当缓存变更数量超过此值才做持久化操作)
@@ -48,16 +55,23 @@ public class CachePointCut extends AbstractCacheManager {
     /**
      * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
      */
-    private boolean copyValue=false;
+    private boolean copyValueOnGet=false;
+
+    /**
+     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     */
+    private boolean copyValueOnSet=false;
 
     /**
      * 清除和持久化的时间间隔
      */
     private int clearAndPersistPeriod=60 * 1000; // 1Minutes
 
-    public CachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
-        config.setCheckFromCacheBeforeLoad(false);
+    public MapCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
+        this.config=config;
+        this.config.setCheckFromCacheBeforeLoad(false);
+        this.serializer=serializer;
+        this.cloner=serializer;
         cacheTask=new CacheTask(this);
         changeListener=cacheTask;
     }
@@ -70,9 +84,7 @@ public class CachePointCut extends AbstractCacheManager {
         }
     }
 
-    @Override
     public synchronized void destroy() {
-        super.destroy();
         cacheTask.destroy();
         if(thread != null) {
             thread.interrupt();
@@ -85,14 +97,17 @@ public class CachePointCut extends AbstractCacheManager {
         if(null == cacheKeyTO) {
             return;
         }
+        if(result.getExpire() < 0) {
+            return;
+        }
         String cacheKey=cacheKeyTO.getCacheKey();
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
         CacheWrapper<Object> value=null;
-        if(copyValue) {
+        if(copyValueOnSet) {
             try {
-                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可以是设置@ExCache缓存
+                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可能是设置@ExCache缓存
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -163,15 +178,18 @@ public class CachePointCut extends AbstractCacheManager {
                 value=(CacheWrapper<Object>)tmp;
             }
         }
-        if(copyValue) {
-            try {
-                CacheWrapper<Object> res=new CacheWrapper<Object>();
-                res.setExpire(value.getExpire());
-                res.setLastLoadTime(value.getLastLoadTime());
-                res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
-                return res;
-            } catch(Exception e) {
-                e.printStackTrace();
+        if(null != value) {
+            if(value.isExpired()) {
+                return null;
+            }
+            if(copyValueOnGet) {
+                try {
+                    CacheWrapper<Object> res=(CacheWrapper<Object>)value.clone();
+                    res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
+                    return res;
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
         return value;
@@ -243,12 +261,20 @@ public class CachePointCut extends AbstractCacheManager {
         }
     }
 
-    public boolean isCopyValue() {
-        return copyValue;
+    public boolean isCopyValueOnGet() {
+        return copyValueOnGet;
     }
 
-    public void setCopyValue(boolean copyValue) {
-        this.copyValue=copyValue;
+    public void setCopyValueOnGet(boolean copyValueOnGet) {
+        this.copyValueOnGet=copyValueOnGet;
+    }
+
+    public boolean isCopyValueOnSet() {
+        return copyValueOnSet;
+    }
+
+    public void setCopyValueOnSet(boolean copyValueOnSet) {
+        this.copyValueOnSet=copyValueOnSet;
     }
 
     public int getClearAndPersistPeriod() {
@@ -257,6 +283,21 @@ public class CachePointCut extends AbstractCacheManager {
 
     public void setClearAndPersistPeriod(int clearAndPersistPeriod) {
         this.clearAndPersistPeriod=clearAndPersistPeriod;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
+    }
+
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
+    }
+
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 
 }

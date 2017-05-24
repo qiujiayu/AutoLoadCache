@@ -9,14 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.ShardedJedis;
-import redis.clients.jedis.ShardedJedisPool;
-
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
@@ -25,15 +22,26 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.ShardedJedis;
+import redis.clients.jedis.ShardedJedisPool;
+
 /**
  * Redis缓存管理
  * @author jiayu.qiu
  */
-public class ShardedCachePointCut extends AbstractCacheManager {
+public class ShardedCachePointCut implements ICacheManager {
 
-    private static final Logger logger=Logger.getLogger(ShardedCachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(ShardedCachePointCut.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
+
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
 
     private ShardedJedisPool shardedJedisPool;
 
@@ -48,7 +56,9 @@ public class ShardedCachePointCut extends AbstractCacheManager {
     private boolean hashExpireByScript=false;
 
     public ShardedCachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
+        this.config=config;
+        this.serializer=serializer;
+        this.cloner=serializer;
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
@@ -73,7 +83,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
                     jedis.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
-                } else {
+                } else if(expire > 0) {
                     jedis.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
             } else {
@@ -111,7 +121,7 @@ public class ShardedCachePointCut extends AbstractCacheManager {
         }
         if(hExpire == 0) {
             jedis.hset(key, field, val);
-        } else {
+        } else if(hExpire > 0) {
             if(hashExpireByScript) {
                 byte[] sha=hashSetScriptSha.get(jedis);
                 if(null == sha) {
@@ -212,7 +222,6 @@ public class ShardedCachePointCut extends AbstractCacheManager {
                 } else {
                     jedis.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
                 }
-                this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
             }
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -298,5 +307,20 @@ public class ShardedCachePointCut extends AbstractCacheManager {
 
     public void setHashExpireByScript(boolean hashExpireByScript) {
         this.hashExpireByScript=hashExpireByScript;
+    }
+
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
+    }
+
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
+    }
+
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 }

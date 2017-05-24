@@ -43,28 +43,28 @@ public abstract class AbstractScriptParser {
 
     /**
      * 将表达式转换期望的值
-     * @param keySpEL 生成缓存Key的表达式
+     * @param keyEL 生成缓存Key的表达式
      * @param arguments 参数
      * @param valueType 值类型
      * @return T Value 返回值
      * @param <T> 泛型
      * @throws Exception 异常
      */
-    public <T> T getElValue(String keySpEL, Object[] arguments, Class<T> valueType) throws Exception {
-        return this.getElValue(keySpEL, arguments, null, false, valueType);
+    public <T> T getElValue(String keyEL, Object[] arguments, Class<T> valueType) throws Exception {
+        return this.getElValue(keyEL, arguments, null, false, valueType);
     }
 
     /**
      * 根据请求参数和执行结果值，进行构造缓存Key
-     * @param keySpEL 生成缓存Key的表达式
+     * @param keyEL 生成缓存Key的表达式
      * @param arguments 参数
      * @param retVal 结果值
      * @param hasRetVal 是否有retVal
      * @return CacheKey 缓存Key
      * @throws Exception 异常
      */
-    public String getDefinedCacheKey(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal) throws Exception {
-        return this.getElValue(keySpEL, arguments, retVal, hasRetVal, String.class);
+    public String getDefinedCacheKey(String keyEL, Object[] arguments, Object retVal, boolean hasRetVal) throws Exception {
+        return this.getElValue(keyEL, arguments, retVal, hasRetVal, String.class);
     }
 
     /**

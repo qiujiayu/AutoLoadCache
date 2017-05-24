@@ -12,7 +12,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.serializer.HessianSerializer;
 import com.jarvis.cache.serializer.ISerializer;
@@ -21,14 +22,14 @@ import com.jarvis.lib.util.OsUtil;
 
 public class CacheTask implements Runnable, CacheChangeListener {
 
-    private static final Logger logger=Logger.getLogger(CacheTask.class);
+    private static final Logger logger=LoggerFactory.getLogger(CacheTask.class);
 
     /**
      * 缓存被修改的个数
      */
     private AtomicInteger cacheChanged=new AtomicInteger(0);
 
-    private CachePointCut cacheManager;
+    private MapCacheManager cacheManager;
 
     private volatile boolean running=false;
 
@@ -36,7 +37,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
 
     private ISerializer<Object> persistSerializer;
 
-    public CacheTask(CachePointCut cacheManager) {
+    public CacheTask(MapCacheManager cacheManager) {
         this.cacheManager=cacheManager;
     }
 
@@ -65,7 +66,7 @@ public class CacheTask implements Runnable, CacheChangeListener {
             return persistFile;
         }
         String path="/tmp/autoload-cache/";
-        String nsp=cacheManager.getNamespace();
+        String nsp=cacheManager.getAutoLoadConfig().getNamespace();
         if(null != nsp && nsp.trim().length() > 0) {
             path+=nsp.trim() + "/";
         }

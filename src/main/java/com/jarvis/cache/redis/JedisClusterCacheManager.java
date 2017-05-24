@@ -1,90 +1,57 @@
 package com.jarvis.cache.redis;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.InitializingBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.jarvis.cache.AbstractCacheManager;
+import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 
 /**
  * Redis缓存管理
  * @author jiayu.qiu
  */
-public class JedisClusterCacheManager extends AbstractCacheManager implements InitializingBean {
+public class JedisClusterCacheManager implements ICacheManager {
 
-    private static final Logger logger=Logger.getLogger(JedisClusterCacheManager.class);
+    private static final Logger logger=LoggerFactory.getLogger(JedisClusterCacheManager.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
 
+    private final ISerializer<Object> serializer;
+
+    private final ICloner cloner;
+
+    private final AutoLoadConfig config;
+
     private JedisCluster jedisCluster;
-
-    private Integer timeout;
-
-    private Integer maxRedirections;
-
-    private String redisUrls;
-
-    private GenericObjectPoolConfig genericObjectPoolConfig;
 
     /**
      * Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）。
      */
     private int hashExpire=-1;
 
-    public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
-        super(config, serializer, scriptParser);
-    }
+    /**
+     * 是否通过脚本来设置 Hash的缓存时长
+     */
+    private boolean hashExpireByScript=true;
 
-    private Set<HostAndPort> parseHostAndPort() throws Exception {
-        if(null == redisUrls || redisUrls.length() == 0) {
-            return null;
-        }
-        try {
-            String reids[]=redisUrls.split(";");
-            Set<HostAndPort> haps=new HashSet<HostAndPort>();
-            for(String redis: reids) {
-
-                String[] ipAndPort=redis.split(":");
-
-                try {
-                    HostAndPort hap=new HostAndPort(ipAndPort[0], Integer.parseInt(ipAndPort[1]));
-                    haps.add(hap);
-                } catch(Exception ex) {
-                    logger.error(ex);
-                }
-            }
-
-            return haps;
-        } catch(IllegalArgumentException ex) {
-            throw ex;
-        } catch(Exception ex) {
-            throw new Exception("解析 jedis 配置失败", ex);
-        }
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        Set<HostAndPort> haps=this.parseHostAndPort();
-        if(null == haps || null == timeout || null == maxRedirections || null == genericObjectPoolConfig) {
-            return;
-        }
-        logger.debug("new JedisCluster");
-        jedisCluster=new JedisCluster(haps, timeout, maxRedirections, genericObjectPoolConfig);
+    public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
+        this.config=config;
+        this.serializer=serializer;
+        this.cloner=serializer;
     }
 
     @Override
@@ -101,9 +68,8 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-
                     jedisCluster.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
-                } else {
+                } else if(expire > 0) {
                     jedisCluster.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
                 }
             } else {
@@ -112,6 +78,17 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
+        }
+    }
+
+    private static byte[] hashSetScript;
+
+    static {
+        try {
+            String tmpScript="redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[3]));";
+            hashSetScript=tmpScript.getBytes("UTF-8");
+        } catch(UnsupportedEncodingException ex) {
+            logger.error(ex.getMessage(), ex);
         }
     }
 
@@ -127,9 +104,20 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
         }
         if(hExpire == 0) {
             jedisCluster.hset(key, field, val);
-        } else {
-            jedisCluster.hset(key, field, val);
-            jedisCluster.expire(key, hExpire);
+        } else if(hExpire > 0) {
+            if(hashExpireByScript) {
+                List<byte[]> keys=new ArrayList<byte[]>();
+                keys.add(key);
+
+                List<byte[]> args=new ArrayList<byte[]>();
+                args.add(field);
+                args.add(val);
+                args.add(keySerializer.serialize(String.valueOf(hExpire)));
+                jedisCluster.eval(hashSetScript, keys, args);
+            } else {
+                jedisCluster.hset(key, field, val);
+                jedisCluster.expire(key, hExpire);
+            }
         }
     }
 
@@ -182,7 +170,6 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
             } else {
                 jedisCluster.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(cacheKeyTO);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
@@ -191,6 +178,10 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
 
     public JedisCluster getJedisCluster() {
         return jedisCluster;
+    }
+
+    public void setJedisCluster(JedisCluster jedisCluster) {
+        this.jedisCluster=jedisCluster;
     }
 
     public int getHashExpire() {
@@ -204,36 +195,27 @@ public class JedisClusterCacheManager extends AbstractCacheManager implements In
         this.hashExpire=hashExpire;
     }
 
-    public Integer getTimeout() {
-        return timeout;
+    public boolean isHashExpireByScript() {
+        return hashExpireByScript;
     }
 
-    public void setTimeout(Integer timeout) {
-        this.timeout=timeout;
+    public void setHashExpireByScript(boolean hashExpireByScript) {
+        this.hashExpireByScript=hashExpireByScript;
     }
 
-    public Integer getMaxRedirections() {
-        return maxRedirections;
+    @Override
+    public ICloner getCloner() {
+        return this.cloner;
     }
 
-    public void setMaxRedirections(Integer maxRedirections) {
-        this.maxRedirections=maxRedirections;
+    @Override
+    public ISerializer<Object> getSerializer() {
+        return this.serializer;
     }
 
-    public String getRedisUrls() {
-        return redisUrls;
-    }
-
-    public void setRedisUrls(String redisUrls) {
-        this.redisUrls=redisUrls;
-    }
-
-    public GenericObjectPoolConfig getGenericObjectPoolConfig() {
-        return genericObjectPoolConfig;
-    }
-
-    public void setGenericObjectPoolConfig(GenericObjectPoolConfig genericObjectPoolConfig) {
-        this.genericObjectPoolConfig=genericObjectPoolConfig;
+    @Override
+    public AutoLoadConfig getAutoLoadConfig() {
+        return this.config;
     }
 
 }

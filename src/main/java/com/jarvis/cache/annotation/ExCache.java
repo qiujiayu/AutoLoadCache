@@ -7,14 +7,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-@Inherited
-@Documented
 /**
  * 对@Cache进行扩展，实现一次请求生成多个缓存数，减少与DAO的交互次数
  * @author jiayu.qiu
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Inherited
+@Documented
 public @interface ExCache {
 
     /**
@@ -42,7 +42,7 @@ public @interface ExCache {
     String hfield() default "";
 
     /**
-     * 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存
+     * 缓存的条件表达式，返回 true 或者 false，只有为 true 才进行缓存
      * @return String
      */
     String condition() default "";

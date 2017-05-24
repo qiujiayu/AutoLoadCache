@@ -6,7 +6,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -21,16 +22,18 @@ import com.jarvis.cache.to.CacheWrapper;
  */
 public class AutoLoadHandler {
 
-    private static final Logger logger=Logger.getLogger(AutoLoadHandler.class);
+    private static final Logger logger=LoggerFactory.getLogger(AutoLoadHandler.class);
 
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
+
+    public static final String THREAD_NAME_PREFIX="autoLoadThread-";
 
     /**
      * 自动加载队列
      */
     private final ConcurrentHashMap<CacheKeyTO, AutoLoadTO> autoLoadMap;
 
-    private final AbstractCacheManager cacheManager;
+    private final CacheHandler cacheHandler;
 
     /**
      * 缓存池
@@ -67,29 +70,32 @@ public class AutoLoadHandler {
     };
 
     /**
-     * @param cacheManager 缓存的set,get方法实现类
+     * @param cacheHandler 缓存的set,get方法实现类
      * @param config 配置
      */
-    public AutoLoadHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
-        this.cacheManager=cacheManager;
+    public AutoLoadHandler(CacheHandler cacheHandler, AutoLoadConfig config) {
+        this.cacheHandler=cacheHandler;
         this.config=config;
-        this.running=true;
-        this.threads=new Thread[this.config.getThreadCnt()];
-        this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
-        this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
-        this.sortThread=new Thread(new SortRunnable());
-        this.sortThread.setDaemon(true);
-        this.sortThread.start();
-        for(int i=0; i < this.config.getThreadCnt(); i++) {
-            this.threads[i]=new Thread(new AutoLoadRunnable());
-            this.threads[i].setName("autoLoadThread-" + i);
-            this.threads[i].setDaemon(true);
-            this.threads[i].start();
+        if(this.config.getThreadCnt() > 0) {
+            this.running=true;
+            this.threads=new Thread[this.config.getThreadCnt()];
+            this.autoLoadMap=new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
+            this.autoLoadQueue=new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
+            this.sortThread=new Thread(new SortRunnable());
+            this.sortThread.setDaemon(true);
+            this.sortThread.start();
+            for(int i=0; i < this.config.getThreadCnt(); i++) {
+                this.threads[i]=new Thread(new AutoLoadRunnable());
+                this.threads[i].setName(THREAD_NAME_PREFIX + i);
+                this.threads[i].setDaemon(true);
+                this.threads[i].start();
+            }
+        } else {
+            this.threads=null;
+            this.autoLoadMap=null;
+            this.autoLoadQueue=null;
+            this.sortThread=null;
         }
-    }
-
-    public AutoLoadConfig getConfig() {
-        return config;
     }
 
     public int getSize() {
@@ -118,6 +124,9 @@ public class AutoLoadHandler {
      * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
+        if(null == autoLoadMap) {
+            return;
+        }
         AutoLoadTO autoLoadTO=autoLoadMap.get(cacheKey);
         if(null != autoLoadTO && !autoLoadTO.isLoading()) {
             autoLoadTO.setLastLoadTime(1L);
@@ -126,7 +135,9 @@ public class AutoLoadHandler {
 
     public void shutdown() {
         running=false;
-        autoLoadMap.clear();
+        if(null != autoLoadMap) {
+            autoLoadMap.clear();
+        }
         logger.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
@@ -139,7 +150,7 @@ public class AutoLoadHandler {
             return autoLoadTO;
         }
         try {
-            if(!cacheManager.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
+            if(!cacheHandler.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
                 return null;
             }
         } catch(Exception e) {
@@ -147,10 +158,10 @@ public class AutoLoadHandler {
             return null;
         }
         int expire=cacheWrapper.getExpire();
-        if(cacheWrapper.getExpire() >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
+        if(expire >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments=joinPoint.getArgs();
             try {
-                arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
+                arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
             } catch(Exception e) {
                 logger.error(e.getMessage(), e);
                 return null;
@@ -298,7 +309,7 @@ public class AutoLoadHandler {
                 try {
                     Method method=autoLoadTO.getJoinPoint().getMethod();
                     // Type returnType=method.getGenericReturnType();
-                    result=cacheManager.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
+                    result=cacheHandler.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
                 } catch(Exception ex) {
 
                 }
@@ -312,24 +323,28 @@ public class AutoLoadHandler {
             }
             CacheAopProxyChain pjp=autoLoadTO.getJoinPoint();
             CacheKeyTO cacheKey=autoLoadTO.getCacheKey();
-            DataLoader dataLoader=new DataLoader(pjp, autoLoadTO, cacheKey, cache, cacheManager);
+            DataLoaderFactory factory=DataLoaderFactory.getInstance();
+            DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData().getCacheWrapper();
             } catch(Throwable e) {
                 logger.error(e.getMessage(), e);
             }
-            if(dataLoader.isFirst() || null == newCacheWrapper) {
+            long loadDataUseTime=dataLoader.getLoadDataUseTime();
+            boolean isFirst=dataLoader.isFirst();
+            factory.returnObject(dataLoader);
+            if(isFirst) {
                 if(null == newCacheWrapper && null != result) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=AUTO_LOAD_MIN_EXPIRE + 60;
                     newCacheWrapper=new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
                 try {
                     if(null != newCacheWrapper) {
-                        cacheManager.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
+                        cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
                         autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
                             .setExpire(newCacheWrapper.getExpire())// 同步过期时间
-                            .addUseTotalTime(dataLoader.getLoadDataUseTime());
+                            .addUseTotalTime(loadDataUseTime);
                     }
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);

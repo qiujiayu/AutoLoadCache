@@ -1,6 +1,6 @@
-##Annotation
+## Annotation
 
-###@Cache
+### @Cache
 
     public @interface Cache {
 
@@ -67,6 +67,13 @@
          * @return 时间
          */
         int waitTimeOut() default 500;
+
+        /**
+         * 分布式锁的缓存时间（单位：秒），在设置分布式锁的前提下，如果此项值大于0，则会使用分布式锁，如果小于等于0，则不会使用分布式锁。
+         * @return
+         */
+        int lockExpire() default 10;
+
         /**
          * 扩展缓存
          * @return
@@ -74,7 +81,7 @@
         ExCache[] exCache() default @ExCache(expire=-1, key="");
     }
 
-###@ExCache
+### @ExCache
 
   使用场景举例：如果系统中用getUserById和getUserByName,两种方法来获取用户信息，我们可以在getUserById 时把 getUserByName 的缓存也生成。反过来getUserByName 时，也可以把getUserById 的缓存生成：
 
@@ -127,14 +134,14 @@
  
     }
 
-###@CacheDelete
+### @CacheDelete
 
     public @interface CacheDelete {
 
         CacheDeleteKey[] value();// 支持删除多个缓存
     }
 
-###@CacheDeleteKey
+### @CacheDeleteKey
 
     public @interface CacheDeleteKey {
 
@@ -157,3 +164,18 @@
         String hfield() default "";
     }
 
+
+### @CacheDeleteTransactional
+
+    /**
+     * 事务环境中批量删除缓存注解<br>
+     * 注意：此注解放到service层，并且需要开启事务的方法上, 用于收集@CacheDeleteKey生成的Key,并在最后进行删除缓存。
+     * @author jiayu.qiu
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @Inherited
+    @Documented
+    public @interface CacheDeleteTransactional {
+
+    }

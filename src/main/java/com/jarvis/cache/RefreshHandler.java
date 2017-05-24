@@ -8,7 +8,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -18,7 +19,7 @@ import com.jarvis.cache.to.CacheWrapper;
 
 public class RefreshHandler {
 
-    private static final Logger logger=Logger.getLogger(RefreshHandler.class);
+    private static final Logger logger=LoggerFactory.getLogger(RefreshHandler.class);
 
     /**
      * 刷新缓存线程池
@@ -30,10 +31,10 @@ public class RefreshHandler {
      */
     private final ConcurrentHashMap<CacheKeyTO, Byte> refreshing;
 
-    private final AbstractCacheManager cacheManager;
+    private final CacheHandler cacheHandler;
 
-    public RefreshHandler(AbstractCacheManager cacheManager, AutoLoadConfig config) {
-        this.cacheManager=cacheManager;
+    public RefreshHandler(CacheHandler cacheHandler, AutoLoadConfig config) {
+        this.cacheHandler=cacheHandler;
         int corePoolSize=config.getRefreshThreadPoolSize();// 线程池的基本大小
         int maximumPoolSize=config.getRefreshThreadPoolMaxSize();// 线程池最大大小,线程池允许创建的最大线程数。如果队列满了，并且已创建的线程数小于最大线程数，则线程池会再创建新的线程执行任务。值得注意的是如果使用了无界的任务队列这个参数就没什么效果。
         int keepAliveTime=config.getRefreshThreadPoolkeepAliveTime();
@@ -59,7 +60,7 @@ public class RefreshHandler {
 
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
         int expire=cacheWrapper.getExpire();
-        if(expire < 60) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+        if(expire < 120) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
             return;
         }
         // 计算超时时间
@@ -117,19 +118,22 @@ public class RefreshHandler {
             this.cache=cache;
             this.cacheKey=cacheKey;
             this.cacheWrapper=cacheWrapper;
-            this.arguments=(Object[])cacheManager.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+            this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
         }
 
         @Override
         public void run() {
-            DataLoader dataLoader=new DataLoader(pjp, cacheKey, cache, cacheManager, arguments);
+            DataLoaderFactory factory=DataLoaderFactory.getInstance();
+            DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
             try {
-                newCacheWrapper=dataLoader.loadData().getCacheWrapper();
+                newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheHandler, arguments).loadData().getCacheWrapper();
             } catch(Throwable ex) {
                 logger.error(ex.getMessage(), ex);
             }
-            if(dataLoader.isFirst() || null == newCacheWrapper) {
+            boolean isFirst=dataLoader.isFirst();
+            factory.returnObject(dataLoader);
+            if(isFirst) {
                 if(null == newCacheWrapper && null != cacheWrapper) {// 如果加载失败，则把旧数据进行续租
                     int newExpire=cacheWrapper.getExpire() / 2;
                     if(newExpire < 120) {
@@ -139,7 +143,7 @@ public class RefreshHandler {
                 }
                 try {
                     if(null != newCacheWrapper) {
-                        cacheManager.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
+                        cacheHandler.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
                     }
                 } catch(Exception e) {
                     logger.error(e.getMessage(), e);

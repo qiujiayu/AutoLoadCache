@@ -14,6 +14,8 @@
 
 ### [注解（Annotation）说明](./doc/annotations.md)
 
+### [分布式锁支持](./doc/lock.md)
+
 ### [表达式的应用](./doc/script.md)
 
 ### [缓存删除](./doc/deleteCache.md)
@@ -24,9 +26,15 @@
 
 ### [与Spring Cache的区别](./doc/SpringCache.md)
 
+### [最佳实战](./doc/suggest.md)
+
+### [Spring boot demo](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
+
 ### 源码阅读
 
 已经实现基于aspectj，代码在com.jarvis.cache.aop.aspectj.AspectjAopInterceptor。想通过阅读代码了解详细细节，可以以此为入口。
+
+注意：有些类get, set, hashCode()， toString() equals()等方法是使用 lombok 自动生成的，所以使用Eclipse 和 IntelliJ IDEA 时，需要先安装lombok。
 
 
 ### [更新日志](./doc/changesLog.md)
@@ -51,8 +59,5 @@
 
 guava cache的研究和使用。参考Spring 中org.springframework.cache.guava.GuavaCacheManager相关代码。
 
-优化ConcurrentHashMap 缓存的持久化功能。
-
-redis3.0 集群研究以及使用
 
 QQ群：429274886

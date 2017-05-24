@@ -9,7 +9,7 @@ import lombok.Data;
  * @author jiayu.qiu
  */
 @Data
-public class CacheWrapper<T> implements Serializable {
+public class CacheWrapper<T> implements Serializable, Cloneable {
 
     private static final long serialVersionUID=1L;
 
@@ -46,6 +46,14 @@ public class CacheWrapper<T> implements Serializable {
             return (System.currentTimeMillis() - lastLoadTime) > expire * 1000;
         }
         return false;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        @SuppressWarnings("unchecked")
+        CacheWrapper<T> tmp=(CacheWrapper<T>)super.clone();
+        tmp.setCacheObject(this.cacheObject);
+        return tmp;
     }
 
 }

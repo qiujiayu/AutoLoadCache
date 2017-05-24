@@ -27,9 +27,18 @@ public final class CacheKeyTO implements Serializable {
 
     public String getCacheKey() {
         if(null != this.namespace && this.namespace.length() > 0) {
-            return this.namespace + ":" + this.key;
+            return new StringBuilder(this.namespace).append(":").append(this.key).toString();
         }
         return this.key;
+    }
+
+    public String getLockKey() {
+        StringBuilder key=new StringBuilder(getCacheKey());
+        if(null != hfield && hfield.length() > 0) {
+            key.append(":").append(hfield);
+        }
+        key.append(":lock");
+        return key.toString();
     }
 
 }
