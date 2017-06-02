@@ -23,7 +23,7 @@ public interface CacheAopProxyChain {
      * 执行方法
      * @param arguments 参数
      * @return 执行结果
-     * @throws Throwable
+     * @throws Throwable Throwable
      */
     Object doProxyChain(Object[] arguments) throws Throwable;
 }

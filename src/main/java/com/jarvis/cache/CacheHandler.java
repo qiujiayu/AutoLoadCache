@@ -212,10 +212,10 @@ public class CacheHandler implements ICacheManager {
 
     /**
      * 用于处理事务下，事务处理完后才删除缓存，避免因事务失败造成缓存中的数据不一致问题。
-     * @param pjp
-     * @param cacheDeleteTransactional
-     * @return
-     * @throws Throwable
+     * @param pjp 切面
+     * @param cacheDeleteTransactional 注解
+     * @return Object 返回值
+     * @throws Exception 异常
      */
     public Object proceedDeleteCacheTransactional(CacheAopProxyChain pjp, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
         Object[] arguments=pjp.getArgs();

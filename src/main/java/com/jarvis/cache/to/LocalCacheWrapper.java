@@ -3,7 +3,6 @@ package com.jarvis.cache.to;
 /**
  * 本地缓存
  * @author jiayu.qiu
- * @param <T>
  */
 public class LocalCacheWrapper<T> extends CacheWrapper<T> {
 

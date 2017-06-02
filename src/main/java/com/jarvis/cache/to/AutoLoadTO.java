@@ -127,7 +127,7 @@ public class AutoLoadTO implements Serializable {
     }
 
     /**
-     * @param loading
+     * @param loading 是否正在加载
      * @return this
      */
     public AutoLoadTO setLoading(boolean loading) {
@@ -177,7 +177,7 @@ public class AutoLoadTO implements Serializable {
 
     /**
      * @param expire expire
-     * @return @return this
+     * @return this
      */
     public AutoLoadTO setExpire(int expire) {
         this.expire=expire;

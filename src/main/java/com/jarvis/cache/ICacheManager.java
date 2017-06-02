@@ -31,14 +31,14 @@ public interface ICacheManager {
      * @param method Method
      * @param args args
      * @return 缓存数据
-     * @throws CacheCenterConnectionException
+     * @throws CacheCenterConnectionException 缓存异常
      */
     CacheWrapper<Object> get(final CacheKeyTO key, final Method method, final Object args[]) throws CacheCenterConnectionException;
 
     /**
      * 删除缓存
      * @param key 缓存key
-     * @throws CacheCenterConnectionException
+     * @throws CacheCenterConnectionException 缓存异常
      */
     void delete(final CacheKeyTO key) throws CacheCenterConnectionException;
 

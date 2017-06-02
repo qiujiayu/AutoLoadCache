@@ -10,13 +10,13 @@ public interface ChangeListener {
 
     /**
      * 缓存更新
-     * @param cacheKey
+     * @param cacheKey 缓存Key
      */
     void update(CacheKeyTO cacheKey);
 
     /**
      * 缓存删除
-     * @param cacheKey
+     * @param cacheKey 缓存Key
      */
     void delete(CacheKeyTO cacheKey);
 }
