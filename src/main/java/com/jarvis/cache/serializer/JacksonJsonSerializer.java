@@ -32,17 +32,18 @@ import com.jarvis.lib.util.BeanUtil;
 public class JacksonJsonSerializer implements ISerializer<Object> {
 
     private static final ObjectMapper mapper=new ObjectMapper();
-    
-    public JacksonJsonSerializer(){
-        //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+    public JacksonJsonSerializer() {
+        // mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.registerModule(new SimpleModule().addSerializer(new JacksonJsonSerializer.NullValueSerializer((String)null)));
         mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
     }
-    
+
     private class NullValueSerializer extends StdSerializer<NullValue> {
 
-        private static final long serialVersionUID = 1999052150548658808L;
+        private static final long serialVersionUID=1999052150548658808L;
+
         private final String classIdentifier;
 
         /**
@@ -51,7 +52,7 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
         NullValueSerializer(String classIdentifier) {
 
             super(NullValue.class);
-            this.classIdentifier = StringUtils.hasText(classIdentifier) ? classIdentifier : "@class";
+            this.classIdentifier=StringUtils.hasText(classIdentifier) ? classIdentifier : "@class";
         }
 
         /*
@@ -59,8 +60,7 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
          * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider)
          */
         @Override
-        public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider)
-                throws IOException {
+        public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
 
             jgen.writeStartObject();
             jgen.writeStringField(classIdentifier, NullValue.class.getName());

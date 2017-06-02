@@ -31,9 +31,9 @@ import redis.clients.jedis.ShardedJedisPool;
  * Redis缓存管理
  * @author jiayu.qiu
  */
-public class ShardedCachePointCut implements ICacheManager {
+public class ShardedJedisCacheManager implements ICacheManager {
 
-    private static final Logger logger=LoggerFactory.getLogger(ShardedCachePointCut.class);
+    private static final Logger logger=LoggerFactory.getLogger(ShardedJedisCacheManager.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
 
@@ -55,7 +55,7 @@ public class ShardedCachePointCut implements ICacheManager {
      */
     private boolean hashExpireByScript=false;
 
-    public ShardedCachePointCut(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+    public ShardedJedisCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
         this.config=config;
         this.serializer=serializer;
         this.cloner=serializer;

@@ -1,6 +1,7 @@
-##AutoLoadConfig 配置
+##[AutoLoadConfig](./src/main/java/com/jarvis/cache/to/AutoLoadConfig.java "AutoLoadConfig") 配置
 
     <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+      <property name="namespace" value="test"/>
       <property name="threadCnt" value="10" />
       <property name="maxElement" value="20000" />
       <property name="printSlowLog" value="true" />
@@ -10,6 +11,7 @@
       <property name="autoLoadPeriod" value="50" />
     </bean>
 
+* namespace : 命名空间，在多个模块共用一个缓存环境时，避免key冲突；
 
 * threadCnt :处理自动加载队列的线程数量,默认值为10；
 
@@ -33,3 +35,5 @@
 * refreshThreadPoolkeepAliveTime ： 异步刷新缓存线程池的 keepAliveTime。默认值20，单位分钟；
 
 * refreshQueueCapacity ： 异步刷新缓存队列容量，默认值：2000；
+
+* loadDataTryCnt ： 加载数据重试次数，默认值为1（即不尝试）

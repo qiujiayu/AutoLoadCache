@@ -36,21 +36,22 @@ Redis配置
       </constructor-arg>
     </bean>
     
-    <bean id="cacheManager" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
+    <bean id="cacheManager" class="com.jarvis.cache.redis.ShardedJedisCacheManager">
       <constructor-arg ref="autoLoadConfig" />
       <constructor-arg ref="hessianSerializer" />
       <constructor-arg ref="scriptParser" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
-      <property name="namespace" value="test_hessian" />
+    </bean>
+
+    <bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
+      <constructor-arg ref="cacheManager" />
+      <constructor-arg ref="scriptParser" />
     </bean>
 
 
-ShardedCachePointCut中可以配置参数说明：
+ShardedJedisCacheManager 中可以配置参数说明：
 
-* namespace ： 命名空间，在缓存表达式生成的缓存key中加入此命名空间，达到区分不同业务的数据的作用；
 
 * hashExpire：Hash的缓存时长：等于0时永久缓存；大于0时，主要是为了防止一些已经不用的缓存占用内存;hashExpire小于0时，则使用@Cache中设置的expire值（默认值为-1）；
 
 * hashExpireByScript ： 是否通过脚本来设置 Hash的缓存时长；
-
-***注意***：通过配置destroy-method="destroy"，释放资源。

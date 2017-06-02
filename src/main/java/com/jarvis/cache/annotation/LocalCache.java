@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 缓存注解
+ * 本地缓存注解
  * @author jiayu.qiu
  */
 @Retention(RetentionPolicy.RUNTIME)

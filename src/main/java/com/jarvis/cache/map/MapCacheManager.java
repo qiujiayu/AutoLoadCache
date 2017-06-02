@@ -53,12 +53,12 @@ public class MapCacheManager implements ICacheManager {
     private boolean needPersist=true;
 
     /**
-     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     * 从缓存中取数据时，是否克隆：true时，是克隆缓存值，可以避免外界修改缓存值；false，不克隆缓存值，缓存中的数据可能被外界修改，但效率比较高。
      */
     private boolean copyValueOnGet=false;
 
     /**
-     * 是否拷贝缓存中的值：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
+     * 往缓存中写数据时，是否把克隆后的值放入缓存：true时，是拷贝缓存值，可以避免外界修改缓存值；false，不拷贝缓存值，缓存中的数据可能被外界修改，但效率比较高。
      */
     private boolean copyValueOnSet=false;
 

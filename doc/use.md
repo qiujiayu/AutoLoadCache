@@ -45,29 +45,49 @@
 * [Memcache 配置](Memcache.md)
 * [ConcurrentHashMap 配置](ConcurrentHashMap.md)
 
+### 6.缓存处理器
 
-### 6.AOP 配置：
+    <bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
+      <constructor-arg ref="cacheManager" />
+      <constructor-arg ref="scriptParser" />
+    </bean>
+
+### 7.AOP 配置：
 
     <bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
-      <property name="cacheManager" ref="cacheManager" />
+      <constructor-arg ref="cacheHandler" />
     </bean>
     <aop:config proxy-target-class="true">
+      <!-- 处理 @Cache AOP-->
       <aop:aspect ref="cacheInterceptor">
         <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
         <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
       </aop:aspect>
+
+      <!-- 处理 @CacheDelete AOP-->
       <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
         <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
         <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
       </aop:aspect>
+
+      <!-- 处理 @CacheDeleteTransactional AOP-->
+      <aop:aspect ref="cacheInterceptor">
+        <aop:pointcut id="cacheDeleteTransactional" expression="execution(* com.jarvis.cache_example.common.service..*.*(..)) &amp;&amp; @annotation(cacheDeleteTransactional)" />
+        <aop:around pointcut-ref="cacheDeleteTransactional" method="deleteCacheTransactional" />
+      </aop:aspect>
+
     </aop:config>
 
 
 如果不同的数据，要使用不同的缓存的话，可以通过配置多个AOP来进行共区分。
 
 
-### 7. 在需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解
+### 8. 在需要使用缓存操作的方法前增加 @Cache和 @CacheDelete注解
 
-更多的配置可以参照[实例代码](https://github.com/qiujiayu/cache-example)
+更多的配置可以参照
+
+[Spring 实例代码](https://github.com/qiujiayu/cache-example)
+
+[Spring boot 实例代码](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
 
 以上配置是基于 Spring 的配置，如果是使用nutz，请参照 [AutoLoadCache-nutz](https://github.com/qiujiayu/AutoLoadCache-nutz) 中的说明。

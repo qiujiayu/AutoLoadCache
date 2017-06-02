@@ -1,22 +1,22 @@
 @startuml
-|AbstractCacheManager|
+|CacheHandler|
 start
 :proceed;
 |#AntiqueWhite|AbstractScriptParser|
 :判断是否允许缓存;
-|AbstractCacheManager|
+|CacheHandler|
 if (不允许缓存) then (yes)
 |DAO|
 :getData;
 stop
 endif
-|#AntiqueWhite|CacheCenter|
+|#AntiqueWhite|ICacheManager|
 :get;
-|AbstractCacheManager|
+|CacheHandler|
 if(null != cacheWrapper && !cacheWrapper.isExpired()) then (yes)
 |AutoLoadHandler|
 :putIfAbsent;
-|AbstractCacheManager|
+|CacheHandler|
 if(null != autoLoadTO) then (yes)
 :autoLoadTO同步最后加载时间;
 else
@@ -39,16 +39,16 @@ repeat
 repeat while (isProcessing.isFirstFinished()?)
  
 endif
-|AbstractCacheManager|
+|CacheHandler|
 :getCacheWrapper();
 if(dataLoader.isFirst()) then (yes)
-|CacheCenter|
+|ICacheManager|
 :set;
-|AbstractCacheManager|
+|CacheHandler|
 :do AutoLoadHandler.putIfAbsent;
 |AutoLoadHandler|
 :putIfAbsent;
-|AbstractCacheManager|
+|CacheHandler|
 if(null != autoLoadTO) then (yes)
 :autoLoadTO同步最后加载时间;
 endif
