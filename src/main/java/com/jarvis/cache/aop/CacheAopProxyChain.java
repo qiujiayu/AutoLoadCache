@@ -5,7 +5,8 @@ import java.lang.reflect.Method;
 public interface CacheAopProxyChain {
 
     /**
-     * @return
+     * 获取参数
+     * @return 参数
      */
     Object[] getArgs();
 
@@ -13,13 +14,15 @@ public interface CacheAopProxyChain {
     Class getTargetClass();
 
     /**
-     * @return
+     * 获取方法
+     * @return Method
      */
     Method getMethod();
 
     /**
-     * @param arguments
-     * @return
+     * 执行方法
+     * @param arguments 参数
+     * @return 执行结果
      * @throws Throwable
      */
     Object doProxyChain(Object[] arguments) throws Throwable;

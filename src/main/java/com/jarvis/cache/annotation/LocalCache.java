@@ -25,13 +25,13 @@ public @interface LocalCache {
 
     /**
      * 动态获取缓存过期时间的表达式
-     * @return 时间
+     * @return 时间表达式
      */
     String expireExpression() default "";
 
     /**
      * 只缓存在本地
-     * @return
+     * @return boolean
      */
     boolean localOnly() default false;
 }
