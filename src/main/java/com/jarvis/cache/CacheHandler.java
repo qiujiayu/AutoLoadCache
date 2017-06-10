@@ -446,7 +446,7 @@ public class CacheHandler implements ICacheManager {
     public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args) throws CacheCenterConnectionException {
         cacheManager.setCache(cacheKey, result, method, args);
         if(null != changeListener) {
-            changeListener.update(cacheKey);
+            changeListener.update(cacheKey, result);
         }
     }
 
