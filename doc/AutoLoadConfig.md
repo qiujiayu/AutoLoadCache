@@ -1,4 +1,4 @@
-##[AutoLoadConfig](../src/main/java/com/jarvis/cache/to/AutoLoadConfig.java "AutoLoadConfig") 配置
+## [AutoLoadConfig](../src/main/java/com/jarvis/cache/to/AutoLoadConfig.java "AutoLoadConfig") 配置
 
     <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
       <property name="namespace" value="test"/>
