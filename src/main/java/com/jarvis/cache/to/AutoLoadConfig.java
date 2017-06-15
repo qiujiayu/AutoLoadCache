@@ -217,4 +217,5 @@ public class AutoLoadConfig {
             this.loadDataTryCnt=loadDataTryCnt;
         }
     }
+
 }

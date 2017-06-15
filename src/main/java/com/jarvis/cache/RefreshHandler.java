@@ -58,6 +58,10 @@ public class RefreshHandler {
         }, rejectedHandler);
     }
 
+    public void removeTask(CacheKeyTO cacheKey) {
+        refreshing.remove(cacheKey);
+    }
+
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
         int expire=cacheWrapper.getExpire();
         if(expire < 120) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
@@ -118,7 +122,11 @@ public class RefreshHandler {
             this.cache=cache;
             this.cacheKey=cacheKey;
             this.cacheWrapper=cacheWrapper;
-            this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+            if(cache.argumentsDeepcloneEnable()) {
+                this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+            } else {
+                this.arguments=pjp.getArgs();
+            }
         }
 
         @Override

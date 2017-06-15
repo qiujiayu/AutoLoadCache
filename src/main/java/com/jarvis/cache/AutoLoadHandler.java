@@ -159,12 +159,16 @@ public class AutoLoadHandler {
         }
         int expire=cacheWrapper.getExpire();
         if(expire >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
-            Object[] arguments=joinPoint.getArgs();
-            try {
-                arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), arguments); // 进行深度复制
-            } catch(Exception e) {
-                logger.error(e.getMessage(), e);
-                return null;
+            Object[] arguments;
+            if(cache.argumentsDeepcloneEnable()) {
+                try {
+                    arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), joinPoint.getArgs()); // 进行深度复制
+                } catch(Exception e) {
+                    logger.error(e.getMessage(), e);
+                    return null;
+                }
+            } else {
+                arguments=joinPoint.getArgs();
             }
             autoLoadTO=new AutoLoadTO(cacheKey, joinPoint, arguments, cache, expire);
             AutoLoadTO tmp=autoLoadMap.putIfAbsent(cacheKey, autoLoadTO);
@@ -225,8 +229,9 @@ public class AutoLoadHandler {
                     try {
                         AutoLoadTO to=tmpArr[i];
                         autoLoadQueue.put(to);
-                        if(i > 0 && i % 2000 == 0) {
-                            Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+                        if(i > 0 && i % 1000 == 0) {
+                            // Thread.sleep(0);// 触发操作系统立刻重新进行一次CPU竞争, 让其它线程获得CPU控制权的权力。
+                            Thread.yield();
                         }
                     } catch(InterruptedException e) {
                         logger.error(e.getMessage(), e);
