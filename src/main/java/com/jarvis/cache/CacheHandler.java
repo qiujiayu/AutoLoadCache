@@ -180,7 +180,7 @@ public class CacheHandler implements ICacheManager {
      * @param cacheDelete 拦截到的注解
      * @param retVal 返回值
      */
-    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) {
+    public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) throws Throwable {
         Object[] arguments=jp.getArgs();
         CacheDeleteKey[] keys=cacheDelete.value();
         if(null == keys || keys.length == 0) {
@@ -188,10 +188,9 @@ public class CacheHandler implements ICacheManager {
         }
         String className=jp.getTargetClass().getName();
         String methodName=jp.getMethod().getName();
-
-        for(int i=0; i < keys.length; i++) {
-            CacheDeleteKey keyConfig=keys[i];
-            try {
+        try {
+            for(int i=0; i < keys.length; i++) {
+                CacheDeleteKey keyConfig=keys[i];
                 String _keys[]=keyConfig.value();
                 String _hfield=keyConfig.hfield();
                 if(!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
@@ -204,9 +203,10 @@ public class CacheHandler implements ICacheManager {
                         this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
                     }
                 }
-            } catch(Exception e) {
-                logger.error(e.getMessage(), e);
             }
+        } catch(Throwable e) {
+            logger.error(e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -231,17 +231,19 @@ public class CacheHandler implements ICacheManager {
         }
         Set<CacheKeyTO> set=CacheHelper.getDeleteCacheKeysSet();
         if(isStart) {
-            if(null != set && set.size() > 0) {
-                try {
+            try {
+                if(null != set && set.size() > 0) {
                     for(CacheKeyTO key: set) {
                         this.delete(key);
                         logger.debug("proceedDeleteCacheTransactional delete-->" + key);
                     }
-                } catch(Throwable e) {
-                    logger.error(e.getMessage(), e);
                 }
+            } catch(Throwable e) {
+                logger.error(e.getMessage(), e);
+                throw e; // 抛出异常，让事务回滚，避免数据库和缓存双写不一致问题
+            } finally {
+                CacheHelper.clearDeleteCacheKeysSet();
             }
-            CacheHelper.clearDeleteCacheKeysSet();
         }
         return result;
     }
