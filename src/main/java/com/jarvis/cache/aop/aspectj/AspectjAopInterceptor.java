@@ -40,7 +40,7 @@ public class AspectjAopInterceptor {
         }
     }
 
-    public void checkAndDeleteCache(JoinPoint jp, Object retVal) {
+    public void checkAndDeleteCache(JoinPoint jp, Object retVal) throws Throwable {
         Signature signature=jp.getSignature();
         MethodSignature methodSignature=(MethodSignature)signature;
         Method method=methodSignature.getMethod();
@@ -69,7 +69,7 @@ public class AspectjAopInterceptor {
         return cacheHandler.proceed(new AspectjCacheAopProxyChain(aopProxyChain), cache);
     }
 
-    public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) {
+    public void deleteCache(JoinPoint aopProxyChain, CacheDelete cacheDelete, Object retVal) throws Throwable {
         cacheHandler.deleteCache(new AspectjDeleteCacheAopProxyChain(aopProxyChain), cacheDelete, retVal);
     }
 
