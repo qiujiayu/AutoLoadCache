@@ -211,7 +211,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
                     jedis.flushDB();
                 }
             } else if(cacheKey.indexOf("*") != -1) {
-                // 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）,性能非常差，建议使用这种方法。
+                // 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）,性能非常差，不建议使用这种方法。
                 // 建议使用 hash表方缓存需要批量删除的数据。
                 batchDel(shardedJedis, cacheKey);
             } else {
