@@ -72,7 +72,14 @@ public class CacheHandler implements ICacheManager {
     private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         DataLoaderFactory factory=DataLoaderFactory.getInstance();
         DataLoader dataLoader=factory.getDataLoader();
-        CacheWrapper<Object> cacheWrapper=dataLoader.init(pjp, cache, this).getData().getCacheWrapper();
+        CacheWrapper<Object> cacheWrapper;
+        try {
+            cacheWrapper=dataLoader.init(pjp, cache, this).getData().getCacheWrapper();
+        } catch(Throwable e) {
+            throw e;
+        } finally {
+            factory.returnObject(dataLoader);
+        }
         Object result=cacheWrapper.getCacheObject();
         Object[] arguments=pjp.getArgs();
         if(scriptParser.isCacheable(cache, arguments, result)) {
