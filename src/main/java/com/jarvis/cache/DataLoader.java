@@ -148,7 +148,7 @@ public class DataLoader {
                 }
             } while(System.currentTimeMillis() - startWait < cache.waitTimeOut());
             if(null == cacheWrapper) {
-                throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " seconds).");
+                throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " ms).");
             }
         } else {
             getData();
