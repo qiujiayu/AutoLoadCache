@@ -218,4 +218,12 @@ public class AutoLoadConfig {
         }
     }
 
+    @Override
+    public String toString() {
+        return "AutoLoadConfig [namespace=" + namespace + ", threadCnt=" + threadCnt + ", maxElement=" + maxElement + ", printSlowLog=" + printSlowLog + ", slowLoadTime=" + slowLoadTime
+            + ", sortType=" + sortType + ", checkFromCacheBeforeLoad=" + checkFromCacheBeforeLoad + ", autoLoadPeriod=" + autoLoadPeriod + ", refreshThreadPoolSize=" + refreshThreadPoolSize
+            + ", refreshThreadPoolMaxSize=" + refreshThreadPoolMaxSize + ", refreshThreadPoolkeepAliveTime=" + refreshThreadPoolkeepAliveTime + ", refreshQueueCapacity=" + refreshQueueCapacity
+            + ", functions=" + functions + ", loadDataTryCnt=" + loadDataTryCnt + "]";
+    }
+
 }

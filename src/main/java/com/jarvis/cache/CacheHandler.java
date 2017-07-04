@@ -33,7 +33,7 @@ import com.jarvis.cache.type.CacheOpType;
  * 处理AOP
  * @author jiayu.qiu
  */
-public class CacheHandler implements ICacheManager {
+public class CacheHandler {
 
     private static final Logger logger=LoggerFactory.getLogger(CacheHandler.class);
 
@@ -451,7 +451,6 @@ public class CacheHandler implements ICacheManager {
         this.lock=lock;
     }
 
-    @Override
     public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args) throws CacheCenterConnectionException {
         cacheManager.setCache(cacheKey, result, method, args);
         if(null != changeListener) {
@@ -459,12 +458,10 @@ public class CacheHandler implements ICacheManager {
         }
     }
 
-    @Override
     public CacheWrapper<Object> get(CacheKeyTO key, Method method, Object[] args) throws CacheCenterConnectionException {
         return cacheManager.get(key, method, args);
     }
 
-    @Override
     public void delete(CacheKeyTO key) throws CacheCenterConnectionException {
         cacheManager.delete(key);
         if(null != changeListener) {
@@ -472,7 +469,6 @@ public class CacheHandler implements ICacheManager {
         }
     }
 
-    @Override
     public ISerializer<Object> getSerializer() {
         return cacheManager.getSerializer();
     }
@@ -481,7 +477,6 @@ public class CacheHandler implements ICacheManager {
         return cacheManager.getCloner();
     }
 
-    @Override
     public AutoLoadConfig getAutoLoadConfig() {
         return this.config;
     }
