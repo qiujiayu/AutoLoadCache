@@ -28,6 +28,8 @@
 
 ### [Spring boot demo](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
 
+### [autoload-cache-spring-boot-starter](https://github.com/qiujiayu/autoload-cache-spring-boot-starter)
+
 ### 源码阅读
 
 已经实现基于aspectj 的AOP，代码在[com.jarvis.cache.aop.aspectj.AspectjAopInterceptor](./src/main/java/com/jarvis/cache/aop/aspectj/AspectjAopInterceptor.java "AspectjAopInterceptor.java")。想通过阅读代码了解详细细节，可以以此为入口。
