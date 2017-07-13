@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -55,7 +54,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
      */
     private boolean hashExpireByScript=false;
 
-    public ShardedJedisCacheManager(AutoLoadConfig config, ISerializer<Object> serializer, AbstractScriptParser scriptParser) {
+    public ShardedJedisCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
         this.config=config;
         this.serializer=serializer;
         this.cloner=serializer;
