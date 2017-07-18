@@ -74,7 +74,7 @@ public class AspectjAopInterceptor {
     }
 
     public Object deleteCacheTransactional(ProceedingJoinPoint aopProxyChain, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
-        return cacheHandler.proceedDeleteCacheTransactional(new AspectjCacheAopProxyChain(aopProxyChain), cacheDeleteTransactional);
+        return cacheHandler.proceedDeleteCacheTransactional(new AspectjDeleteCacheTransactionalAopProxyChain(aopProxyChain), cacheDeleteTransactional);
     }
 
     public CacheHandler getCacheHandler() {

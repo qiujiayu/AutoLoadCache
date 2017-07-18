@@ -16,6 +16,7 @@ import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
+import com.jarvis.cache.aop.DeleteCacheTransactionalAopProxyChain;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.lock.ILock;
@@ -224,14 +225,13 @@ public class CacheHandler {
      * @return Object 返回值
      * @throws Exception 异常
      */
-    public Object proceedDeleteCacheTransactional(CacheAopProxyChain pjp, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
-        Object[] arguments=pjp.getArgs();
+    public Object proceedDeleteCacheTransactional(DeleteCacheTransactionalAopProxyChain pjp, CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
         Object result=null;
         Set<CacheKeyTO> set0=CacheHelper.getDeleteCacheKeysSet();
         boolean isStart=null == set0;
         try {
             CacheHelper.initDeleteCacheKeysSet();// 初始化Set
-            result=pjp.doProxyChain(arguments);
+            result=pjp.doProxyChain();
         } catch(Throwable e) {
             throw e;
         } finally {
