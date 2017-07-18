@@ -14,7 +14,7 @@ public class CacheHelper {
 
     /**
      * 获取CacheOpType
-     * @return
+     * @return ThreadLocal中设置的CacheOpType
      */
     public static CacheOpType getCacheOpType() {
         return OP_TYPE.get();
@@ -22,7 +22,7 @@ public class CacheHelper {
 
     /**
      * 设置CacheOpType
-     * @param config
+     * @param opType CacheOpType
      */
     public static void setCacheOpType(CacheOpType opType) {
         OP_TYPE.set(opType);
