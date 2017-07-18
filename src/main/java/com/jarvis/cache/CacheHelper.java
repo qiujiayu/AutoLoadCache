@@ -3,38 +3,36 @@ package com.jarvis.cache;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.jarvis.cache.to.CacheConfigTO;
 import com.jarvis.cache.to.CacheKeyTO;
+import com.jarvis.cache.type.CacheOpType;
 
 public class CacheHelper {
 
-    private static final ThreadLocal<CacheConfigTO> CONFIG=new ThreadLocal<CacheConfigTO>();
+    private static final ThreadLocal<CacheOpType> OP_TYPE=new ThreadLocal<CacheOpType>();
 
     private static final ThreadLocal<Set<CacheKeyTO>> DELETE_CACHE_KEYS=new ThreadLocal<Set<CacheKeyTO>>();
 
-    public static CacheConfigTO getLocalConfig() {
-        return CONFIG.get();
-    }
-
-    private static void setLocalConfig(CacheConfigTO config) {
-        CONFIG.set(config);
+    /**
+     * 获取CacheOpType
+     * @return
+     */
+    public static CacheOpType getCacheOpType() {
+        return OP_TYPE.get();
     }
 
     /**
-     * 移除本地变量
+     * 设置CacheOpType
+     * @param config
      */
-    public static void clearLocalConfig() {
-        CONFIG.remove();
+    public static void setCacheOpType(CacheOpType opType) {
+        OP_TYPE.set(opType);
     }
 
-    public static CacheConfigTO setCacheAble(boolean cacheAble) {
-        CacheConfigTO config=getLocalConfig();
-        if(null == config) {
-            config=new CacheConfigTO();
-        }
-        config.setCacheAble(cacheAble);
-        setLocalConfig(config);
-        return config;
+    /**
+     * 移除CacheOpType
+     */
+    public static void clearCacheOpType() {
+        OP_TYPE.remove();
     }
 
     public static void initDeleteCacheKeysSet() {

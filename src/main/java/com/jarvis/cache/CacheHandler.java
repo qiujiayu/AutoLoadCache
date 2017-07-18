@@ -24,7 +24,6 @@ import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
-import com.jarvis.cache.to.CacheConfigTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
@@ -70,6 +69,13 @@ public class CacheHandler {
         refreshHandler=new RefreshHandler(this, config);
     }
 
+    /**
+     * 从数据源中获取最新数据，并写入缓存。注意：这里不使用“拿来主义”机制，是因为当前可能是更新数据的方法。
+     * @param pjp CacheAopProxyChain
+     * @param cache Cache注解
+     * @return 最新数据
+     * @throws Throwable 异常
+     */
     private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         DataLoaderFactory factory=DataLoaderFactory.getInstance();
         DataLoader dataLoader=factory.getDataLoader();
@@ -100,6 +106,36 @@ public class CacheHandler {
     }
 
     /**
+     * 获取CacheOpType，从三个地方获取：<br>
+     * 1. Cache注解中获取；<br>
+     * 2. 从ThreadLocal中获取；<br>
+     * 3. 从参数中获取；<br>
+     * 上面三者的优先级：从低到高。
+     * @param cache 注解
+     * @param arguments 参数
+     * @return CacheOpType
+     */
+    private CacheOpType getCacheOpType(Cache cache, Object[] arguments) {
+        CacheOpType opType=cache.opType();
+        CacheOpType _tmp=CacheHelper.getCacheOpType();
+        if(null != _tmp) {
+            opType=_tmp;
+        }
+        if(null != arguments && arguments.length > 0) {
+            for(Object tmp: arguments) {
+                if(null != tmp && tmp instanceof CacheOpType) {
+                    opType=(CacheOpType)tmp;
+                    break;
+                }
+            }
+        }
+        if(null == opType) {
+            opType=CacheOpType.READ_WRITE;
+        }
+        return opType;
+    }
+
+    /**
      * 处理@Cache 拦截
      * @param pjp 切面
      * @param cache 注解
@@ -107,36 +143,36 @@ public class CacheHandler {
      * @throws Exception 异常
      */
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
-        logger.debug("CacheHandler.proceed-->" + pjp.getTargetClass().getName() + "." + pjp.getMethod().getName());
-        if(null != cache.opType() && cache.opType() == CacheOpType.WRITE) {// 更新缓存操作
-            return writeOnly(pjp, cache);
-        }
-        CacheConfigTO config=CacheHelper.getLocalConfig();
-        if(config != null) {
-            CacheHelper.clearLocalConfig();
-            if(!config.isCacheAble()) {
-                return getData(pjp);
-            }
-        }
         Object[] arguments=pjp.getArgs();
+        CacheOpType opType=getCacheOpType(cache, arguments);
+        logger.debug("CacheHandler.proceed-->" + pjp.getTargetClass().getName() + "." + pjp.getMethod().getName() + "--" + opType.name());
+
+        if(opType == CacheOpType.WRITE) {
+            return writeOnly(pjp, cache);
+        } else if(opType == CacheOpType.LOAD) {
+            return getData(pjp);
+        }
+
         if(!scriptParser.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp);
         }
+
         CacheKeyTO cacheKey=getCacheKey(pjp, cache);
         if(null == cacheKey) {
             return getData(pjp);
         }
         Method method=pjp.getMethod();
-        // Type returnType=method.getGenericReturnType();
         CacheWrapper<Object> cacheWrapper=null;
         try {
             cacheWrapper=this.get(cacheKey, method, arguments);// 从缓存中获取数据
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         }
-        if(null != cache.opType() && cache.opType() == CacheOpType.READ_ONLY) {// 如果是只读，则直接返回
+
+        if(opType == CacheOpType.READ_ONLY) {
             return null == cacheWrapper ? null : cacheWrapper.getCacheObject();
         }
+
         if(null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO=autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
             if(null != autoLoadTO) {// 同步最后加载时间
