@@ -126,13 +126,10 @@ public class DataLoader {
             long startWait=processingTO.getStartTime();
             do {
                 if(distributedLock.tryLock(lockKey, cache.lockExpire())) {// 获得分布式锁
-                    long start=System.currentTimeMillis();
                     try {
                         getData();
                     } finally {
-                        if(System.currentTimeMillis() - start < cache.lockExpire() * 1000) {// 当锁没过期才需要释放锁,避免释放他人的锁
-                            distributedLock.unlock(lockKey);
-                        }
+                        distributedLock.unlock(lockKey);
                     }
                     break;
                 }

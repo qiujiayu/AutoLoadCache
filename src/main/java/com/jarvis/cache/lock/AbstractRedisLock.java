@@ -1,10 +1,17 @@
 package com.jarvis.cache.lock;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.jarvis.cache.to.RedisLockInfo;
+
 /**
  * 基于Redis实现分布式锁
  * @author jiayu.qiu
  */
 public abstract class AbstractRedisLock implements ILock {
+
+    private static final ThreadLocal<Map<String, RedisLockInfo>> LOCK_START_TIME=new ThreadLocal<Map<String, RedisLockInfo>>();
 
     protected abstract Long setnx(String key, String val);
 
@@ -26,6 +33,23 @@ public abstract class AbstractRedisLock implements ILock {
 
     @Override
     public boolean tryLock(String key, int lockExpire) {
+        boolean locked=getLock(key, lockExpire);
+
+        if(locked) {
+            Map<String, RedisLockInfo> startTimeMap=LOCK_START_TIME.get();
+            if(null == startTimeMap) {
+                startTimeMap=new HashMap<String, RedisLockInfo>();
+                LOCK_START_TIME.set(startTimeMap);
+            }
+            RedisLockInfo info=new RedisLockInfo();
+            info.setLeaseTime(lockExpire * 1000);
+            info.setStartTime(System.currentTimeMillis());
+            startTimeMap.put(key, info);
+        }
+        return locked;
+    }
+
+    private boolean getLock(String key, int lockExpire) {
         long lockExpireTime=serverTimeMillis() + (lockExpire * 1000) + 1;// 锁超时时间
         String lockExpireTimeStr=String.valueOf(lockExpireTime);
         if(setnx(key, lockExpireTimeStr).intValue() == 1) {// 获取到锁
@@ -49,6 +73,14 @@ public abstract class AbstractRedisLock implements ILock {
 
     @Override
     public void unlock(String key) {
+        Map<String, RedisLockInfo> startTimeMap=LOCK_START_TIME.get();
+        RedisLockInfo info=null;
+        if(null != startTimeMap) {
+            info=startTimeMap.remove(key);
+        }
+        if(null != info && (System.currentTimeMillis() - info.getStartTime()) >= info.getLeaseTime()) {
+            return;
+        }
         try {
             del(key);
         } catch(Throwable e) {
