@@ -7,3 +7,5 @@
 *.class
 memo.txt
 *.pptx
+.DS_Store
+*.key
