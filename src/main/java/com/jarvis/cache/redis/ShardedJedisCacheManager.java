@@ -177,7 +177,10 @@ public class ShardedJedisCacheManager implements ICacheManager {
             } else {
                 bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
-            Type returnType=method.getGenericReturnType();
+            Type returnType=null;
+            if(null != method) {
+                returnType=method.getGenericReturnType();
+            }
             res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
