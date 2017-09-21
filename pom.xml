@@ -191,6 +191,9 @@
   <profiles>
     <profile>
       <id>release</id>
+      <properties>
+        <gpg.executable>gpg2</gpg.executable>
+      </properties>
       <build>
         <plugins>
           <!-- GPG -->
