@@ -2,9 +2,6 @@ package com.jarvis.cache;
 
 import java.lang.reflect.Method;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.annotation.LocalCache;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -15,14 +12,15 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.LocalCacheWrapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 组合多种缓存管理方案，本地保存短期缓存，远程保存长期缓存
  * @author gongqin
  * @version 2016年6月8日
  */
+@Slf4j
 public class ComboCacheManager implements ICacheManager {
-
-    private static final Logger logger=LoggerFactory.getLogger(ComboCacheManager.class);
 
     private final ISerializer<Object> serializer;
 
@@ -79,7 +77,7 @@ public class ComboCacheManager implements ICacheManager {
             localResult.setRemoteLastLoadTime(result.getLastLoadTime());
             localCache.setCache(cacheKey, result, method, args);
         } catch(Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 

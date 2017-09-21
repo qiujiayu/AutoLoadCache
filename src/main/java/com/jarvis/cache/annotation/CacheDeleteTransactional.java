@@ -17,5 +17,9 @@ import java.lang.annotation.Target;
 @Inherited
 @Documented
 public @interface CacheDeleteTransactional {
-
+    /**
+     * 在事务环境中是否使用缓存数据，默认为false
+     * @return
+     */
+    boolean useCache() default false;
 }

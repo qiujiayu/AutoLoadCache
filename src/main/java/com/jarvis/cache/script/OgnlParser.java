@@ -16,8 +16,6 @@ import ognl.OgnlContext;
  */
 public class OgnlParser extends AbstractScriptParser {
 
-    // private static final Logger logger=Logger.getLogger(OgnlParser.class);
-
     private final ConcurrentHashMap<String, Object> expCache=new ConcurrentHashMap<String, Object>();
 
     private final ConcurrentHashMap<String, Class<?>> funcs=new ConcurrentHashMap<String, Class<?>>(64);

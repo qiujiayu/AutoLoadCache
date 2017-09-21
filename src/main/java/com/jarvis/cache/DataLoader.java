@@ -1,7 +1,5 @@
 package com.jarvis.cache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -13,13 +11,14 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 数据加载器
  * @author jiayu.qiu
  */
+@Slf4j
 public class DataLoader {
-
-    private static final Logger logger=LoggerFactory.getLogger(DataLoader.class);
 
     private CacheHandler cacheHandler;
 
@@ -98,7 +97,7 @@ public class DataLoader {
         if(null == processing) {// 当前并发中的第一个请求
             isFirst=true;
             lock=processingTO;
-            logger.debug(tname + " first thread!");
+            log.trace("{} first thread!", tname);
             try {
                 doFirstRequest(processingTO);
             } catch(Throwable e) {
@@ -162,24 +161,24 @@ public class DataLoader {
             }
             if(processing.isFirstFinished()) {
                 CacheWrapper<Object> _cacheWrapper=processing.getCache();// 从本地缓存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                logger.debug(tname + " do FirstFinished" + " is null :" + (null == _cacheWrapper));
+                log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == _cacheWrapper));
                 if(null != _cacheWrapper) {
                     cacheWrapper=_cacheWrapper;
                     return;
                 }
                 Throwable error=processing.getError();
                 if(null != error) {// 当DAO出错时，直接抛异常
-                    logger.debug(tname + " do error");
+                    log.trace("{} do error", tname);
                     throw error;
                 }
                 break;
             } else {
                 synchronized(lock) {
-                    logger.debug(tname + " do wait");
+                    log.trace("{} do wait", tname);
                     try {
                         lock.wait(10);// 如果要测试lock对象是否有效，wait时间去掉就可以
                     } catch(InterruptedException ex) {
-                        logger.error(ex.getMessage(), ex);
+                        log.error(ex.getMessage(), ex);
                     }
                 }
             }
@@ -213,7 +212,7 @@ public class DataLoader {
             AutoLoadConfig config=cacheHandler.getAutoLoadConfig();
             if(config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
                 String className=pjp.getTargetClass().getName();
-                logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + loadDataUseTime + "ms");
+                log.error("{}.{}, use time:{}ms",className, pjp.getMethod().getName(), loadDataUseTime);
             }
             buildCacheWrapper(result);
         } catch(Throwable e) {
@@ -231,7 +230,7 @@ public class DataLoader {
         try {
             expire=cacheHandler.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), arguments, result);
         } catch(Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         cacheWrapper=new CacheWrapper<Object>(result, expire);
     }

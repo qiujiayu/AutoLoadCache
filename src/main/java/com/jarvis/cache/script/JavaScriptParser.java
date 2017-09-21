@@ -10,18 +10,16 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.CacheUtil;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 解析JavaScript表达式
  * @author jiayu.qiu
  */
+@Slf4j
 public class JavaScriptParser extends AbstractScriptParser {
-
-    private static final Logger logger=LoggerFactory.getLogger(JavaScriptParser.class);
 
     private final ScriptEngineManager manager=new ScriptEngineManager();
 
@@ -54,7 +52,7 @@ public class JavaScriptParser extends AbstractScriptParser {
             addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
             addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));
         } catch(Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -65,7 +63,7 @@ public class JavaScriptParser extends AbstractScriptParser {
             String methodName=method.getName();
             funcs.append("function " + name + "(obj){return " + clsName + "." + methodName + "(obj);}");
         } catch(Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 

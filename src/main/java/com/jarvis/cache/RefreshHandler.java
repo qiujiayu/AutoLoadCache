@@ -8,18 +8,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
-public class RefreshHandler {
+import lombok.extern.slf4j.Slf4j;
 
-    private static final Logger logger=LoggerFactory.getLogger(RefreshHandler.class);
+@Slf4j
+public class RefreshHandler {
 
     /**
      * 刷新缓存线程池
@@ -91,7 +89,7 @@ public class RefreshHandler {
             try {
                 refreshThreadPool.execute(new RefreshTask(pjp, cache, cacheKey, cacheWrapper));
             } catch(Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
     }
@@ -137,7 +135,7 @@ public class RefreshHandler {
             try {
                 newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheHandler, arguments).loadData().getCacheWrapper();
             } catch(Throwable ex) {
-                logger.error(ex.getMessage(), ex);
+                log.error(ex.getMessage(), ex);
             }
             boolean isFirst=dataLoader.isFirst();
             factory.returnObject(dataLoader);
@@ -154,7 +152,7 @@ public class RefreshHandler {
                         cacheHandler.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
                     }
                 } catch(Exception e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
             refreshing.remove(cacheKey);

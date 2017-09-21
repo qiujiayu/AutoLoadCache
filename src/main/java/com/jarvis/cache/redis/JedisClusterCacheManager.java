@@ -6,9 +6,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -18,15 +15,15 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.JedisCluster;
 
 /**
  * Redis缓存管理
  * @author jiayu.qiu
  */
+@Slf4j
 public class JedisClusterCacheManager implements ICacheManager {
-
-    private static final Logger logger=LoggerFactory.getLogger(JedisClusterCacheManager.class);
 
     private static final StringSerializer keySerializer=new StringSerializer();
 
@@ -76,7 +73,7 @@ public class JedisClusterCacheManager implements ICacheManager {
                 hashSet(cacheKey, hfield, result);
             }
         } catch(Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         } finally {
         }
     }
@@ -88,7 +85,7 @@ public class JedisClusterCacheManager implements ICacheManager {
             String tmpScript="redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]);\nredis.call('EXPIRE', KEYS[1], tonumber(ARGV[3]));";
             hashSetScript=tmpScript.getBytes("UTF-8");
         } catch(UnsupportedEncodingException ex) {
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
     }
 
@@ -146,7 +143,7 @@ public class JedisClusterCacheManager implements ICacheManager {
             }
             res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
         } catch(Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         } finally {
         }
         return res;
@@ -165,7 +162,7 @@ public class JedisClusterCacheManager implements ICacheManager {
         if(null == cacheKey || cacheKey.length() == 0) {
             return;
         }
-        logger.debug("delete cache:" + cacheKey);
+        log.debug("delete cache:{}", cacheKey);
         try {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
@@ -174,7 +171,7 @@ public class JedisClusterCacheManager implements ICacheManager {
                 jedisCluster.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
             }
         } catch(Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         } finally {
         }
     }

@@ -6,9 +6,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -16,13 +13,14 @@ import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
  * @author jiayu.qiu
  */
+@Slf4j
 public class AutoLoadHandler {
-
-    private static final Logger logger=LoggerFactory.getLogger(AutoLoadHandler.class);
 
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 
@@ -138,7 +136,7 @@ public class AutoLoadHandler {
         if(null != autoLoadMap) {
             autoLoadMap.clear();
         }
-        logger.info("----------------------AutoLoadHandler.shutdown--------------------");
+        log.info("----------------------AutoLoadHandler.shutdown--------------------");
     }
 
     public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache, CacheWrapper<Object> cacheWrapper) {
@@ -154,7 +152,7 @@ public class AutoLoadHandler {
                 return null;
             }
         } catch(Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return null;
         }
         int expire=cacheWrapper.getExpire();
@@ -164,7 +162,7 @@ public class AutoLoadHandler {
                 try {
                     arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), joinPoint.getArgs()); // 进行深度复制
                 } catch(Exception e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     return null;
                 }
             } else {
@@ -207,7 +205,7 @@ public class AutoLoadHandler {
                     try {
                         Thread.sleep(1000);
                     } catch(InterruptedException e) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                     continue;
                 } else if(autoLoadMap.size() <= threads.length * 10) {
@@ -218,7 +216,7 @@ public class AutoLoadHandler {
                 try {
                     Thread.sleep(sleep);
                 } catch(InterruptedException e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
 
                 AutoLoadTO tmpArr[]=getAutoLoadQueue();
@@ -234,9 +232,9 @@ public class AutoLoadHandler {
                             Thread.yield();
                         }
                     } catch(InterruptedException e) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     } catch(Exception e) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
             }
@@ -255,7 +253,7 @@ public class AutoLoadHandler {
                         Thread.sleep(config.getAutoLoadPeriod());
                     }
                 } catch(InterruptedException e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         }
@@ -316,7 +314,7 @@ public class AutoLoadHandler {
                     // Type returnType=method.getGenericReturnType();
                     result=cacheHandler.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
                 } catch(Exception ex) {
-
+                    log.error(ex.getMessage(), ex);
                 }
                 if(null != result) {// 如果已经被别的服务器更新了，则不需要再次更新
                     autoLoadTO.setExpire(result.getExpire());
@@ -334,7 +332,7 @@ public class AutoLoadHandler {
             try {
                 newCacheWrapper=dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData().getCacheWrapper();
             } catch(Throwable e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
             long loadDataUseTime=dataLoader.getLoadDataUseTime();
             boolean isFirst=dataLoader.isFirst();
@@ -352,7 +350,7 @@ public class AutoLoadHandler {
                             .addUseTotalTime(loadDataUseTime);
                     }
                 } catch(Exception e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         }

@@ -6,9 +6,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
@@ -29,13 +26,14 @@ import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
 import com.jarvis.cache.type.CacheOpType;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 处理AOP
  * @author jiayu.qiu
  */
+@Slf4j
 public class CacheHandler {
-
-    private static final Logger logger=LoggerFactory.getLogger(CacheHandler.class);
 
     // 解决java.lang.NoSuchMethodError:java.util.Map.putIfAbsent
     public final ConcurrentHashMap<CacheKeyTO, ProcessingTO> processing=new ConcurrentHashMap<CacheKeyTO, ProcessingTO>();
@@ -99,7 +97,7 @@ public class CacheHandler {
                         .setExpire(cacheWrapper.getExpire());// 同步过期时间
                 }
             } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                log.error(ex.getMessage(), ex);
             }
         }
         return result;
@@ -145,7 +143,7 @@ public class CacheHandler {
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         CacheOpType opType=getCacheOpType(cache, arguments);
-        logger.debug("CacheHandler.proceed-->" + pjp.getTargetClass().getName() + "." + pjp.getMethod().getName() + "--" + opType.name());
+        log.trace("CacheHandler.proceed-->{}.{}--{})" , pjp.getTargetClass().getName(), pjp.getMethod().getName(), opType.name());
 
         if(opType == CacheOpType.WRITE) {
             return writeOnly(pjp, cache);
@@ -166,8 +164,9 @@ public class CacheHandler {
         try {
             cacheWrapper=this.get(cacheKey, method, arguments);// 从缓存中获取数据
         } catch(Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
+        log.trace("cache key:{}, cache data is null {} ", cacheKey.getCacheKey(), null == cacheWrapper);
 
         if(opType == CacheOpType.READ_ONLY) {
             return null == cacheWrapper ? null : cacheWrapper.getCacheObject();
@@ -211,7 +210,7 @@ public class CacheHandler {
                         .addUseTotalTime(loadDataUseTime);// 统计用时
                 }
             } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                log.error(ex.getMessage(), ex);
             }
         }
 
@@ -249,7 +248,7 @@ public class CacheHandler {
                 }
             }
         } catch(Throwable e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -265,12 +264,16 @@ public class CacheHandler {
         Object result=null;
         Set<CacheKeyTO> set0=CacheHelper.getDeleteCacheKeysSet();
         boolean isStart=null == set0;
+        if(!cacheDeleteTransactional.useCache()) {
+            CacheHelper.setCacheOpType(CacheOpType.LOAD); //在事务环境下尽量直接去数据源加载数据，而不是从缓存中加载，减少数据不一致的可能
+        }
         try {
             CacheHelper.initDeleteCacheKeysSet();// 初始化Set
             result=pjp.doProxyChain();
         } catch(Throwable e) {
             throw e;
         } finally {
+            CacheHelper.clearCacheOpType();
         }
         Set<CacheKeyTO> set=CacheHelper.getDeleteCacheKeysSet();
         if(isStart) {
@@ -278,11 +281,11 @@ public class CacheHandler {
                 if(null != set && set.size() > 0) {
                     for(CacheKeyTO key: set) {
                         this.delete(key);
-                        logger.debug("proceedDeleteCacheTransactional delete-->" + key);
+                        log.trace("proceedDeleteCacheTransactional delete-->{}",  key);
                     }
                 }
             } catch(Throwable e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
                 throw e; // 抛出异常，让事务回滚，避免数据库和缓存双写不一致问题
             } finally {
                 CacheHelper.clearDeleteCacheKeysSet();
@@ -306,7 +309,7 @@ public class CacheHandler {
             // AutoLoadConfig config=autoLoadHandler.getConfig();
             if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                 String className=pjp.getTargetClass().getName();
-                logger.error(className + "." + pjp.getMethod().getName() + ", use time:" + useTime + "ms");
+                log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
             }
             return result;
         } catch(Throwable e) {
@@ -356,7 +359,7 @@ public class CacheHandler {
                 }
 
             } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                log.error(ex.getMessage(), ex);
             }
         }
 
@@ -365,7 +368,7 @@ public class CacheHandler {
     public void destroy() {
         autoLoadHandler.shutdown();
         refreshHandler.shutdown();
-        logger.info("cache destroy ... ... ...");
+        log.trace("cache destroy ... ... ...");
     }
 
     /**
@@ -388,13 +391,13 @@ public class CacheHandler {
                     hfield=scriptParser.getDefinedCacheKey(_hfield, arguments, result, hasRetVal);
                 }
             } catch(Exception ex) {
-                logger.error(ex.getMessage(), ex);
+                log.error(ex.getMessage(), ex);
             }
         } else {
             key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
         }
         if(null == key || key.trim().length() == 0) {
-            logger.error(className + "." + methodName + "; cache key is empty");
+            log.error("{}.{}; cache key is empty", className, methodName);
             return null;
         }
         return new CacheKeyTO(config.getNamespace(), key, hfield);
@@ -474,7 +477,7 @@ public class CacheHandler {
                 Method method=cls.getDeclaredMethod(name, new Class[]{Object.class});
                 scriptParser.addFunction(name, method);
             } catch(Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
     }
