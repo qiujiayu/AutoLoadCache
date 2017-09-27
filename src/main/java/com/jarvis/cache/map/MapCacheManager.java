@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
@@ -26,8 +25,6 @@ public class MapCacheManager implements ICacheManager {
     private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
 
     private final CacheChangeListener changeListener;
-
-    private final ISerializer<Object> serializer;
 
     private final ICloner cloner;
 
@@ -67,11 +64,10 @@ public class MapCacheManager implements ICacheManager {
      */
     private int clearAndPersistPeriod=60 * 1000; // 1Minutes
 
-    public MapCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
+    public MapCacheManager(AutoLoadConfig config, ICloner cloner) {
         this.config=config;
         this.config.setCheckFromCacheBeforeLoad(false);
-        this.serializer=serializer;
-        this.cloner=serializer;
+        this.cloner=cloner;
         cacheTask=new CacheTask(this);
         changeListener=cacheTask;
     }
@@ -107,7 +103,7 @@ public class MapCacheManager implements ICacheManager {
         CacheWrapper<Object> value=null;
         if(copyValueOnSet) {
             try {
-                value=(CacheWrapper<Object>)this.getCloner().deepClone(result, null);// 这里type为null，因为有可能是设置@ExCache缓存
+                value=(CacheWrapper<Object>)this.cloner.deepClone(result, null);// 这里type为null，因为有可能是设置@ExCache缓存
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -185,7 +181,7 @@ public class MapCacheManager implements ICacheManager {
             if(copyValueOnGet) {
                 try {
                     CacheWrapper<Object> res=(CacheWrapper<Object>)value.clone();
-                    res.setCacheObject(this.getCloner().deepClone(value.getCacheObject(), method.getReturnType()));
+                    res.setCacheObject(this.cloner.deepClone(value.getCacheObject(), method.getReturnType()));
                     return res;
                 } catch(Exception e) {
                     e.printStackTrace();
@@ -284,18 +280,7 @@ public class MapCacheManager implements ICacheManager {
     public void setClearAndPersistPeriod(int clearAndPersistPeriod) {
         this.clearAndPersistPeriod=clearAndPersistPeriod;
     }
-
-    @Override
-    public ICloner getCloner() {
-        return this.cloner;
-    }
-
-    @Override
-    public ISerializer<Object> getSerializer() {
-        return this.serializer;
-    }
-
-    @Override
+    
     public AutoLoadConfig getAutoLoadConfig() {
         return this.config;
     }

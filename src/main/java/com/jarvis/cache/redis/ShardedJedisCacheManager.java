@@ -13,11 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.jarvis.cache.ICacheManager;
-import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
-import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -38,10 +36,6 @@ public class ShardedJedisCacheManager implements ICacheManager {
 
     private final ISerializer<Object> serializer;
 
-    private final ICloner cloner;
-
-    private final AutoLoadConfig config;
-
     private ShardedJedisPool shardedJedisPool;
 
     /**
@@ -54,10 +48,8 @@ public class ShardedJedisCacheManager implements ICacheManager {
      */
     private boolean hashExpireByScript=false;
 
-    public ShardedJedisCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
-        this.config=config;
+    public ShardedJedisCacheManager(ISerializer<Object> serializer) {
         this.serializer=serializer;
-        this.cloner=serializer;
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
@@ -81,9 +73,9 @@ public class ShardedJedisCacheManager implements ICacheManager {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-                    jedis.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
+                    jedis.set(keySerializer.serialize(cacheKey), serializer.serialize(result));
                 } else if(expire > 0) {
-                    jedis.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
+                    jedis.setex(keySerializer.serialize(cacheKey), expire, serializer.serialize(result));
                 }
             } else {
                 hashSet(jedis, cacheKey, hfield, result);
@@ -111,7 +103,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
     private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
         byte[] key=keySerializer.serialize(cacheKey);
         byte[] field=keySerializer.serialize(hfield);
-        byte[] val=getSerializer().serialize(result);
+        byte[] val=serializer.serialize(result);
         int hExpire;
         if(hashExpire < 0) {
             hExpire=result.getExpire();
@@ -181,7 +173,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
             if(null != method) {
                 returnType=method.getGenericReturnType();
             }
-            res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
+            res=(CacheWrapper<Object>)serializer.deserialize(bytes, returnType);
         } catch(Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
@@ -311,18 +303,4 @@ public class ShardedJedisCacheManager implements ICacheManager {
         this.hashExpireByScript=hashExpireByScript;
     }
 
-    @Override
-    public ICloner getCloner() {
-        return this.cloner;
-    }
-
-    @Override
-    public ISerializer<Object> getSerializer() {
-        return this.serializer;
-    }
-
-    @Override
-    public AutoLoadConfig getAutoLoadConfig() {
-        return this.config;
-    }
 }

@@ -18,7 +18,6 @@ import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.lock.ILock;
 import com.jarvis.cache.script.AbstractScriptParser;
-import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -41,6 +40,8 @@ public class CacheHandler {
     private final ICacheManager cacheManager;
 
     private final AutoLoadConfig config;
+    
+    private final ICloner cloner;
 
     private final AutoLoadHandler autoLoadHandler;
 
@@ -58,9 +59,10 @@ public class CacheHandler {
 
     private ChangeListener changeListener;
 
-    public CacheHandler(ICacheManager cacheManager, AbstractScriptParser scriptParser) {
+    public CacheHandler(ICacheManager cacheManager, AbstractScriptParser scriptParser, AutoLoadConfig config, ICloner cloner) {
         this.cacheManager=cacheManager;
-        this.config=cacheManager.getAutoLoadConfig();
+        this.config=config;
+        this.cloner=cloner;
         this.autoLoadHandler=new AutoLoadHandler(this, config);
         this.scriptParser=scriptParser;
         registerFunction(config.getFunctions());
@@ -508,12 +510,8 @@ public class CacheHandler {
         }
     }
 
-    public ISerializer<Object> getSerializer() {
-        return cacheManager.getSerializer();
-    }
-
     public ICloner getCloner() {
-        return cacheManager.getCloner();
+        return cloner;
     }
 
     public AutoLoadConfig getAutoLoadConfig() {

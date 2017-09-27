@@ -3,11 +3,8 @@ package com.jarvis.cache;
 import java.lang.reflect.Method;
 
 import com.jarvis.cache.annotation.LocalCache;
-import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
-import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.LocalCacheWrapper;
@@ -21,12 +18,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ComboCacheManager implements ICacheManager {
-
-    private final ISerializer<Object> serializer;
-
-    private final ICloner cloner;
-
-    private final AutoLoadConfig config;
 
     /**
      * 表达式解析器
@@ -46,9 +37,6 @@ public class ComboCacheManager implements ICacheManager {
     public ComboCacheManager(ICacheManager localCache, ICacheManager remoteCache, AbstractScriptParser scriptParser) {
         this.localCache=localCache;
         this.remoteCache=remoteCache;
-        this.serializer=remoteCache.getSerializer();
-        this.config=remoteCache.getAutoLoadConfig();
-        this.cloner=remoteCache.getCloner();
         this.scriptParser=scriptParser;
     }
 
@@ -116,20 +104,4 @@ public class ComboCacheManager implements ICacheManager {
         localCache.delete(key);
         remoteCache.delete(key);
     }
-
-    @Override
-    public ICloner getCloner() {
-        return this.cloner;
-    }
-
-    @Override
-    public ISerializer<Object> getSerializer() {
-        return this.serializer;
-    }
-
-    @Override
-    public AutoLoadConfig getAutoLoadConfig() {
-        return this.config;
-    }
-
 }

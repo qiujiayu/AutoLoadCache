@@ -2,10 +2,7 @@ package com.jarvis.cache;
 
 import java.lang.reflect.Method;
 
-import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -42,9 +39,4 @@ public interface ICacheManager {
      */
     void delete(final CacheKeyTO key) throws CacheCenterConnectionException;
 
-    ICloner getCloner();
-
-    ISerializer<Object> getSerializer();
-
-    AutoLoadConfig getAutoLoadConfig();
 }

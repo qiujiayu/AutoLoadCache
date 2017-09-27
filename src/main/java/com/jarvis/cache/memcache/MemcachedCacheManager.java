@@ -3,10 +3,7 @@ package com.jarvis.cache.memcache;
 import java.lang.reflect.Method;
 
 import com.jarvis.cache.ICacheManager;
-import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
-import com.jarvis.cache.serializer.ISerializer;
-import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -19,16 +16,7 @@ public class MemcachedCacheManager implements ICacheManager {
 
     private MemcachedClient memcachedClient;
 
-    private final ISerializer<Object> serializer;
-
-    private final ICloner cloner;
-
-    private final AutoLoadConfig config;
-
-    public MemcachedCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
-        this.config=config;
-        this.serializer=serializer;
-        this.cloner=serializer;
+    public MemcachedCacheManager() {
     }
 
     @Override
@@ -101,19 +89,5 @@ public class MemcachedCacheManager implements ICacheManager {
         this.memcachedClient=memcachedClient;
     }
 
-    @Override
-    public ICloner getCloner() {
-        return this.cloner;
-    }
-
-    @Override
-    public ISerializer<Object> getSerializer() {
-        return this.serializer;
-    }
-
-    @Override
-    public AutoLoadConfig getAutoLoadConfig() {
-        return this.config;
-    }
 
 }

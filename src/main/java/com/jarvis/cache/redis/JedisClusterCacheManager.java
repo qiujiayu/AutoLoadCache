@@ -7,11 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.jarvis.cache.ICacheManager;
-import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.serializer.StringSerializer;
-import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
@@ -29,10 +27,6 @@ public class JedisClusterCacheManager implements ICacheManager {
 
     private final ISerializer<Object> serializer;
 
-    private final ICloner cloner;
-
-    private final AutoLoadConfig config;
-
     private JedisCluster jedisCluster;
 
     /**
@@ -45,10 +39,8 @@ public class JedisClusterCacheManager implements ICacheManager {
      */
     private boolean hashExpireByScript=true;
 
-    public JedisClusterCacheManager(AutoLoadConfig config, ISerializer<Object> serializer) {
-        this.config=config;
+    public JedisClusterCacheManager(ISerializer<Object> serializer) {
         this.serializer=serializer;
-        this.cloner=serializer;
     }
 
     @Override
@@ -65,9 +57,9 @@ public class JedisClusterCacheManager implements ICacheManager {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-                    jedisCluster.set(keySerializer.serialize(cacheKey), getSerializer().serialize(result));
+                    jedisCluster.set(keySerializer.serialize(cacheKey), serializer.serialize(result));
                 } else if(expire > 0) {
-                    jedisCluster.setex(keySerializer.serialize(cacheKey), expire, getSerializer().serialize(result));
+                    jedisCluster.setex(keySerializer.serialize(cacheKey), expire, serializer.serialize(result));
                 }
             } else {
                 hashSet(cacheKey, hfield, result);
@@ -92,7 +84,7 @@ public class JedisClusterCacheManager implements ICacheManager {
     private void hashSet(String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
         byte[] key=keySerializer.serialize(cacheKey);
         byte[] field=keySerializer.serialize(hfield);
-        byte[] val=getSerializer().serialize(result);
+        byte[] val=serializer.serialize(result);
         int hExpire;
         if(hashExpire < 0) {
             hExpire=result.getExpire();
@@ -141,7 +133,7 @@ public class JedisClusterCacheManager implements ICacheManager {
             if(null != method) {
                 returnType=method.getGenericReturnType();
             }
-            res=(CacheWrapper<Object>)getSerializer().deserialize(bytes, returnType);
+            res=(CacheWrapper<Object>)serializer.deserialize(bytes, returnType);
         } catch(Exception ex) {
             log.error(ex.getMessage(), ex);
         } finally {
@@ -201,21 +193,6 @@ public class JedisClusterCacheManager implements ICacheManager {
 
     public void setHashExpireByScript(boolean hashExpireByScript) {
         this.hashExpireByScript=hashExpireByScript;
-    }
-
-    @Override
-    public ICloner getCloner() {
-        return this.cloner;
-    }
-
-    @Override
-    public ISerializer<Object> getSerializer() {
-        return this.serializer;
-    }
-
-    @Override
-    public AutoLoadConfig getAutoLoadConfig() {
-        return this.config;
     }
 
 }
