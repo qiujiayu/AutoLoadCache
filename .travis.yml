@@ -1,9 +1,7 @@
+sudo: required
 language: java
 
-install: echo "I trust Maven."
+install:
+  - jdk_switcher use oraclejdk8
+  - mvn clean install -DskipTests=true
 
-script: mvn install -DskipTests=true
-
-jdk:
-  - oraclejdk7
-  - oraclejdk8
