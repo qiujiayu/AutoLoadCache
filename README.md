@@ -26,9 +26,8 @@
 
 ### [最佳实战](./doc/suggest.md)
 
-### [Spring boot demo](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
+### [autoload-cache-spring-boot-starter](https://github.com/qiujiayu/autoload-cache-spring-boot-starter) 推荐使用这个，[test目录](https://github.com/qiujiayu/autoload-cache-spring-boot-starter/tree/master/src/test)中也有可运行例子。
 
-### [autoload-cache-spring-boot-starter](https://github.com/qiujiayu/autoload-cache-spring-boot-starter)
 
 ### 源码阅读
 

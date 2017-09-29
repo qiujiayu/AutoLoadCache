@@ -21,8 +21,6 @@
     <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
 
     <bean id="cacheManager" class="com.jarvis.cache.memcache.MemcachedCacheManager">
-      <constructor-arg ref="autoLoadConfig" />
-      <constructor-arg ref="hessianSerializer" />
       <property name="memcachedClient", ref="memcachedClient" />
     </bean>
 

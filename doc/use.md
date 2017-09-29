@@ -50,6 +50,8 @@
     <bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
       <constructor-arg ref="cacheManager" />
       <constructor-arg ref="scriptParser" />
+      <constructor-arg ref="autoLoadConfig" />
+      <constructor-arg ref="hessianSerializer" />
     </bean>
 
 ### 7.AOP 配置：
@@ -86,7 +88,9 @@
 
 更多的配置可以参照
 
-[Spring 实例代码](https://github.com/qiujiayu/cache-example)
+[autoload-cache-spring-boot-starter](https://github.com/qiujiayu/autoload-cache-spring-boot-starter) 推荐使用这个，[test目录](https://github.com/qiujiayu/autoload-cache-spring-boot-starter/tree/master/src/test)中也有可运行例子。
+
+[Spring 实例代码](https://github.com/qiujiayu/cache-example)，基于Spring XML进行配置
 
 [Spring boot 实例代码](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
 
