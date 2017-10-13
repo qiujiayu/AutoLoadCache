@@ -140,7 +140,7 @@ public class RefreshHandler {
             boolean isFirst=dataLoader.isFirst();
             factory.returnObject(dataLoader);
             if(isFirst) {
-                if(null == newCacheWrapper && null != cacheWrapper) {// 如果加载失败，则把旧数据进行续租
+                if(null == newCacheWrapper && null != cacheWrapper) {// 如果数据源没有数据，则把旧数据进行续租
                     int newExpire=cacheWrapper.getExpire() / 2;
                     if(newExpire < 120) {
                         newExpire=120;
@@ -151,7 +151,7 @@ public class RefreshHandler {
                     if(null != newCacheWrapper) {
                         cacheHandler.writeCache(pjp, arguments, cache, cacheKey, newCacheWrapper);
                     }
-                } catch(Exception e) {
+                } catch(Throwable e) {
                     log.error(e.getMessage(), e);
                 }
             }

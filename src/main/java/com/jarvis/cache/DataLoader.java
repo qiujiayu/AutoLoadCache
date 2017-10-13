@@ -84,35 +84,34 @@ public class DataLoader {
 
     public DataLoader loadData() throws Throwable {
         ProcessingTO processing=cacheHandler.processing.get(cacheKey);
-        ProcessingTO processingTO=null;
         if(null == processing) {
-            processingTO=new ProcessingTO();
-            ProcessingTO _processing=cacheHandler.processing.putIfAbsent(cacheKey, processingTO);// 为发减少数据层的并发，增加等待机制。
-            if(null != _processing) {
-                processing=_processing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
+            ProcessingTO newProcessing=new ProcessingTO();
+            ProcessingTO firstProcessing=cacheHandler.processing.putIfAbsent(cacheKey, newProcessing);// 为发减少数据层的并发，增加等待机制。
+            if(null == firstProcessing) { // 当前并发中的第一个请求
+                isFirst=true;
+                processing=newProcessing;
+            } else { 
+                isFirst=false;
+                processing=firstProcessing;// 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
             }
         }
-        Object lock=null;
-        String tname=Thread.currentThread().getName();
-        if(null == processing) {// 当前并发中的第一个请求
-            isFirst=true;
-            lock=processingTO;
-            log.trace("{} first thread!", tname);
+        Object lock=processing;
+        String threadName=Thread.currentThread().getName();
+        if(isFirst) {
+            log.trace("{} first thread!", threadName);
             try {
-                doFirstRequest(processingTO);
+                doFirstRequest(processing);
             } catch(Throwable e) {
-                processingTO.setError(e);
+                processing.setError(e);
                 throw e;
             } finally {
-                processingTO.setFirstFinished(true);
+                processing.setFirstFinished(true);
                 cacheHandler.processing.remove(cacheKey);
                 synchronized(lock) {
                     lock.notifyAll();
                 }
             }
         } else {
-            isFirst=false;
-            lock=processing;
             doWaitRequest(processing, lock);
         }
         return this;
