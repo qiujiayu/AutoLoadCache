@@ -37,9 +37,7 @@ Redis配置(基于一致性哈希算法)
     </bean>
     
     <bean id="cacheManager" class="com.jarvis.cache.redis.ShardedJedisCacheManager">
-      <constructor-arg ref="autoLoadConfig" />
       <constructor-arg ref="hessianSerializer" />
-      <constructor-arg ref="scriptParser" />
       <property name="shardedJedisPool" ref="shardedJedisPool" />
     </bean>
 
