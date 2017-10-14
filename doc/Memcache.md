@@ -18,14 +18,6 @@
         <property name="useNagleAlgorithm" value="false" />
     </bean>
 
-    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
-
     <bean id="cacheManager" class="com.jarvis.cache.memcache.MemcachedCacheManager">
       <property name="memcachedClient", ref="memcachedClient" />
     </bean>
-
-    <bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
-      <constructor-arg ref="cacheManager" />
-      <constructor-arg ref="scriptParser" />
-    </bean>
-
