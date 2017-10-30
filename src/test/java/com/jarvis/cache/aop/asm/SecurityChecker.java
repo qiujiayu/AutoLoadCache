@@ -1,5 +1,8 @@
 package com.jarvis.cache.aop.asm;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class SecurityChecker {
 
     public static void checkSecurity() {

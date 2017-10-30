@@ -22,7 +22,7 @@ public class MapCacheManager implements ICacheManager {
 
     private static final Logger logger=LoggerFactory.getLogger(MapCacheManager.class);
 
-    private final ConcurrentHashMap<String, Object> cache=new ConcurrentHashMap<String, Object>();
+    private final ConcurrentHashMap<String, Object> cache;
 
     private final CacheChangeListener changeListener;
 
@@ -65,6 +65,11 @@ public class MapCacheManager implements ICacheManager {
     private int clearAndPersistPeriod=60 * 1000; // 1Minutes
 
     public MapCacheManager(AutoLoadConfig config, ICloner cloner) {
+      this(config, cloner, 1024);
+    }
+
+    public MapCacheManager(AutoLoadConfig config, ICloner cloner, int initSize) {
+        this.cache=new ConcurrentHashMap<String, Object>(initSize);
         this.config=config;
         this.config.setCheckFromCacheBeforeLoad(false);
         this.cloner=cloner;
@@ -118,11 +123,11 @@ public class MapCacheManager implements ICacheManager {
             Object tmpObj=cache.get(cacheKey);
             ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> hash;
             if(null == tmpObj) {
-                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>();
-                ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> _hash=null;
-                _hash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.putIfAbsent(cacheKey, hash);
-                if(null != _hash) {
-                    hash=_hash;
+                hash=new ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>(16);
+                ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>> tempHash=null;
+                tempHash=(ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>)cache.putIfAbsent(cacheKey, hash);
+                if(null != tempHash) {
+                    hash=tempHash;
                 }
             } else {
                 if(tmpObj instanceof ConcurrentHashMap) {

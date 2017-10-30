@@ -1,5 +1,9 @@
 package com.jarvis.cache.exception;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class LoadDataTimeOutException extends Exception {
 
     /**

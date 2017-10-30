@@ -9,6 +9,9 @@ import com.test.Simple;
 
 import junit.framework.TestCase;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class OgnlTest extends TestCase {
 
     AbstractScriptParser scriptParser=new OgnlParser();
@@ -52,7 +55,7 @@ public class OgnlTest extends TestCase {
 
         String keySpEL="#retVal.rid";
         Object[] arguments=new Object[]{"1111", "2222"};
-        Map returnObj=new HashMap();
+        Map returnObj=new HashMap(1);
         returnObj.put("rid", "iamrid");
         String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, returnObj, true);
         System.out.println(res);

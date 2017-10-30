@@ -25,7 +25,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
 
     private final Charset charset;
 
-    private static final SerializerFeature[] features={SerializerFeature.DisableCircularReferenceDetect};
+    private static final SerializerFeature[] FEATURES={SerializerFeature.DisableCircularReferenceDetect};
 
     public FastjsonSerializer() {
         this(Charset.forName("UTF8"));
@@ -40,7 +40,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
         if(obj == null) {
             return null;
         }
-        String json=JSON.toJSONString(obj, features);
+        String json=JSON.toJSONString(obj, FEATURES);
         return json.getBytes(charset);
     }
 
@@ -73,7 +73,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
             return cal;
         }
         if(null != type) {
-            String json=JSON.toJSONString(obj, features);
+            String json=JSON.toJSONString(obj, FEATURES);
             return JSON.parseObject(json, type);
         }
 
@@ -114,7 +114,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
             res.setCacheObject(deepClone(wrapper.getCacheObject(), null));
             return res;
         } else {
-            String json=JSON.toJSONString(obj, features);
+            String json=JSON.toJSONString(obj, FEATURES);
             return JSON.parseObject(json, clazz);
         }
     }
@@ -135,7 +135,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
             Type genericParameterType=genericParameterTypes[i];
             Object obj=args[i];
             if(genericParameterType instanceof ParameterizedType) {
-                String json=JSON.toJSONString(obj, features);
+                String json=JSON.toJSONString(obj, FEATURES);
                 res[i]=JSON.parseObject(json, genericParameterType);
             } else {
                 res[i]=deepClone(obj, null);

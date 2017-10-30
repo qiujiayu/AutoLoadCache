@@ -31,13 +31,13 @@ import com.jarvis.lib.util.BeanUtil;
  */
 public class JacksonJsonSerializer implements ISerializer<Object> {
 
-    private static final ObjectMapper mapper=new ObjectMapper();
+    private static final ObjectMapper MAPPER=new ObjectMapper();
 
     public JacksonJsonSerializer() {
         // mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.registerModule(new SimpleModule().addSerializer(new JacksonJsonSerializer.NullValueSerializer((String)null)));
-        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+        MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        MAPPER.registerModule(new SimpleModule().addSerializer(new JacksonJsonSerializer.NullValueSerializer((String)null)));
+        MAPPER.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
     }
 
     private class NullValueSerializer extends StdSerializer<NullValue> {
@@ -73,7 +73,7 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
         if(obj == null) {
             return null;
         }
-        return mapper.writeValueAsBytes(obj);
+        return MAPPER.writeValueAsBytes(obj);
     }
 
     @Override
@@ -82,8 +82,8 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
             return null;
         }
         Type[] agsType=new Type[]{returnType};
-        JavaType javaType=mapper.getTypeFactory().constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
-        return mapper.readValue(bytes, javaType);
+        JavaType javaType=MAPPER.getTypeFactory().constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
+        return MAPPER.readValue(bytes, javaType);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -104,9 +104,9 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
             return cal;
         }
         if(null != type) {
-            String json=mapper.writeValueAsString(obj);
-            JavaType javaType=mapper.getTypeFactory().constructType(type);
-            return mapper.readValue(json, javaType);
+            String json=MAPPER.writeValueAsString(obj);
+            JavaType javaType=MAPPER.getTypeFactory().constructType(type);
+            return MAPPER.readValue(json, javaType);
         }
 
         if(clazz.isArray()) {
@@ -146,8 +146,8 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
             res.setCacheObject(deepClone(wrapper.getCacheObject(), null));
             return res;
         } else {
-            String json=mapper.writeValueAsString(obj);
-            return mapper.readValue(json, clazz);
+            String json=MAPPER.writeValueAsString(obj);
+            return MAPPER.readValue(json, clazz);
         }
     }
 
@@ -167,9 +167,9 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
             Type genericParameterType=genericParameterTypes[i];
             Object obj=args[i];
             if(genericParameterType instanceof ParameterizedType) {
-                String json=mapper.writeValueAsString(obj);
-                JavaType javaType=mapper.getTypeFactory().constructType(genericParameterType);
-                res[i]=mapper.readValue(json, javaType);
+                String json=MAPPER.writeValueAsString(obj);
+                JavaType javaType=MAPPER.getTypeFactory().constructType(genericParameterType);
+                res[i]=MAPPER.readValue(json, javaType);
             } else {
                 res[i]=deepClone(obj, null);
             }

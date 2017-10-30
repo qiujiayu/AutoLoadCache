@@ -22,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AutoLoadHandler {
 
+    /**
+     * 自动加载最小过期时间
+     */
     public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
 
     public static final String THREAD_NAME_PREFIX="autoLoadThread-";
@@ -36,7 +39,7 @@ public class AutoLoadHandler {
     /**
      * 缓存池
      */
-    private final Thread threads[];
+    private final Thread[] threads;
 
     /**
      * 排序进行，对自动加载队列进行排序
@@ -58,7 +61,7 @@ public class AutoLoadHandler {
     /**
      * 随机数种子
      */
-    private static final ThreadLocal<Random> random=new ThreadLocal<Random>() {
+    private static final ThreadLocal<Random> RANDOM=new ThreadLocal<Random>() {
 
         @Override
         protected Random initialValue() {
@@ -187,8 +190,9 @@ public class AutoLoadHandler {
         if(null == autoLoadMap || autoLoadMap.isEmpty()) {
             return null;
         }
-        AutoLoadTO tmpArr[]=new AutoLoadTO[autoLoadMap.size()];
-        tmpArr=autoLoadMap.values().toArray(tmpArr);// 复制引用
+        AutoLoadTO[] tmpArr=new AutoLoadTO[autoLoadMap.size()];
+        // 复制引用
+        tmpArr=autoLoadMap.values().toArray(tmpArr);
         if(null != config.getSortType() && null != config.getSortType().getComparator()) {
             Arrays.sort(tmpArr, config.getSortType().getComparator());
         }
@@ -201,9 +205,10 @@ public class AutoLoadHandler {
         public void run() {
             while(running) {
                 int sleep=100;
-                if(autoLoadMap.isEmpty() || autoLoadQueue.size() > 0) {// 如果没有数据 或 还有线程在处理，则继续等待
+                // 如果没有数据 或 还有线程在处理，则继续等待
+                if(autoLoadMap.isEmpty() || autoLoadQueue.size() > 0) {
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(sleep);
                     } catch(InterruptedException e) {
                         log.error(e.getMessage(), e);
                     }
@@ -219,7 +224,7 @@ public class AutoLoadHandler {
                     log.error(e.getMessage(), e);
                 }
 
-                AutoLoadTO tmpArr[]=getAutoLoadQueue();
+                AutoLoadTO[] tmpArr=getAutoLoadQueue();
                 if(null == tmpArr || tmpArr.length == 0) {
                     continue;
                 }
@@ -268,18 +273,21 @@ public class AutoLoadHandler {
             }
             Cache cache=autoLoadTO.getCache();
             long requestTimeout=cache.requestTimeout();
-            if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {// 如果超过一定时间没有请求数据，则从队列中删除
+            // 如果超过一定时间没有请求数据，则从队列中删除
+            if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
-            if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {// 如果效率比较高的请求，就没必要使用自动加载了。
+            // 如果效率比较高的请求，就没必要使用自动加载了。
+            if(autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             // 对于使用频率很低的数据，也可以考虑不用自动加载
             long difFirstRequestTime=now - autoLoadTO.getFirstRequestTime();
             long oneHourSecs=3600000L;
-            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {// 使用率比较低的数据，没有必要使用自动加载。
+            // 使用率比较低的数据，没有必要使用自动加载。
+            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -287,7 +295,8 @@ public class AutoLoadHandler {
                 return;
             }
             int expire=autoLoadTO.getExpire();
-            if(expire < AUTO_LOAD_MIN_EXPIRE) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+            // 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+            if(expire < AUTO_LOAD_MIN_EXPIRE) {
                 return;
             }
             // 计算超时时间
@@ -302,7 +311,7 @@ public class AutoLoadHandler {
                     timeout=expire - 60;
                 }
             }
-            int rand=random.get().nextInt(10);
+            int rand=RANDOM.get().nextInt(10);
             timeout=(timeout + (rand % 2 == 0 ? rand : -rand)) * 1000;
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;
@@ -316,7 +325,8 @@ public class AutoLoadHandler {
                 } catch(Exception ex) {
                     log.error(ex.getMessage(), ex);
                 }
-                if(null != result) {// 如果已经被别的服务器更新了，则不需要再次更新
+                // 如果已经被别的服务器更新了，则不需要再次更新
+                if(null != result) {
                     autoLoadTO.setExpire(result.getExpire());
                     if(result.getLastLoadTime() > autoLoadTO.getLastLoadTime() && (now - result.getLastLoadTime()) < timeout) {
                         autoLoadTO.setLastLoadTime(result.getLastLoadTime());
@@ -338,15 +348,16 @@ public class AutoLoadHandler {
             long loadDataUseTime=dataLoader.getLoadDataUseTime();
             factory.returnObject(dataLoader);
             if(isFirst) {
-                if(null == newCacheWrapper && null != result) {// 如果数据加载失败，则把旧数据进行续租
+                // 如果数据加载失败，则把旧数据进行续租
+                if(null == newCacheWrapper && null != result) {
                     int newExpire=AUTO_LOAD_MIN_EXPIRE + 60;
                     newCacheWrapper=new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
                 try {
                     if(null != newCacheWrapper) {
                         cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
-                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
-                            .setExpire(newCacheWrapper.getExpire())// 同步过期时间
+                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())
+                            .setExpire(newCacheWrapper.getExpire())
                             .addUseTotalTime(loadDataUseTime);
                     }
                 } catch(Exception e) {

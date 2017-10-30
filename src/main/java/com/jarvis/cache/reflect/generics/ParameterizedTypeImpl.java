@@ -21,10 +21,11 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     private ParameterizedTypeImpl(Class<?> paramClass, Type[] paramArrayOfType, Type paramType) {
         this.actualTypeArguments=paramArrayOfType;
         this.rawType=paramClass;
-        if(paramType != null)
+        if(paramType != null) {
             this.ownerType=paramType;
-        else
+        } else {
             this.ownerType=paramClass.getDeclaringClass();
+        }
         validateConstructorArguments();
     }
 
@@ -35,25 +36,29 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         if(arrayOfTypeVariable.length != this.actualTypeArguments.length) {
             throw new MalformedParameterizedTypeException();
         }
-        for(int i=0; i < this.actualTypeArguments.length; i++);
+        // for(int i=0; i < this.actualTypeArguments.length; i++);
     }
 
     public static ParameterizedTypeImpl make(Class<?> paramClass, Type[] paramArrayOfType, Type paramType) {
         return new ParameterizedTypeImpl(paramClass, paramArrayOfType, paramType);
     }
 
+    @Override
     public Type[] getActualTypeArguments() {
         return (Type[])this.actualTypeArguments.clone();
     }
 
+    @Override
     public Class<?> getRawType() {
         return this.rawType;
     }
 
+    @Override
     public Type getOwnerType() {
         return this.ownerType;
     }
 
+    @Override
     public boolean equals(Object paramObject) {
         if((paramObject instanceof ParameterizedType)) {
             ParameterizedType localParameterizedType=(ParameterizedType)paramObject;
@@ -71,10 +76,12 @@ public class ParameterizedTypeImpl implements ParameterizedType {
         return false;
     }
 
+    @Override
     public int hashCode() {
         return Arrays.hashCode(this.actualTypeArguments) ^ (this.ownerType == null ? 0 : this.ownerType.hashCode()) ^ (this.rawType == null ? 0 : this.rawType.hashCode());
     }
 
+    @Override
     public String toString() {
         StringBuilder localStringBuilder=new StringBuilder();
 
@@ -88,8 +95,9 @@ public class ParameterizedTypeImpl implements ParameterizedType {
 
             if((this.ownerType instanceof ParameterizedTypeImpl)) {
                 localStringBuilder.append(this.rawType.getName().replace(((ParameterizedTypeImpl)this.ownerType).rawType.getName() + "$", ""));
-            } else
+            } else {
                 localStringBuilder.append(this.rawType.getName());
+            }
         } else {
             localStringBuilder.append(this.rawType.getName());
         }
@@ -97,11 +105,12 @@ public class ParameterizedTypeImpl implements ParameterizedType {
             localStringBuilder.append("<");
             int i=1;
             for(Type localType: this.actualTypeArguments) {
-                if(i == 0)
+                if(i == 0) {
                     localStringBuilder.append(", ");
-                if((localType instanceof Class<?>))
+                }
+                if((localType instanceof Class<?>)) {
                     localStringBuilder.append(((Class<?>)localType).getName());
-                else {
+                } else {
                     // if(null!=localType){
                     localStringBuilder.append(localType.toString());
                     // }

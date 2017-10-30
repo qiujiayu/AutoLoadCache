@@ -13,7 +13,10 @@ import org.junit.Test;
 import com.jarvis.cache.serializer.FastjsonSerializer;
 import com.jarvis.cache.to.CacheWrapper;
 
-public class FastJsonDeepCloneCacheWrapper {
+/**
+ * @author: jiayu.qiu
+ */
+public class FastJsonDeepCloneCacheWrapperTest {
 
     @Test
     public void testCacheWrapper() throws Exception {
@@ -26,7 +29,7 @@ public class FastJsonDeepCloneCacheWrapper {
         list.add(user);
         cache.setCacheObject(list);
 
-        Field fields[]=CacheWrapper.class.getDeclaredFields();
+        Field[] fields=CacheWrapper.class.getDeclaredFields();
         for(Field field: fields) {
             field.setAccessible(true);
             Type genericFieldType=field.getGenericType();
@@ -36,7 +39,7 @@ public class FastJsonDeepCloneCacheWrapper {
             } else if(genericFieldType instanceof TypeVariable) {
                 System.out.println("----TypeVariable----------------");
                 TypeVariable tv=(TypeVariable)genericFieldType;
-                Type types[]=tv.getBounds();
+                Type[] types=tv.getBounds();
                 for(Type type: types) {
                     System.out.println("-----" + type);
                 }

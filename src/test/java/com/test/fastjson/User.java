@@ -5,6 +5,9 @@ import java.util.Date;
 
 import lombok.Data;
 
+/**
+ * @author: jiayu.qiu
+ */
 @Data
 public class User implements Serializable {
 

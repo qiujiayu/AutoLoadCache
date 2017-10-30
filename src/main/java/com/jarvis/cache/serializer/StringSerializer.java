@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
  * <p>
  * Does not perform any null conversion since empty strings are valid keys/values.
  * </p>
+ * @author: jiayu.qiu
  */
 public class StringSerializer implements ISerializer<String> {
 

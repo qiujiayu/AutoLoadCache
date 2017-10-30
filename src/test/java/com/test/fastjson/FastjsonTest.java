@@ -11,6 +11,9 @@ import com.alibaba.fastjson.JSON;
 import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.to.CacheWrapper;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class FastjsonTest {
 
     public static void main(String[] args) throws SecurityException, NoSuchMethodException {
@@ -26,11 +29,11 @@ public class FastjsonTest {
         list.add(user);
         String listJson=JSON.toJSONString(list);
 
-        Method methods[]=FastjsonTest.class.getDeclaredMethods();
+        Method[] methods=FastjsonTest.class.getDeclaredMethods();
         Type testType=null;
         String testName=null;
         for(Method method: methods) {
-            if(method.getName().equals("getData")) {
+            if("getData".equals(method.getName())) {
                 try {
                     for(Class cls: method.getParameterTypes()) {
                         System.out.println(cls.getName());

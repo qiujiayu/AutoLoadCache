@@ -7,7 +7,6 @@ import java.lang.reflect.Type;
  * 注意：只能获取超类中的参数类型
  * @author jiayu.qiu
  */
-
 public class ReflectUtils {
 
     /**

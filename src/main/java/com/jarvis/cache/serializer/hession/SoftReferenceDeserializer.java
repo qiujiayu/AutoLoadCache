@@ -1,4 +1,4 @@
-package com.jarvis.cache.serializer;
+package com.jarvis.cache.serializer.hession;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -7,6 +7,9 @@ import com.caucho.hessian.io.AbstractHessianInput;
 import com.caucho.hessian.io.AbstractMapDeserializer;
 import com.caucho.hessian.io.IOExceptionWrapper;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class SoftReferenceDeserializer extends AbstractMapDeserializer {
 
     @Override

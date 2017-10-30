@@ -7,6 +7,10 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class ShardedJedisLock extends AbstractRedisLock {
 
     private static final Logger logger=LoggerFactory.getLogger(ShardedJedisLock.class);

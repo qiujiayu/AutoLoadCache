@@ -10,7 +10,11 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.test.hessian.MyTO;
 
-
+/**
+ * 
+ * TODO
+ * @author: jiayu.qiu
+ */
 public class KryoTest {
 
     private final static Kryo kryo = new Kryo();
@@ -63,22 +67,25 @@ public class KryoTest {
             output.flush();
             return baos.toByteArray();
         }finally{
-            if(output != null)
+            if(output != null) {
                 output.close();
+            }
         }
     }
 
     private static Object read(byte[] data) throws Exception {
-        if(data == null || data.length == 0)
+        if(data == null || data.length == 0) {
             return null;
+        }
         Input ois = null;
         try {
             ByteArrayInputStream bais = new ByteArrayInputStream(data);
             ois = new Input(bais);
             return kryo.readClassAndObject(ois);
         } finally {
-            if(ois != null)
+            if(ois != null) {
                 ois.close();
+            }
         }
     }
 

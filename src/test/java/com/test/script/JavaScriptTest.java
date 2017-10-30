@@ -9,6 +9,9 @@ import com.test.Simple;
 
 import junit.framework.TestCase;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class JavaScriptTest extends TestCase {
 
     AbstractScriptParser scriptParser=new JavaScriptParser();
@@ -82,7 +85,7 @@ public class JavaScriptTest extends TestCase {
         keySpEL="retVal.get('rid')";// undefined
 
         Object[] arguments=new Object[]{"1111", "2222"};
-        Map returnObj=new HashMap();
+        Map returnObj=new HashMap(1);
         returnObj.put("rid", "iamrid");
         String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, returnObj, true);
         System.out.println(res);

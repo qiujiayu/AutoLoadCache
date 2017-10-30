@@ -23,9 +23,12 @@ import com.test.Stopwatch;
 
 import net.sf.cglib.beans.BeanCopier;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class DeepCloneTest {
 
-    private static final SerializerFeature[] features={SerializerFeature.DisableCircularReferenceDetect};
+    private static final SerializerFeature[] FEATURES={SerializerFeature.DisableCircularReferenceDetect};
 
     private static int hot=10000;
 
@@ -82,10 +85,10 @@ public class DeepCloneTest {
         user.setName("test");
         user.setBirthday(new Date());
         list.add(user);
-        Map<Integer, User> map=new HashMap<Integer, User>();
+        Map<Integer, User> map=new HashMap<Integer, User>(1);
         map.put(user.getId(), user);
         Object[] arr=new Object[]{1, "test", list, map, User.class};
-        String json=JSON.toJSONString(arr, features);
+        String json=JSON.toJSONString(arr, FEATURES);
         System.out.println(json);
         Object[] arr2=JSON.parseObject(json, arr.getClass());
         for(int i=0; i < arr2.length; i++) {
@@ -101,7 +104,7 @@ public class DeepCloneTest {
         user.setName("test");
         user.setBirthday(new Date());
         list.add(user);
-        Map<Integer, User> map=new HashMap<Integer, User>();
+        Map<Integer, User> map=new HashMap<Integer, User>(1);
         map.put(user.getId(), user);
         Object[] arr=new Object[]{1, "test", list, map, User.class};
         ISerializer<Object> s=new FastjsonSerializer();
@@ -152,7 +155,7 @@ public class DeepCloneTest {
         user.setName("test");
         user.setBirthday(new Date());
         list.add(user);
-        Map<Integer, User> map=new HashMap<Integer, User>();
+        Map<Integer, User> map=new HashMap<Integer, User>(1);
         User user2=new User();
         user2.setId(1);
         user2.setName("test");

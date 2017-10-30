@@ -4,6 +4,9 @@ import java.lang.ref.SoftReference;
 
 import com.test.Simple;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class SoftReferenceTest {
 
     public static void main(String[] args) {

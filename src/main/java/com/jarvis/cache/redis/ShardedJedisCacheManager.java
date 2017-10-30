@@ -32,7 +32,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
 
     private static final Logger logger=LoggerFactory.getLogger(ShardedJedisCacheManager.class);
 
-    private static final StringSerializer keySerializer=new StringSerializer();
+    private static final StringSerializer KEY_SERIALIZER=new StringSerializer();
 
     private final ISerializer<Object> serializer;
 
@@ -73,9 +73,9 @@ public class ShardedJedisCacheManager implements ICacheManager {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-                    jedis.set(keySerializer.serialize(cacheKey), serializer.serialize(result));
+                    jedis.set(KEY_SERIALIZER.serialize(cacheKey), serializer.serialize(result));
                 } else if(expire > 0) {
-                    jedis.setex(keySerializer.serialize(cacheKey), expire, serializer.serialize(result));
+                    jedis.setex(KEY_SERIALIZER.serialize(cacheKey), expire, serializer.serialize(result));
                 }
             } else {
                 hashSet(jedis, cacheKey, hfield, result);
@@ -98,11 +98,11 @@ public class ShardedJedisCacheManager implements ICacheManager {
         }
     }
 
-    private static final Map<Jedis, byte[]> hashSetScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
+    private static final Map<String, byte[]> HASH_SET_SCRIPT_SHA=new ConcurrentHashMap<String, byte[]>();
 
     private void hashSet(Jedis jedis, String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
-        byte[] key=keySerializer.serialize(cacheKey);
-        byte[] field=keySerializer.serialize(hfield);
+        byte[] key=KEY_SERIALIZER.serialize(cacheKey);
+        byte[] field=KEY_SERIALIZER.serialize(hfield);
         byte[] val=serializer.serialize(result);
         int hExpire;
         if(hashExpire < 0) {
@@ -114,10 +114,11 @@ public class ShardedJedisCacheManager implements ICacheManager {
             jedis.hset(key, field, val);
         } else if(hExpire > 0) {
             if(hashExpireByScript) {
-                byte[] sha=hashSetScriptSha.get(jedis);
+                String redisInstance = jedis.getClient().getHost()+":"+jedis.getClient().getPort();
+                byte[] sha=HASH_SET_SCRIPT_SHA.get(redisInstance);
                 if(null == sha) {
                     sha=jedis.scriptLoad(hashSetScript);
-                    hashSetScriptSha.put(jedis, sha);
+                    HASH_SET_SCRIPT_SHA.put(redisInstance, sha);
                 }
                 List<byte[]> keys=new ArrayList<byte[]>();
                 keys.add(key);
@@ -125,14 +126,14 @@ public class ShardedJedisCacheManager implements ICacheManager {
 
                 List<byte[]> args=new ArrayList<byte[]>();
                 args.add(val);
-                args.add(keySerializer.serialize(String.valueOf(hExpire)));
+                args.add(KEY_SERIALIZER.serialize(String.valueOf(hExpire)));
                 try {
                     jedis.evalsha(sha, keys, args);
                 } catch(Exception ex) {
                     logger.error(ex.getMessage(), ex);
                     try {
                         sha=jedis.scriptLoad(hashSetScript);
-                        hashSetScriptSha.put(jedis, sha);
+                        HASH_SET_SCRIPT_SHA.put(redisInstance, sha);
                         jedis.evalsha(sha, keys, args);
                     } catch(Exception ex1) {
                         logger.error(ex1.getMessage(), ex1);
@@ -165,9 +166,9 @@ public class ShardedJedisCacheManager implements ICacheManager {
             byte bytes[]=null;
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
-                bytes=jedis.get(keySerializer.serialize(cacheKey));
+                bytes=jedis.get(KEY_SERIALIZER.serialize(cacheKey));
             } else {
-                bytes=jedis.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
+                bytes=jedis.hget(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
             }
             Type returnType=null;
             if(null != method) {
@@ -212,9 +213,9 @@ public class ShardedJedisCacheManager implements ICacheManager {
                 Jedis jedis=shardedJedis.getShard(cacheKey);
                 String hfield=cacheKeyTO.getHfield();
                 if(null == hfield || hfield.length() == 0) {
-                    jedis.del(keySerializer.serialize(cacheKey));
+                    jedis.del(KEY_SERIALIZER.serialize(cacheKey));
                 } else {
-                    jedis.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
+                    jedis.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
                 }
             }
         } catch(Exception ex) {
@@ -238,16 +239,17 @@ public class ShardedJedisCacheManager implements ICacheManager {
         }
     }
 
-    private static final Map<Jedis, byte[]> delScriptSha=new ConcurrentHashMap<Jedis, byte[]>();
+    private static final Map<String, byte[]> DEL_SCRIPT_SHA=new ConcurrentHashMap<String, byte[]>();
 
     private void batchDel(ShardedJedis shardedJedis, String cacheKey) throws Exception {
         Collection<Jedis> list=shardedJedis.getAllShards();
         for(Jedis jedis: list) {// 如果是批量删除缓存，则要遍历所有redis，避免遗漏。
-            byte[] sha=delScriptSha.get(jedis);
-            byte[] key=keySerializer.serialize(cacheKey);
+            String redisInstance = jedis.getClient().getHost()+":"+jedis.getClient().getPort();
+            byte[] sha=DEL_SCRIPT_SHA.get(redisInstance);
+            byte[] key=KEY_SERIALIZER.serialize(cacheKey);
             if(null == sha) {
                 sha=jedis.scriptLoad(delScript);
-                delScriptSha.put(jedis, sha);
+                DEL_SCRIPT_SHA.put(redisInstance, sha);
             }
             try {
                 @SuppressWarnings("unchecked")
@@ -261,7 +263,7 @@ public class ShardedJedisCacheManager implements ICacheManager {
                 logger.error(ex.getMessage(), ex);
                 try {
                     sha=jedis.scriptLoad(delScript);
-                    delScriptSha.put(jedis, sha);
+                    DEL_SCRIPT_SHA.put(redisInstance, sha);
                     @SuppressWarnings("unchecked")
                     List<String> keys=(List<String>)jedis.evalsha(sha, 1, key);
                     if(null != keys && keys.size() > 0) {

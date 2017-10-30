@@ -9,6 +9,9 @@ import java.util.Map;
 import com.jarvis.cache.clone.Cloning;
 import com.jarvis.cache.clone.ICloner;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class CloningTest {
 
     public static void main(String[] args) throws Exception {
@@ -32,7 +35,7 @@ public class CloningTest {
         user.setName("test");
         user.setBirthday(new Date());
         list.add(user);
-        Map<Integer, User> map=new HashMap<Integer, User>();
+        Map<Integer, User> map=new HashMap<Integer, User>(4);
         map.put(user.getId(), user);
         Object[] arr=new Object[]{1, "test", list, map, User.class};
         ICloner s=new Cloning();

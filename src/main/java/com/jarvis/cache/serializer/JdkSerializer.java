@@ -11,6 +11,9 @@ import java.util.Date;
 
 import com.jarvis.lib.util.BeanUtil;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class JdkSerializer implements ISerializer<Object> {
 
     @Override

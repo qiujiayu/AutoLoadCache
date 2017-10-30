@@ -3,11 +3,12 @@ package com.jarvis.cache.to;
 import java.util.Map;
 
 import com.jarvis.cache.type.AutoLoadQueueSortType;
-
+import lombok.ToString;
 /**
  * 缓存处理的相关 配置
  * @author jiayu.qiu
  */
+@ToString
 public class AutoLoadConfig {
 
     /**
@@ -76,6 +77,11 @@ public class AutoLoadConfig {
      * 加载数据重试次数，默认值为1：
      */
     private int loadDataTryCnt=1;
+    
+    /**
+     * 
+     */
+    private int processingMapSize=1024;
 
     public String getNamespace() {
         return namespace;
@@ -217,13 +223,16 @@ public class AutoLoadConfig {
             this.loadDataTryCnt=loadDataTryCnt;
         }
     }
-
-    @Override
-    public String toString() {
-        return "AutoLoadConfig [namespace=" + namespace + ", threadCnt=" + threadCnt + ", maxElement=" + maxElement + ", printSlowLog=" + printSlowLog + ", slowLoadTime=" + slowLoadTime
-            + ", sortType=" + sortType + ", checkFromCacheBeforeLoad=" + checkFromCacheBeforeLoad + ", autoLoadPeriod=" + autoLoadPeriod + ", refreshThreadPoolSize=" + refreshThreadPoolSize
-            + ", refreshThreadPoolMaxSize=" + refreshThreadPoolMaxSize + ", refreshThreadPoolkeepAliveTime=" + refreshThreadPoolkeepAliveTime + ", refreshQueueCapacity=" + refreshQueueCapacity
-            + ", functions=" + functions + ", loadDataTryCnt=" + loadDataTryCnt + "]";
+    
+    public int getProcessingMapSize() {
+        return processingMapSize;
+    }
+    
+    public void setProcessingMapSize(int processingMapSize) {
+        if(processingMapSize < 64) {
+            return;
+        }
+        this.processingMapSize = processingMapSize;
     }
 
 }

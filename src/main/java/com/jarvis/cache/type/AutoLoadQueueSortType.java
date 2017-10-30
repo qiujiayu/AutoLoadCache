@@ -5,7 +5,9 @@ import java.util.Comparator;
 import com.jarvis.cache.comparator.AutoLoadOldestComparator;
 import com.jarvis.cache.comparator.AutoLoadRequestTimesComparator;
 import com.jarvis.cache.to.AutoLoadTO;
-
+/**
+ * @author: jiayu.qiu
+ */
 public enum AutoLoadQueueSortType {
         /**
          * 默认顺序
@@ -33,7 +35,7 @@ public enum AutoLoadQueueSortType {
         if(null == id) {
             return NONE;
         }
-        AutoLoadQueueSortType values[]=AutoLoadQueueSortType.values();
+        AutoLoadQueueSortType[] values=AutoLoadQueueSortType.values();
         for(AutoLoadQueueSortType tmp: values) {
             if(id.intValue() == tmp.getId().intValue()) {
                 return tmp;

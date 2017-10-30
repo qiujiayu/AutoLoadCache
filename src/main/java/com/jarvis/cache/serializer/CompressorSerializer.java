@@ -9,6 +9,10 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import com.jarvis.cache.compress.CommonsCompressor;
 import com.jarvis.cache.compress.ICompressor;
 
+/**
+ * memcache缓存管理
+ * @author: jiayu.qiu
+ */
 public class CompressorSerializer implements ISerializer<Object> {
 
     private static final int DEFAULT_COMPRESSION_THRESHOLD=16384;

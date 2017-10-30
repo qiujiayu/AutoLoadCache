@@ -20,7 +20,7 @@ public abstract class AbstractRedisLockWithLua implements ILock {
      * 分布式锁 KEY[1] lock key <br>
      * ARGV[1] 过期时间 ARGV[2] 缓存时长 返回值: 如果执行成功, 则返回1; 否则返回0
      */
-    private static final String lockScriptStr="local lockKey= KEYS[1]\n"//
+    private static final String LOCK_SCRIPT_STR="local lockKey= KEYS[1]\n"//
         + "local lock = redis.call('SETNX', lockKey, ARGV[1])\n" // 持锁
         + "if lock == 0 then\n" //
         + "  return 0\n" //
@@ -32,14 +32,28 @@ public abstract class AbstractRedisLockWithLua implements ILock {
 
     static {
         try {
-            lockScript=lockScriptStr.getBytes("UTF-8");
+            lockScript=LOCK_SCRIPT_STR.getBytes("UTF-8");
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * 
+     * eval
+     * @param lockScript
+     * @param key
+     * @param args
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     protected abstract Long eval(byte[] lockScript, String key, List<byte[]> args) throws UnsupportedEncodingException;
 
+    /**
+     * 
+     * del
+     * @param key
+     */
     protected abstract void del(String key);
 
     @Override
@@ -49,7 +63,7 @@ public abstract class AbstractRedisLockWithLua implements ILock {
         if(locked) {
             Map<String, RedisLockInfo> startTimeMap=LOCK_START_TIME.get();
             if(null == startTimeMap) {
-                startTimeMap=new HashMap<String, RedisLockInfo>();
+                startTimeMap=new HashMap<String, RedisLockInfo>(8);
                 LOCK_START_TIME.set(startTimeMap);
             }
             RedisLockInfo info=new RedisLockInfo();

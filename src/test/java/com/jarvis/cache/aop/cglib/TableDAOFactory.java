@@ -3,7 +3,9 @@ package com.jarvis.cache.aop.cglib;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
-
+/**
+ * @author: jiayu.qiu
+ */
 public class TableDAOFactory {
 
     private static TableDao tDao=new TableDao();

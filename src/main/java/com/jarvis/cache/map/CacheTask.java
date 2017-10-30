@@ -20,6 +20,10 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.OsUtil;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class CacheTask implements Runnable, CacheChangeListener {
 
     private static final Logger logger=LoggerFactory.getLogger(CacheTask.class);
@@ -192,10 +196,10 @@ public class CacheTask implements Runnable, CacheChangeListener {
      */
     private void cleanCache() {
         Iterator<Entry<String, Object>> iterator=cacheManager.getCache().entrySet().iterator();
-        int _cacheChanged=0;
+        int cacheChanged=0;
         int i=0;
         while(iterator.hasNext()) {
-            _cacheChanged+=removeExpiredItem(iterator);
+            cacheChanged+=removeExpiredItem(iterator);
             i++;
             if(i == 2000) {
                 i=0;
@@ -206,14 +210,14 @@ public class CacheTask implements Runnable, CacheChangeListener {
                 }
             }
         }
-        if(_cacheChanged > 0) {
-            cacheChange(_cacheChanged);
+        if(cacheChanged > 0) {
+            cacheChange(cacheChanged);
         }
     }
 
     @SuppressWarnings("unchecked")
     private int removeExpiredItem(Iterator<Entry<String, Object>> iterator) {
-        int _cacheChanged=0;
+        int cacheChanged=0;
         Object value=iterator.next().getValue();
         if(value instanceof SoftReference) {
             SoftReference<CacheWrapper<Object>> reference=(SoftReference<CacheWrapper<Object>>)value;
@@ -221,11 +225,11 @@ public class CacheTask implements Runnable, CacheChangeListener {
                 CacheWrapper<Object> tmp=reference.get();
                 if(tmp.isExpired()) {
                     iterator.remove();
-                    _cacheChanged++;
+                    cacheChanged++;
                 }
             } else {
                 iterator.remove();
-                _cacheChanged++;
+                cacheChanged++;
             }
         } else if(value instanceof ConcurrentHashMap) {
             ConcurrentHashMap<String, Object> hash=(ConcurrentHashMap<String, Object>)value;
@@ -238,17 +242,17 @@ public class CacheTask implements Runnable, CacheChangeListener {
                         CacheWrapper<Object> tmp=reference.get();
                         if(tmp.isExpired()) {
                             iterator2.remove();
-                            _cacheChanged++;
+                            cacheChanged++;
                         }
                     } else {
                         iterator2.remove();
-                        _cacheChanged++;
+                        cacheChanged++;
                     }
                 } else if(tmpObj instanceof CacheWrapper) {// 兼容老版本
                     CacheWrapper<Object> tmp=(CacheWrapper<Object>)tmpObj;
                     if(tmp.isExpired()) {
                         iterator2.remove();
-                        _cacheChanged++;
+                        cacheChanged++;
                     }
                 }
             }
@@ -259,10 +263,10 @@ public class CacheTask implements Runnable, CacheChangeListener {
             CacheWrapper<Object> tmp=(CacheWrapper<Object>)value;
             if(tmp.isExpired()) {
                 iterator.remove();
-                _cacheChanged++;
+                cacheChanged++;
             }
         }
-        return _cacheChanged;
+        return cacheChanged;
     }
 
     @Override

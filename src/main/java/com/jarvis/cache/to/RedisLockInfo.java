@@ -1,27 +1,15 @@
 package com.jarvis.cache.to;
 
+import lombok.Data;
+
 /**
  * @author jiayu.qiu
  */
+@Data
 public class RedisLockInfo {
 
     private Long startTime;
 
     private Integer leaseTime;
 
-    public Long getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(Long startTime) {
-        this.startTime=startTime;
-    }
-
-    public Integer getLeaseTime() {
-        return leaseTime;
-    }
-
-    public void setLeaseTime(Integer leaseTime) {
-        this.leaseTime=leaseTime;
-    }
 }

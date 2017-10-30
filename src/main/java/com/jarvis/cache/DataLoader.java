@@ -159,10 +159,10 @@ public class DataLoader {
                 break;
             }
             if(processing.isFirstFinished()) {
-                CacheWrapper<Object> _cacheWrapper=processing.getCache();// 从本地内存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == _cacheWrapper));
-                if(null != _cacheWrapper) {
-                    cacheWrapper=_cacheWrapper;
+                CacheWrapper<Object> tmpcacheWrapper=processing.getCache();// 从本地内存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == tmpcacheWrapper));
+                if(null != tmpcacheWrapper) {
+                    cacheWrapper=tmpcacheWrapper;
                     return;
                 }
                 Throwable error=processing.getError();

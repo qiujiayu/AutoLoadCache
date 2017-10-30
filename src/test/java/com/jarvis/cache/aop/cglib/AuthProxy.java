@@ -6,6 +6,9 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 // 方法拦截器
+/**
+ * @author: jiayu.qiu
+ */
 public class AuthProxy implements MethodInterceptor {
 
     private String userName;
@@ -15,6 +18,7 @@ public class AuthProxy implements MethodInterceptor {
     }
 
     // 用来增强原有方法
+    @Override
     public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
         // 权限判断
         if(!"张三".equals(userName)) {

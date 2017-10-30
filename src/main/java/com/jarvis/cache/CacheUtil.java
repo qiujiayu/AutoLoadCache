@@ -47,7 +47,7 @@ public class CacheUtil {
         int len=buf.length();
 
         while(len-- > 0) {
-            hash=((hash << 5) + hash) + buf.charAt(len); /* hash * 33 + c */
+            hash=((hash << 5) + hash) + buf.charAt(len);
         }
         return hash;
     }

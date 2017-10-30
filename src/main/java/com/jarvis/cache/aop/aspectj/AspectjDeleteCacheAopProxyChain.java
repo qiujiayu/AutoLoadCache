@@ -8,6 +8,10 @@ import org.aspectj.lang.reflect.MethodSignature;
 
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class AspectjDeleteCacheAopProxyChain implements DeleteCacheAopProxyChain {
 
     private JoinPoint jp;

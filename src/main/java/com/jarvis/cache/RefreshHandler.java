@@ -16,6 +16,10 @@ import com.jarvis.cache.to.CacheWrapper;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 异步刷新缓存处理器
+ * @author: jiayu.qiu
+ */
 @Slf4j
 public class RefreshHandler {
 

@@ -1,5 +1,8 @@
 package com.jarvis.lib.util;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class OsUtil {
 
     private static OsUtil instance=new OsUtil();
@@ -8,10 +11,11 @@ public class OsUtil {
 
     static {
         String os=System.getProperty("os.name");
-        if((os != null) && (os.toUpperCase().indexOf("LINUX") > -1))
+        if((os != null) && (os.toUpperCase().indexOf("LINUX") > -1)) {
             isLinux=true;
-        else
+        } else {
             isLinux=false;
+        }
     }
 
     public static OsUtil getInstance() {

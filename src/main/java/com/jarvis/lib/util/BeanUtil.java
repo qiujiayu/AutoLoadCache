@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BeanUtil {
 
     @SuppressWarnings("rawtypes")
-    private static final ConcurrentHashMap<Class, Field[]> fieldsCahce=new ConcurrentHashMap<Class, Field[]>();
+    private static final ConcurrentHashMap<Class, Field[]> FIELDS_CAHCE=new ConcurrentHashMap<Class, Field[]>();
 
     /**
      * 是否为基础数据类型
@@ -97,13 +97,13 @@ public class BeanUtil {
         }
         String r=cl.getName();
         do {
-            Field[] fields=fieldsCahce.get(cl);
+            Field[] fields=FIELDS_CAHCE.get(cl);
             if(null == fields) {
                 fields=cl.getDeclaredFields();
                 if(null != fields) {
                     AccessibleObject.setAccessible(fields, true);
                 }
-                fieldsCahce.put(cl, fields);
+                FIELDS_CAHCE.put(cl, fields);
             }
             if(null == fields || fields.length == 0) {
                 cl=cl.getSuperclass();

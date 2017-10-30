@@ -24,7 +24,7 @@ import com.test.Stopwatch;
  * 使用深度复制 Method中的参数
  * @author jiayu.qiu
  */
-public class DeepCloneMethodArgs {
+public class DeepCloneMethodArgsTest {
 
     private static int hot=10000;
 
@@ -32,7 +32,7 @@ public class DeepCloneMethodArgs {
 
     @Test
     public void testDeepClone() throws Exception {
-        Method methods[]=DeepCloneMethodArgs.class.getDeclaredMethods();
+        Method[] methods=DeepCloneMethodArgsTest.class.getDeclaredMethods();
         String testName="getUserList";
         Method method=null;
         for(Method m: methods) {
@@ -94,7 +94,7 @@ public class DeepCloneMethodArgs {
         user.setName("test");
         user.setBirthday(new Date());
         list.add(user);
-        Map<Integer, User> map=new HashMap<Integer, User>();
+        Map<Integer, User> map=new HashMap<Integer, User>(1);
         User user2=new User();
         user2.setId(1);
         user2.setName("test");

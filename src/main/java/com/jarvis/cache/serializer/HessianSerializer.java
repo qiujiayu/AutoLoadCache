@@ -13,6 +13,8 @@ import com.caucho.hessian.io.AbstractSerializerFactory;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.caucho.hessian.io.SerializerFactory;
+import com.jarvis.cache.serializer.hession.HessionBigDecimalSerializerFactory;
+import com.jarvis.cache.serializer.hession.HessionSoftReferenceSerializerFactory;
 import com.jarvis.lib.util.BeanUtil;
 
 /**
@@ -20,11 +22,11 @@ import com.jarvis.lib.util.BeanUtil;
  */
 public class HessianSerializer implements ISerializer<Object> {
 
-    private static final SerializerFactory serializerFactory=new SerializerFactory();
+    private static final SerializerFactory SERIALIZER_FACTORY=new SerializerFactory();
 
     static {
-        serializerFactory.addFactory(new HessionBigDecimalSerializerFactory());
-        serializerFactory.addFactory(new HessionSoftReferenceSerializerFactory());
+        SERIALIZER_FACTORY.addFactory(new HessionBigDecimalSerializerFactory());
+        SERIALIZER_FACTORY.addFactory(new HessionSoftReferenceSerializerFactory());
     }
 
     /**
@@ -32,7 +34,7 @@ public class HessianSerializer implements ISerializer<Object> {
      * @param factory AbstractSerializerFactory
      */
     public void addSerializerFactory(AbstractSerializerFactory factory) {
-        serializerFactory.addFactory(factory);
+        SERIALIZER_FACTORY.addFactory(factory);
     }
 
     @Override
@@ -43,7 +45,7 @@ public class HessianSerializer implements ISerializer<Object> {
 
         ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
         AbstractHessianOutput output=new Hessian2Output(outputStream);
-        output.setSerializerFactory(serializerFactory);
+        output.setSerializerFactory(SERIALIZER_FACTORY);
         // 将对象写到流里
         output.writeObject(obj);
         output.flush();
@@ -59,7 +61,7 @@ public class HessianSerializer implements ISerializer<Object> {
         }
         ByteArrayInputStream inputStream=new ByteArrayInputStream(bytes);
         AbstractHessianInput input=new Hessian2Input(inputStream);
-        input.setSerializerFactory(serializerFactory);
+        input.setSerializerFactory(SERIALIZER_FACTORY);
         Object obj=input.readObject();
         input.close();
         return obj;

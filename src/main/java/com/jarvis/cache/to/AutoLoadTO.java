@@ -15,7 +15,7 @@ public class AutoLoadTO implements Serializable {
 
     private final CacheAopProxyChain joinPoint;
 
-    private final Object args[];
+    private final Object[] args;
 
     /**
      * 缓存注解

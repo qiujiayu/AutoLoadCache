@@ -13,12 +13,38 @@ public abstract class AbstractRedisLock implements ILock {
 
     private static final ThreadLocal<Map<String, RedisLockInfo>> LOCK_START_TIME=new ThreadLocal<Map<String, RedisLockInfo>>();
 
+    /**
+     * 
+     * SETNX
+     * @param key
+     * @param val
+     * @return
+     */
     protected abstract Long setnx(String key, String val);
 
+    /**
+     * 
+     * EXPIRE
+     * @param key
+     * @param expire
+     */
     protected abstract void expire(String key, int expire);
 
+    /**
+     * 
+     * GET
+     * @param key
+     * @return
+     */
     protected abstract String get(String key);
 
+    /**
+     * 
+     * GETSET
+     * @param key
+     * @param newVal
+     * @return
+     */
     protected abstract String getSet(String key, String newVal);
 
     private long serverTimeMillis() {
@@ -29,6 +55,11 @@ public abstract class AbstractRedisLock implements ILock {
         return serverTimeMillis() > Long.parseLong(value);
     }
 
+    /**
+     * 
+     * DEL
+     * @param key
+     */
     protected abstract void del(String key);
 
     @Override
@@ -38,7 +69,7 @@ public abstract class AbstractRedisLock implements ILock {
         if(locked) {
             Map<String, RedisLockInfo> startTimeMap=LOCK_START_TIME.get();
             if(null == startTimeMap) {
-                startTimeMap=new HashMap<String, RedisLockInfo>();
+                startTimeMap=new HashMap<String, RedisLockInfo>(8);
                 LOCK_START_TIME.set(startTimeMap);
             }
             RedisLockInfo info=new RedisLockInfo();

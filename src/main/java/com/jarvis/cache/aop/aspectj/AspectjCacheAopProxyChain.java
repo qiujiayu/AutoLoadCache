@@ -8,6 +8,10 @@ import org.aspectj.lang.reflect.MethodSignature;
 
 import com.jarvis.cache.aop.CacheAopProxyChain;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
 
     private final ProceedingJoinPoint jp;

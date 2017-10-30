@@ -1,5 +1,8 @@
 package com.test;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class Stopwatch {
 
     private long begin;

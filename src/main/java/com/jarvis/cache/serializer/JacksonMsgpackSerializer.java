@@ -25,14 +25,14 @@ import com.jarvis.lib.util.BeanUtil;
  */
 public class JacksonMsgpackSerializer implements ISerializer<Object> {
 
-    private static final ObjectMapper mapper=new ObjectMapper(new MessagePackFactory());
+    private static final ObjectMapper MAPPER=new ObjectMapper(new MessagePackFactory());
 
     @Override
     public byte[] serialize(Object obj) throws Exception {
         if(obj == null) {
             return null;
         }
-        return mapper.writeValueAsBytes(obj);
+        return MAPPER.writeValueAsBytes(obj);
     }
 
     @Override
@@ -41,8 +41,8 @@ public class JacksonMsgpackSerializer implements ISerializer<Object> {
             return null;
         }
         Type[] agsType=new Type[]{returnType};
-        JavaType javaType=mapper.getTypeFactory().constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
-        return mapper.readValue(bytes, javaType);
+        JavaType javaType=MAPPER.getTypeFactory().constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
+        return MAPPER.readValue(bytes, javaType);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -63,9 +63,9 @@ public class JacksonMsgpackSerializer implements ISerializer<Object> {
             return cal;
         }
         if(null != type) {
-            byte[] tmp=mapper.writeValueAsBytes(obj);
-            JavaType javaType=mapper.getTypeFactory().constructType(type);
-            return mapper.readValue(tmp, javaType);
+            byte[] tmp=MAPPER.writeValueAsBytes(obj);
+            JavaType javaType=MAPPER.getTypeFactory().constructType(type);
+            return MAPPER.readValue(tmp, javaType);
         }
 
         if(clazz.isArray()) {
@@ -105,8 +105,8 @@ public class JacksonMsgpackSerializer implements ISerializer<Object> {
             res.setCacheObject(deepClone(wrapper.getCacheObject(), null));
             return res;
         } else {
-            byte[] tmp=mapper.writeValueAsBytes(obj);
-            return mapper.readValue(tmp, clazz);
+            byte[] tmp=MAPPER.writeValueAsBytes(obj);
+            return MAPPER.readValue(tmp, clazz);
         }
     }
 
@@ -126,9 +126,9 @@ public class JacksonMsgpackSerializer implements ISerializer<Object> {
             Type genericParameterType=genericParameterTypes[i];
             Object obj=args[i];
             if(genericParameterType instanceof ParameterizedType) {
-                byte[] tmp=mapper.writeValueAsBytes(obj);
-                JavaType javaType=mapper.getTypeFactory().constructType(genericParameterType);
-                res[i]=mapper.readValue(tmp, javaType);
+                byte[] tmp=MAPPER.writeValueAsBytes(obj);
+                JavaType javaType=MAPPER.getTypeFactory().constructType(genericParameterType);
+                res[i]=MAPPER.readValue(tmp, javaType);
             } else {
                 res[i]=deepClone(obj, null);
             }

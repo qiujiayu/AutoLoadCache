@@ -6,6 +6,10 @@ import java.util.List;
 
 import redis.clients.jedis.JedisCluster;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class JedisClusterLockWithLua extends AbstractRedisLockWithLua {
 
     private JedisCluster jedisCluster;

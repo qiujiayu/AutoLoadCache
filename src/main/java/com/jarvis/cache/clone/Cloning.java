@@ -9,6 +9,10 @@ import java.util.Date;
 import com.jarvis.lib.util.BeanUtil;
 import com.rits.cloning.Cloner;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class Cloning implements ICloner {
 
     private final Cloner cloner=new Cloner();

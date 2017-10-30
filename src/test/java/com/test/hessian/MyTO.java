@@ -6,6 +6,9 @@ import java.util.List;
 
 import lombok.Data;
 
+/**
+ * @author: jiayu.qiu
+ */
 @Data
 public class MyTO implements Serializable {
 

@@ -3,9 +3,12 @@ package com.jarvis.cache.aop.cglib;
 import java.lang.reflect.Method;
 
 import net.sf.cglib.proxy.CallbackFilter;
-
+/**
+ * @author: jiayu.qiu
+ */
 public class AuthProxyFilter implements CallbackFilter {
 
+    @Override
     public int accept(Method arg0) {
         /*
          * 如果调用的不是query方法，则要调用authProxy拦截器去判断权限

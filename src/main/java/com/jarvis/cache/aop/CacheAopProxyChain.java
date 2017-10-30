@@ -1,7 +1,10 @@
 package com.jarvis.cache.aop;
 
 import java.lang.reflect.Method;
-
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public interface CacheAopProxyChain {
 
     /**
@@ -10,6 +13,10 @@ public interface CacheAopProxyChain {
      */
     Object[] getArgs();
 
+    /**
+     * 获取目标类
+     * @return
+     */
     @SuppressWarnings("rawtypes")
     Class getTargetClass();
 

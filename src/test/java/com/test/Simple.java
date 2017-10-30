@@ -1,5 +1,8 @@
 package com.test;
 
+/**
+ * @author: jiayu.qiu
+ */
 public class Simple implements java.io.Serializable {
 
     private static final long serialVersionUID=-4333266259384775868L;
@@ -42,6 +45,7 @@ public class Simple implements java.io.Serializable {
         return simple;
     }
 
+    @Override
     public String toString() {
         return "name=" + name + ";age=" + age + ";sex=" + sex;
     }

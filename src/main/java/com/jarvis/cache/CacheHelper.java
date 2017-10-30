@@ -6,6 +6,10 @@ import java.util.Set;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.type.CacheOpType;
 
+/**
+ * 
+ * @author: jiayu.qiu
+ */
 public class CacheHelper {
 
     private static final ThreadLocal<CacheOpType> OP_TYPE=new ThreadLocal<CacheOpType>();

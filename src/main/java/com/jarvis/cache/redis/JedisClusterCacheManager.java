@@ -23,7 +23,7 @@ import redis.clients.jedis.JedisCluster;
 @Slf4j
 public class JedisClusterCacheManager implements ICacheManager {
 
-    private static final StringSerializer keySerializer=new StringSerializer();
+    private static final StringSerializer KEY_SERIALIZER=new StringSerializer();
 
     private final ISerializer<Object> serializer;
 
@@ -57,9 +57,9 @@ public class JedisClusterCacheManager implements ICacheManager {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
                 if(expire == 0) {
-                    jedisCluster.set(keySerializer.serialize(cacheKey), serializer.serialize(result));
+                    jedisCluster.set(KEY_SERIALIZER.serialize(cacheKey), serializer.serialize(result));
                 } else if(expire > 0) {
-                    jedisCluster.setex(keySerializer.serialize(cacheKey), expire, serializer.serialize(result));
+                    jedisCluster.setex(KEY_SERIALIZER.serialize(cacheKey), expire, serializer.serialize(result));
                 }
             } else {
                 hashSet(cacheKey, hfield, result);
@@ -82,8 +82,8 @@ public class JedisClusterCacheManager implements ICacheManager {
     }
 
     private void hashSet(String cacheKey, String hfield, CacheWrapper<Object> result) throws Exception {
-        byte[] key=keySerializer.serialize(cacheKey);
-        byte[] field=keySerializer.serialize(hfield);
+        byte[] key=KEY_SERIALIZER.serialize(cacheKey);
+        byte[] field=KEY_SERIALIZER.serialize(hfield);
         byte[] val=serializer.serialize(result);
         int hExpire;
         if(hashExpire < 0) {
@@ -101,7 +101,7 @@ public class JedisClusterCacheManager implements ICacheManager {
                 List<byte[]> args=new ArrayList<byte[]>();
                 args.add(field);
                 args.add(val);
-                args.add(keySerializer.serialize(String.valueOf(hExpire)));
+                args.add(KEY_SERIALIZER.serialize(String.valueOf(hExpire)));
                 jedisCluster.eval(hashSetScript, keys, args);
             } else {
                 jedisCluster.hset(key, field, val);
@@ -125,9 +125,9 @@ public class JedisClusterCacheManager implements ICacheManager {
             byte bytes[]=null;
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
-                bytes=jedisCluster.get(keySerializer.serialize(cacheKey));
+                bytes=jedisCluster.get(KEY_SERIALIZER.serialize(cacheKey));
             } else {
-                bytes=jedisCluster.hget(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
+                bytes=jedisCluster.hget(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
             }
             Type returnType=null;
             if(null != method) {
@@ -158,9 +158,9 @@ public class JedisClusterCacheManager implements ICacheManager {
         try {
             String hfield=cacheKeyTO.getHfield();
             if(null == hfield || hfield.length() == 0) {
-                jedisCluster.del(keySerializer.serialize(cacheKey));
+                jedisCluster.del(KEY_SERIALIZER.serialize(cacheKey));
             } else {
-                jedisCluster.hdel(keySerializer.serialize(cacheKey), keySerializer.serialize(hfield));
+                jedisCluster.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
             }
         } catch(Exception ex) {
             log.error(ex.getMessage(), ex);

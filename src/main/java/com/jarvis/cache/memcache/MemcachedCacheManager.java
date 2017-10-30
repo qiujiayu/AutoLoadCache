@@ -9,8 +9,10 @@ import com.jarvis.cache.to.CacheWrapper;
 
 import net.spy.memcached.MemcachedClient;
 
+
 /**
  * memcache缓存管理
+ * @author: jiayu.qiu
  */
 public class MemcachedCacheManager implements ICacheManager {
 
