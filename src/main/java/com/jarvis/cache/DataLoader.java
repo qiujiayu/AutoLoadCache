@@ -41,7 +41,6 @@ public class DataLoader {
     private int tryCnt=0;
 
     public DataLoader() {
-
     }
 
     public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler) {
@@ -80,6 +79,21 @@ public class DataLoader {
 
     public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler) {
         return init(pjp, null, cacheKey, cache, cacheHandler);
+    }
+
+    /**
+     * 重置数据，避免长期缓存
+     */
+    public void reset() {
+        this.cacheHandler=null;
+        this.pjp=null;
+        this.cacheKey=null;
+        this.cache=null;
+        this.autoLoadTO=null;
+        this.arguments=null;
+        this.isFirst=true;
+        this.loadDataUseTime=0;
+        this.tryCnt=0;
     }
 
     public DataLoader loadData() throws Throwable {

@@ -51,6 +51,7 @@ public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
     }
 
     public void returnObject(DataLoader loader) {
+        loader.reset();
         factory.returnObject(loader);
     }
 
