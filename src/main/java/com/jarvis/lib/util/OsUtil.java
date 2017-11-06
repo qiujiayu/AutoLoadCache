@@ -11,7 +11,8 @@ public class OsUtil {
 
     static {
         String os=System.getProperty("os.name");
-        if((os != null) && (os.toUpperCase().indexOf("LINUX") > -1)) {
+        String linux = "LINUX";
+        if((os != null) && (os.toUpperCase().indexOf(linux) > -1)) {
             isLinux=true;
         } else {
             isLinux=false;

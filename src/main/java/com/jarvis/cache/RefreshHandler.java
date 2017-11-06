@@ -23,6 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RefreshHandler {
 
+    private static final int REFRESH_MIN_EXPIRE=120;
+    
+    private static final int ONE_THOUSAND_MS = 1000;
     /**
      * 刷新缓存线程池
      */
@@ -66,7 +69,7 @@ public class RefreshHandler {
 
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
         int expire=cacheWrapper.getExpire();
-        if(expire < 120) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
+        if(expire < REFRESH_MIN_EXPIRE) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
             return;
         }
         // 计算超时时间
@@ -76,16 +79,18 @@ public class RefreshHandler {
             timeout=expire - alarmTime;
         } else {
             if(expire >= 600) {
-                timeout=expire - 120;
+                timeout=expire - REFRESH_MIN_EXPIRE;
             } else {
                 timeout=expire - 60;
             }
         }
-        if((System.currentTimeMillis() - cacheWrapper.getLastLoadTime()) < (timeout * 1000)) {
+        
+        if((System.currentTimeMillis() - cacheWrapper.getLastLoadTime()) < (timeout * ONE_THOUSAND_MS)) {
             return;
         }
         Byte tmpByte=refreshing.get(cacheKey);
-        if(null != tmpByte) {// 如果有正在刷新的请求，则不处理
+        // 如果有正在刷新的请求，则不处理
+        if(null != tmpByte) {
             return;
         }
         tmpByte=1;
@@ -125,7 +130,8 @@ public class RefreshHandler {
             this.cacheKey=cacheKey;
             this.cacheWrapper=cacheWrapper;
             if(cache.argumentsDeepcloneEnable()) {
-                this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); // 进行深度复制(因为是异步执行，防止外部修改参数值)
+                // 进行深度复制(因为是异步执行，防止外部修改参数值)
+                this.arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(), pjp.getArgs()); 
             } else {
                 this.arguments=pjp.getArgs();
             }
@@ -144,7 +150,8 @@ public class RefreshHandler {
             boolean isFirst=dataLoader.isFirst();
             factory.returnObject(dataLoader);
             if(isFirst) {
-                if(null == newCacheWrapper && null != cacheWrapper) {// 如果数据加载失败，则把旧数据进行续租
+                // 如果数据加载失败，则把旧数据进行续租
+                if(null == newCacheWrapper && null != cacheWrapper) {
                     int newExpire=cacheWrapper.getExpire() / 2;
                     if(newExpire < 120) {
                         newExpire=120;

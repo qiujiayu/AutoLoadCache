@@ -79,9 +79,9 @@ public class AutoLoadConfig {
     private int loadDataTryCnt=1;
     
     /**
-     * 
+     * Processing Map的初始大小
      */
-    private int processingMapSize=1024;
+    private int processingMapSize=512;
 
     public String getNamespace() {
         return namespace;
@@ -153,7 +153,8 @@ public class AutoLoadConfig {
     }
 
     public void setAutoLoadPeriod(int autoLoadPeriod) {
-        if(autoLoadPeriod < 5) {
+        int defaultPeriod = 5;
+        if(autoLoadPeriod < defaultPeriod) {
             return;
         }
         this.autoLoadPeriod=autoLoadPeriod;
@@ -219,7 +220,9 @@ public class AutoLoadConfig {
     }
 
     public void setLoadDataTryCnt(int loadDataTryCnt) {
-        if(loadDataTryCnt >= 0 && loadDataTryCnt < 5) {
+        int minCnt = 0;
+        int maxCnt = 5;
+        if(loadDataTryCnt >= minCnt && loadDataTryCnt < maxCnt) {
             this.loadDataTryCnt=loadDataTryCnt;
         }
     }
@@ -229,10 +232,12 @@ public class AutoLoadConfig {
     }
     
     public void setProcessingMapSize(int processingMapSize) {
-        if(processingMapSize < 64) {
-            return;
+        int minSize = 64;
+        if(processingMapSize < minSize) {
+            this.processingMapSize = minSize;
+        } else {
+            this.processingMapSize = processingMapSize;
         }
-        this.processingMapSize = processingMapSize;
     }
 
 }

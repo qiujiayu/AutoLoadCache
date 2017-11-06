@@ -25,7 +25,9 @@ public class AutoLoadHandler {
     /**
      * 自动加载最小过期时间
      */
-    public static final Integer AUTO_LOAD_MIN_EXPIRE=120;
+    public static final int AUTO_LOAD_MIN_EXPIRE=120;
+    
+    private static final int ONE_THOUSAND_MS = 1000;
 
     public static final String THREAD_NAME_PREFIX="autoLoadThread-";
 
@@ -163,7 +165,8 @@ public class AutoLoadHandler {
             Object[] arguments;
             if(cache.argumentsDeepcloneEnable()) {
                 try {
-                    arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), joinPoint.getArgs()); // 进行深度复制
+                    // 进行深度复制
+                    arguments=(Object[])cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(), joinPoint.getArgs()); 
                 } catch(Exception e) {
                     log.error(e.getMessage(), e);
                     return null;
@@ -261,6 +264,7 @@ public class AutoLoadHandler {
                     log.error(e.getMessage(), e);
                 }
             }
+            RANDOM.remove();
         }
 
         private void loadCache(AutoLoadTO autoLoadTO) {
@@ -274,7 +278,7 @@ public class AutoLoadHandler {
             Cache cache=autoLoadTO.getCache();
             long requestTimeout=cache.requestTimeout();
             // 如果超过一定时间没有请求数据，则从队列中删除
-            if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * 1000) {
+            if(requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * ONE_THOUSAND_MS) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -287,7 +291,7 @@ public class AutoLoadHandler {
             long difFirstRequestTime=now - autoLoadTO.getFirstRequestTime();
             long oneHourSecs=3600000L;
             // 使用率比较低的数据，没有必要使用自动加载。
-            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < 1000 && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {
+            if(difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < ONE_THOUSAND_MS && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -312,7 +316,7 @@ public class AutoLoadHandler {
                 }
             }
             int rand=RANDOM.get().nextInt(10);
-            timeout=(timeout + (rand % 2 == 0 ? rand : -rand)) * 1000;
+            timeout=(timeout + (rand % 2 == 0 ? rand : -rand)) * ONE_THOUSAND_MS;
             if((now - autoLoadTO.getLastLoadTime()) < timeout) {
                 return;
             }

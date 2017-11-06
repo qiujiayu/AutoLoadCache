@@ -70,7 +70,8 @@ public class CacheUtil {
         if(null == str || str.length() == 0) {
             return "";
         }
-        if(str.length() <= 20) {
+        int originSize = 20;
+        if(str.length() <= originSize) {
             return str;
         }
         StringBuilder tmp=new StringBuilder();

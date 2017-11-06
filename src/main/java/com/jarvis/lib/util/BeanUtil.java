@@ -128,7 +128,8 @@ public class BeanUtil {
                 r+=",";
 
             }
-            if(r.endsWith(",")) {
+            String comma = ",";
+            if(r.endsWith(comma)) {
                 r=r.substring(0, r.length() - 1);
             }
             r+="]";

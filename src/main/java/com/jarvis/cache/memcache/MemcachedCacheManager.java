@@ -74,7 +74,8 @@ public class MemcachedCacheManager implements ICacheManager {
             throw new RuntimeException("memcached does not support hash cache.");
         }
         try {
-            if("*".equals(cacheKey)) {
+            String allKeysPattern = "*";
+            if(allKeysPattern.equals(cacheKey)) {
                 memcachedClient.flush();
             } else {
                 memcachedClient.delete(cacheKey);

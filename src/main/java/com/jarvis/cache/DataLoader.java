@@ -145,7 +145,8 @@ public class DataLoader {
                     }
                     break;
                 }
-                for(int i=0; i < 10; i++) {// 没有获得锁时，定时缓存尝试获取数据
+                int tryCnt = 10;
+                for(int i=0; i < tryCnt; i++) {// 没有获得锁时，定时缓存尝试获取数据
                     cacheWrapper=cacheHandler.get(cacheKey, pjp.getMethod(), this.arguments);
                     if(null != cacheWrapper) {
                         break;
@@ -223,10 +224,11 @@ public class DataLoader {
             Object result=pjp.doProxyChain(arguments);
             loadDataUseTime=System.currentTimeMillis() - loadDataStartTime;
             AutoLoadConfig config=cacheHandler.getAutoLoadConfig();
+            String className=pjp.getTargetClass().getName();
             if(config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
-                String className=pjp.getTargetClass().getName();
-                log.error("{}.{}, use time:{}ms",className, pjp.getMethod().getName(), loadDataUseTime);
+                log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), loadDataUseTime);
             }
+            log.debug("{}.{}, use time:{}ms, result is null :", className, pjp.getMethod().getName(), loadDataUseTime, null == result);
             buildCacheWrapper(result);
         } catch(Throwable e) {
             throw e;

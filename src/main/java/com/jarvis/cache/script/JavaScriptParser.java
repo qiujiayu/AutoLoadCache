@@ -36,8 +36,9 @@ public class JavaScriptParser extends AbstractScriptParser {
 
     static {
         String javaVersion=System.getProperty("java.version");
-        int ind=0;
-        for(int i=0; i < 2; i++) {
+        int ind = 0;
+        int cnt = 2;
+        for(int i=0; i < cnt; i++) {
             ind=javaVersion.indexOf(".", ind);
             ind++;
         }

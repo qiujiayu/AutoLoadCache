@@ -200,12 +200,13 @@ public class ShardedJedisCacheManager implements ICacheManager {
         ShardedJedis shardedJedis=null;
         try {
             shardedJedis=shardedJedisPool.getResource();
-            if("*".equals(cacheKey)) {
+            String allKeysPattern = "*";
+            if(allKeysPattern.equals(cacheKey)) {
                 Collection<Jedis> list=shardedJedis.getAllShards();
                 for(Jedis jedis: list) {
                     jedis.flushDB();
                 }
-            } else if(cacheKey.indexOf("*") != -1) {
+            } else if(cacheKey.indexOf(allKeysPattern) != -1) {
                 // 如果传进来的值中 带有 * 或 ? 号，则会使用批量删除（遍历所有Redis服务器）,性能非常差，不建议使用这种方法。
                 // 建议使用 hash表方缓存需要批量删除的数据。
                 batchDel(shardedJedis, cacheKey);
