@@ -26,7 +26,7 @@ public @interface Cache {
     int expire();
 
     /**
-     * 动态获取缓存过期时间的表达式
+     * 动态获取缓存过期时间的表达式，当其执行结果为null或小于0的整数时，会使用expire
      * @return 时间
      */
     String expireExpression() default "";
