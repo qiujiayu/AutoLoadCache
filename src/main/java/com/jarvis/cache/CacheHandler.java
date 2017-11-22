@@ -288,6 +288,8 @@ public class CacheHandler {
                         this.delete(key);
                         log.trace("proceedDeleteCacheTransactional delete-->{}",  key);
                     }
+                } else {
+                    log.warn("proceedDeleteCacheTransactional: key set is empty!");
                 }
             } catch(Throwable e) {
                 log.error(e.getMessage(), e);
