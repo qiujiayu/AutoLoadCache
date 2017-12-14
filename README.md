@@ -10,6 +10,8 @@
 
 ### [设计思想及原理](./doc/idea.md)
 
+在infoq 发表的文章[《面对缓存，有哪些问题需要思考？》](http://www.infoq.com/cn/articles/thinking-about-distributed-cache-redis)
+
 ### [使用方法](./doc/use.md)
 
 ### [注解（Annotation）说明](./doc/annotations.md)
