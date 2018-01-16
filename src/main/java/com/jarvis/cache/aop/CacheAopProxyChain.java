@@ -12,13 +12,12 @@ public interface CacheAopProxyChain {
      * @return 参数
      */
     Object[] getArgs();
-
+    
     /**
-     * 获取目标类
+     * 获取目标实例
      * @return
      */
-    @SuppressWarnings("rawtypes")
-    Class getTargetClass();
+    Object getTarget();
 
     /**
      * 获取方法

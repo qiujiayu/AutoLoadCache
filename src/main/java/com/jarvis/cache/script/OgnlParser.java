@@ -31,7 +31,7 @@ public class OgnlParser extends AbstractScriptParser {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
+    public <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
         Object object=EXPRESSION_CACHE.get(exp);
         if(null == object) {
             String className=CacheUtil.class.getName();
@@ -49,6 +49,7 @@ public class OgnlParser extends AbstractScriptParser {
         }
         
         Map<String, Object> values= new HashMap<String, Object>(2);
+        values.put(TARGET, target);
         values.put(ARGS, arguments);
         if(hasRetVal) {
             values.put(RET_VAL, retVal);

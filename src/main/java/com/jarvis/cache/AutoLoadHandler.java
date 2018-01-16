@@ -153,7 +153,7 @@ public class AutoLoadHandler {
             return autoLoadTO;
         }
         try {
-            if(!cacheHandler.getScriptParser().isAutoload(cache, joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
+            if(!cacheHandler.getScriptParser().isAutoload(cache, joinPoint.getTarget(), joinPoint.getArgs(), cacheWrapper.getCacheObject())) {
                 return null;
             }
         } catch(Exception e) {

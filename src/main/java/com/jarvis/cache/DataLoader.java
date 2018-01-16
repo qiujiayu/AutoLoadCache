@@ -224,7 +224,7 @@ public class DataLoader {
             Object result=pjp.doProxyChain(arguments);
             loadDataUseTime=System.currentTimeMillis() - loadDataStartTime;
             AutoLoadConfig config=cacheHandler.getAutoLoadConfig();
-            String className=pjp.getTargetClass().getName();
+            String className=pjp.getTarget().getClass().getName();
             if(config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
                 log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), loadDataUseTime);
             }

@@ -28,10 +28,9 @@ public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
         return jp.getArgs();
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
-    public Class getTargetClass() {
-        return jp.getTarget().getClass();
+    public Object getTarget() {
+        return jp.getTarget();
     }
 
     @Override

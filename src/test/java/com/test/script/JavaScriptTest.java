@@ -30,10 +30,10 @@ public class JavaScriptTest extends TestCase {
 
         String keySpEL="'test_'+args[0]+'_'+args[1]";
         Object[] arguments=new Object[]{"1111", "2222"};
-        String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, null, false);
+        String res=scriptParser.getDefinedCacheKey(keySpEL, null, arguments, null, false);
         System.out.println(res);
         // 自定义函数使用
-        Boolean rv=scriptParser.getElValue("empty(args[0])", arguments, Boolean.class);
+        Boolean rv=scriptParser.getElValue("empty(args[0])", null, arguments, Boolean.class);
         assertFalse(rv);
     }
 
@@ -47,27 +47,27 @@ public class JavaScriptTest extends TestCase {
         simple.setSex(0);
         Object[] arguments=new Object[]{"1111", "2222", simple};
 
-        String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, null, false);
+        String res=scriptParser.getDefinedCacheKey(keySpEL, null, arguments, null, false);
         System.out.println(res);
         assertEquals("test_1111_2222", res);
         // 自定义函数使用
-        Boolean rv=scriptParser.getElValue("empty(args[0])", arguments, Boolean.class);
+        Boolean rv=scriptParser.getElValue("empty(args[0])", null, arguments, Boolean.class);
         assertFalse(rv);
 
         String val=null;
-        val=scriptParser.getElValue("hash(args[0])", arguments, String.class);
+        val=scriptParser.getElValue("hash(args[0])", null, arguments, String.class);
         System.out.println(val);
         assertEquals("1111", val);
 
-        val=scriptParser.getElValue("hash(args[1])", arguments, String.class);
+        val=scriptParser.getElValue("hash(args[1])", null, arguments, String.class);
         System.out.println(val);
         assertEquals("2222", val);
 
-        val=scriptParser.getElValue("hash(args[2])", arguments, String.class);
+        val=scriptParser.getElValue("hash(args[2])", null, arguments, String.class);
         System.out.println(val);
         assertEquals("-290203482_-550943035_-57743508_-1052004462", val);
 
-        val=scriptParser.getElValue("hash(args)", arguments, String.class);
+        val=scriptParser.getElValue("hash(args)", null, arguments, String.class);
         System.out.println(val);
         assertEquals("322960956_-1607969343_673194431_1921252123", val);
     }
@@ -87,7 +87,7 @@ public class JavaScriptTest extends TestCase {
         Object[] arguments=new Object[]{"1111", "2222"};
         Map returnObj=new HashMap(1);
         returnObj.put("rid", "iamrid");
-        String res=scriptParser.getDefinedCacheKey(keySpEL, arguments, returnObj, true);
+        String res=scriptParser.getDefinedCacheKey(keySpEL, null, arguments, returnObj, true);
         System.out.println(res);
 
         assertEquals("iamrid", res);
@@ -98,12 +98,12 @@ public class JavaScriptTest extends TestCase {
         simple.setSex(0);
         keySpEL="retVal.name";
 
-        res=scriptParser.getDefinedCacheKey(keySpEL, arguments, simple, true);
+        res=scriptParser.getDefinedCacheKey(keySpEL, null, arguments, simple, true);
         System.out.println(res);
         assertEquals("刘德华", res);
 
         // 自定义函数使用
-        Boolean rv=scriptParser.getElValue("empty(args[0])", arguments, Boolean.class);
+        Boolean rv=scriptParser.getElValue("empty(args[0])", null, arguments, Boolean.class);
         assertFalse(rv);
     }
 }

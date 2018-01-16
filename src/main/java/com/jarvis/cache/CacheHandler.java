@@ -92,7 +92,7 @@ public class CacheHandler {
         }
         Object result=cacheWrapper.getCacheObject();
         Object[] arguments=pjp.getArgs();
-        if(scriptParser.isCacheable(cache, arguments, result)) {
+        if(scriptParser.isCacheable(cache, pjp.getTarget(), arguments, result)) {
             CacheKeyTO cacheKey=getCacheKey(pjp, cache, result);
             AutoLoadTO autoLoadTO=autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
             try {
@@ -148,7 +148,7 @@ public class CacheHandler {
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         CacheOpType opType=getCacheOpType(cache, arguments);
-        log.trace("CacheHandler.proceed-->{}.{}--{})" , pjp.getTargetClass().getName(), pjp.getMethod().getName(), opType.name());
+        log.trace("CacheHandler.proceed-->{}.{}--{})" , pjp.getTarget().getClass().getName(), pjp.getMethod().getName(), opType.name());
 
         if(opType == CacheOpType.WRITE) {
             return writeOnly(pjp, cache);
@@ -156,7 +156,7 @@ public class CacheHandler {
             return getData(pjp);
         }
 
-        if(!scriptParser.isCacheable(cache, arguments)) {// 如果不进行缓存，则直接返回数据
+        if(!scriptParser.isCacheable(cache, pjp.getTarget(), arguments)) {// 如果不进行缓存，则直接返回数据
             return getData(pjp);
         }
 
@@ -234,7 +234,7 @@ public class CacheHandler {
         if(null == keys || keys.length == 0) {
             return;
         }
-        String className=jp.getTargetClass().getName();
+        Object target=jp.getTarget();
         String methodName=jp.getMethod().getName();
         try {
             for(int i=0; i < keys.length; i++) {
@@ -245,7 +245,7 @@ public class CacheHandler {
                     continue;
                 }
                 for(String tempKey: tempKeys) {
-                    CacheKeyTO key=getCacheKey(className, methodName, arguments, tempKey, tempHfield, retVal, true);
+                    CacheKeyTO key=getCacheKey(target, methodName, arguments, tempKey, tempHfield, retVal, true);
                     if(null != key && !CacheHelper.addDeleteCacheKey(key)) {
                         this.delete(key);
                         this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
@@ -314,7 +314,7 @@ public class CacheHandler {
             Object result=pjp.doProxyChain(arguments);
             long useTime=System.currentTimeMillis() - startTime;
             if(config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
-                String className=pjp.getTargetClass().getName();
+                String className=pjp.getTarget().getClass().getName();
                 log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
             }
             return result;
@@ -336,10 +336,11 @@ public class CacheHandler {
             return;
         }
 
-        Object result=cacheWrapper.getCacheObject();
+        Object result = cacheWrapper.getCacheObject();
+        Object target = pjp.getTarget();
         for(ExCache exCache: exCaches) {
             try {
-                if(!scriptParser.isCacheable(exCache, arguments, result)) {
+                if(!scriptParser.isCacheable(exCache, pjp.getTarget(), arguments, result)) {
                     continue;
                 }
                 CacheKeyTO exCacheKey=getCacheKey(pjp, arguments, exCache, result);
@@ -350,7 +351,7 @@ public class CacheHandler {
                 if(null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
                     exResult=result;
                 } else {
-                    exResult=scriptParser.getElValue(exCache.cacheObject(), arguments, result, true, Object.class);
+                    exResult=scriptParser.getElValue(exCache.cacheObject(), target, arguments, result, true, Object.class);
                 }
 
                 int exCacheExpire=scriptParser.getRealExpire(exCache.expire(), exCache.expireExpression(), arguments, exResult);
@@ -379,7 +380,7 @@ public class CacheHandler {
 
     /**
      * 生成缓存KeyTO
-     * @param className 类名
+     * @param target 类名
      * @param methodName 方法名
      * @param arguments 参数
      * @param keyExpression key表达式
@@ -387,23 +388,23 @@ public class CacheHandler {
      * @param result 执行实际方法的返回值
      * @return CacheKeyTO
      */
-    private CacheKeyTO getCacheKey(String className, String methodName, Object[] arguments, String keyExpression, String hfieldExpression, Object result, boolean hasRetVal) {
+    private CacheKeyTO getCacheKey(Object target, String methodName, Object[] arguments, String keyExpression, String hfieldExpression, Object result, boolean hasRetVal) {
         String key=null;
         String hfield=null;
         if(null != keyExpression && keyExpression.trim().length() > 0) {
             try {
-                key=scriptParser.getDefinedCacheKey(keyExpression, arguments, result, hasRetVal);
+                key=scriptParser.getDefinedCacheKey(keyExpression, target, arguments, result, hasRetVal);
                 if(null != hfieldExpression && hfieldExpression.trim().length() > 0) {
-                    hfield=scriptParser.getDefinedCacheKey(hfieldExpression, arguments, result, hasRetVal);
+                    hfield=scriptParser.getDefinedCacheKey(hfieldExpression, target, arguments, result, hasRetVal);
                 }
             } catch(Exception ex) {
                 log.error(ex.getMessage(), ex);
             }
         } else {
-            key=CacheUtil.getDefaultCacheKey(className, methodName, arguments);
+            key=CacheUtil.getDefaultCacheKey(target.getClass().getName(), methodName, arguments);
         }
         if(null == key || key.trim().length() == 0) {
-            log.error("{}.{}; cache key is empty", className, methodName);
+            log.error("{}.{}; cache key is empty", target.getClass().getName(), methodName);
             return null;
         }
         return new CacheKeyTO(config.getNamespace(), key, hfield);
@@ -416,12 +417,12 @@ public class CacheHandler {
      * @return String 缓存Key
      */
     private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache) {
-        String className=pjp.getTargetClass().getName();
+        Object target=pjp.getTarget();
         String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String keyExpression=cache.key();
         String hfieldExpression=cache.hfield();
-        return getCacheKey(className, methodName, arguments, keyExpression, hfieldExpression, null, false);
+        return getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, null, false);
     }
 
     /**
@@ -432,12 +433,12 @@ public class CacheHandler {
      * @return 缓存Key
      */
     private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Cache cache, Object result) {
-        String className=pjp.getTargetClass().getName();
+        Object target=pjp.getTarget();
         String methodName=pjp.getMethod().getName();
         Object[] arguments=pjp.getArgs();
         String keyExpression=cache.key();
         String hfieldExpression=cache.hfield();
-        return getCacheKey(className, methodName, arguments, keyExpression, hfieldExpression, result, true);
+        return getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, result, true);
     }
 
     /**
@@ -449,14 +450,14 @@ public class CacheHandler {
      * @return 缓存Key
      */
     private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Object[] arguments, ExCache exCache, Object result) {
-        String className=pjp.getTargetClass().getName();
+        Object target=pjp.getTarget();
         String methodName=pjp.getMethod().getName();
         String keyExpression=exCache.key();
         if(null == keyExpression || keyExpression.trim().length() == 0) {
             return null;
         }
         String hfieldExpression=exCache.hfield();
-        return getCacheKey(className, methodName, arguments, keyExpression, hfieldExpression, result, true);
+        return getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, result, true);
     }
 
     public AutoLoadHandler getAutoLoadHandler() {

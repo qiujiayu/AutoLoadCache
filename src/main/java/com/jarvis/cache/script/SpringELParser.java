@@ -52,7 +52,7 @@ public class SpringELParser extends AbstractScriptParser {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T getElValue(String keySpEL, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
+    public <T> T getElValue(String keySpEL, Object target, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
         if(valueType.equals(String.class)) {
             if(keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {// 如果不是表达式，直接返回字符串
                 return (T)keySpEL;
@@ -67,6 +67,7 @@ public class SpringELParser extends AbstractScriptParser {
             Map.Entry<String, Method> entry=it.next();
             context.registerFunction(entry.getKey(), entry.getValue());
         }
+        context.setVariable(TARGET, target);
         context.setVariable(ARGS, arguments);
         if(hasRetVal) {
             context.setVariable(RET_VAL, retVal);

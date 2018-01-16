@@ -30,12 +30,12 @@ public class ScriptTest {
 
     private void testScriptParser(AbstractScriptParser scriptParser, String script, Object[] args) throws Exception {
         for(int i=0; i < hot; i++) {
-            scriptParser.getDefinedCacheKey(script, args, null, false);
+            scriptParser.getDefinedCacheKey(script, null, args, null, false);
         }
 
         Stopwatch sw=Stopwatch.begin();
         for(int i=0; i < run; i++) {
-            scriptParser.getDefinedCacheKey(script, args, null, false);
+            scriptParser.getDefinedCacheKey(script, null, args, null, false);
         }
         sw.stop();
         System.out.println(scriptParser.getClass().getName() + "--->" + sw);

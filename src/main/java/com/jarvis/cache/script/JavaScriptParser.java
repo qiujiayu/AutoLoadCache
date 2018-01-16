@@ -70,8 +70,9 @@ public class JavaScriptParser extends AbstractScriptParser {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T getElValue(String exp, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
+    public <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
         Bindings bindings=new SimpleBindings();
+        bindings.put(TARGET, target);
         bindings.put(ARGS, arguments);
         if(hasRetVal) {
             bindings.put(RET_VAL, retVal);
