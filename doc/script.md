@@ -26,6 +26,7 @@
 | ------------- | ------------- | ------------- |
 | args | 当前被调用的方法的参数列表 | #args[0] |
 | retVal | 方法执行后的返回值（仅当方法执行之后才有效，如@Cache(opType=CacheOpType.WRITE),expireExpression,autoloadCondition,@ExCache() | #retVal |
+| target | AOP 拦截到的当前实例 | #target |
 
 ### 提供的SpEL函数
 

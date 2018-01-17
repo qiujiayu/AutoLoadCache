@@ -32,6 +32,11 @@ public class OgnlParser extends AbstractScriptParser {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal, Class<T> valueType) throws Exception {
+        if(valueType.equals(String.class)) {
+            if(exp.indexOf("#") == -1 && exp.indexOf("@") == -1 && exp.indexOf("'") == -1) {// 如果不是表达式，直接返回字符串
+                return (T)exp;
+            }
+        }
         Object object=EXPRESSION_CACHE.get(exp);
         if(null == object) {
             String className=CacheUtil.class.getName();
