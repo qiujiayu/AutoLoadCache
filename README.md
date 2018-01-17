@@ -12,6 +12,8 @@
 
 在infoq 发表的文章[《面对缓存，有哪些问题需要思考？》](http://www.infoq.com/cn/articles/thinking-about-distributed-cache-redis)
 
+[《再谈缓存的穿透、数据一致性和最终一致性问题》](https://mp.weixin.qq.com/s?__biz=MzIwMzg1ODcwMw==&mid=2247487343&idx=1&sn=6a5f60341a820465387b0ffcf48ae85b)
+
 ### [使用方法](./doc/use.md)
 
 ### [注解（Annotation）说明](./doc/annotations.md)
