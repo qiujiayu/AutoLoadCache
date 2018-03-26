@@ -112,9 +112,7 @@ public class AutoLoadTO implements Serializable {
      * @return this
      */
     public AutoLoadTO setLastLoadTime(long lastLoadTime) {
-        if(lastLoadTime > this.lastLoadTime) {
-            this.lastLoadTime=lastLoadTime;
-        }
+        this.lastLoadTime=lastLoadTime;
         return this;
     }
 
