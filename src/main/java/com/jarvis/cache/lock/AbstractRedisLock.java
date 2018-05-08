@@ -11,7 +11,12 @@ import com.jarvis.cache.to.RedisLockInfo;
  */
 public abstract class AbstractRedisLock implements ILock {
 
-    private static final ThreadLocal<Map<String, RedisLockInfo>> LOCK_START_TIME=new ThreadLocal<Map<String, RedisLockInfo>>();
+    private static final ThreadLocal<Map<String, RedisLockInfo>> LOCK_START_TIME=new ThreadLocal<Map<String, RedisLockInfo>>(){
+        @Override
+        protected Map<String, RedisLockInfo> initialValue() {
+            return new HashMap<String, RedisLockInfo>(4);
+        }
+    };
 
     /**
      * 
@@ -68,10 +73,6 @@ public abstract class AbstractRedisLock implements ILock {
 
         if(locked) {
             Map<String, RedisLockInfo> startTimeMap=LOCK_START_TIME.get();
-            if(null == startTimeMap) {
-                startTimeMap=new HashMap<String, RedisLockInfo>(8);
-                LOCK_START_TIME.set(startTimeMap);
-            }
             RedisLockInfo info=new RedisLockInfo();
             info.setLeaseTime(lockExpire * 1000);
             info.setStartTime(System.currentTimeMillis());
@@ -109,6 +110,7 @@ public abstract class AbstractRedisLock implements ILock {
         if(null != startTimeMap) {
             info=startTimeMap.remove(key);
         }
+        // 如果超过租约时间则不需要主到释放锁
         if(null != info && (System.currentTimeMillis() - info.getStartTime()) >= info.getLeaseTime()) {
             return;
         }
