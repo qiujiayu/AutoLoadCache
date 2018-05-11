@@ -7,10 +7,13 @@ import com.jarvis.cache.serializer.ISerializer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClient redisClient;
+
     private final ByteArrayCodec byteArrayCodec = new ByteArrayCodec();
 
     public LettuceRedisCacheManager(RedisClient redisClient, ISerializer<Object> serializer) {
@@ -54,18 +57,32 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
         @Override
         public void hset(byte[] key, byte[] field, byte[] value, int seconds) {
-            connection.async().hset(key, field, value);
-            connection.async().expire(key, seconds);
+            connection.async().hset(key, field, value).whenComplete((res, throwable) -> {
+                if (res) {
+                    connection.async().expire(key, seconds);
+                }
+            });
+
         }
 
         @Override
         public byte[] get(byte[] key) {
-            return connection.sync().get(key);
+            try {
+                return connection.async().get(key).get();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+            return null;
         }
 
         @Override
         public byte[] hget(byte[] key, byte[] field) {
-            return connection.sync().hget(key, field);
+            try {
+                return connection.async().hget(key, field).get();
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+            return null;
         }
 
         @Override
