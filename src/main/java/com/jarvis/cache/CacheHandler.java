@@ -148,8 +148,9 @@ public class CacheHandler {
     public Object proceed(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         Object[] arguments=pjp.getArgs();
         CacheOpType opType=getCacheOpType(cache, arguments);
-        log.trace("CacheHandler.proceed-->{}.{}--{})" , pjp.getTarget().getClass().getName(), pjp.getMethod().getName(), opType.name());
-
+        if(log.isTraceEnabled()) {
+            log.trace("CacheHandler.proceed-->{}.{}--{})" , pjp.getTarget().getClass().getName(), pjp.getMethod().getName(), opType.name());
+        }
         if(opType == CacheOpType.WRITE) {
             return writeOnly(pjp, cache);
         } else if(opType == CacheOpType.LOAD) {
@@ -171,8 +172,9 @@ public class CacheHandler {
         } catch(Exception ex) {
             log.error(ex.getMessage(), ex);
         }
-        log.trace("cache key:{}, cache data is null {} ", cacheKey.getCacheKey(), null == cacheWrapper);
-
+        if(log.isTraceEnabled()) {
+            log.trace("cache key:{}, cache data is null {} ", cacheKey.getCacheKey(), null == cacheWrapper);
+        }
         if(opType == CacheOpType.READ_ONLY) {
             return null == cacheWrapper ? null : cacheWrapper.getCacheObject();
         }
@@ -286,10 +288,14 @@ public class CacheHandler {
                 if(null != set && set.size() > 0) {
                     for(CacheKeyTO key: set) {
                         this.delete(key);
-                        log.trace("proceedDeleteCacheTransactional delete-->{}",  key);
+                        if(log.isTraceEnabled()) {
+                            log.trace("proceedDeleteCacheTransactional delete-->{}",  key);
+                        }
                     }
                 } else {
-                    log.warn("proceedDeleteCacheTransactional: key set is empty!");
+                    if(log.isWarnEnabled()) {
+                        log.warn("proceedDeleteCacheTransactional: key set is empty!");
+                    }
                 }
             } catch(Throwable e) {
                 log.error(e.getMessage(), e);

@@ -110,7 +110,9 @@ public class DataLoader {
         Object lock=processing;
         String threadName=Thread.currentThread().getName();
         if(isFirst) {
-            log.trace("{} first thread!", threadName);
+            if(log.isTraceEnabled()) {
+                log.trace("{} first thread!", threadName);
+            }
             try {
                 doFirstRequest(processing);
             } catch(Throwable e) {
@@ -171,20 +173,26 @@ public class DataLoader {
            
             if(processing.isFirstFinished()) {
                 CacheWrapper<Object> tmpcacheWrapper=processing.getCache();// 从本地内存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
-                log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == tmpcacheWrapper));
+                if(log.isTraceEnabled()) {
+                    log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == tmpcacheWrapper));
+                }
                 if(null != tmpcacheWrapper) {
                     cacheWrapper=tmpcacheWrapper;
                     return;
                 }
                 Throwable error=processing.getError();
                 if(null != error) {// 当DAO出错时，直接抛异常
-                    log.trace("{} do error", tname);
+                    if(log.isTraceEnabled()) {
+                        log.trace("{} do error", tname);
+                    }
                     throw error;
                 }
                 break;
             } else {
                 synchronized(lock) {
-                    log.trace("{} do wait", tname);
+                    if(log.isTraceEnabled()) {
+                        log.trace("{} do wait", tname);
+                    }
                     try {
                         lock.wait(10);// 如果要测试lock对象是否有效，wait时间去掉就可以
                     } catch(InterruptedException ex) {
@@ -224,7 +232,9 @@ public class DataLoader {
             if(config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
                 log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), loadDataUseTime);
             }
-            log.debug("{}.{}, use time:{}ms, result is null :", className, pjp.getMethod().getName(), loadDataUseTime, null == result);
+            if(log.isDebugEnabled()) {
+                log.debug("{}.{}, use time:{}ms, result is null :", className, pjp.getMethod().getName(), loadDataUseTime, null == result);
+            }
             buildCacheWrapper(result);
         } catch(Throwable e) {
             throw e;
