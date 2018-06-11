@@ -93,6 +93,6 @@
 
 [Spring 实例代码](https://github.com/qiujiayu/cache-example)，基于Spring XML进行配置
 
-[Spring boot 实例代码](https://github.com/qiujiayu/AutoLoadCache-spring-boot)
+[Spring boot 实例代码](https://github.com/qiujiayu/autoload-cache-spring-boot-starter/tree/master/src/test)
 
 以上配置是基于 Spring 的配置，如果是使用nutz，请参照 [AutoLoadCache-nutz](https://github.com/qiujiayu/AutoLoadCache-nutz) 中的说明。
