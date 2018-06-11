@@ -32,7 +32,7 @@ public class DataLoader {
 
     private AutoLoadTO autoLoadTO;
 
-    private boolean isFirst=true;
+    private boolean isFirst;
 
     private long loadDataUseTime;
 
@@ -54,7 +54,6 @@ public class DataLoader {
         } else {// 来自AutoLoadHandler的请求
             this.arguments=autoLoadTO.getArgs();
         }
-        this.isFirst=true;
         this.loadDataUseTime=0;
         this.tryCnt=0;
         return this;
@@ -67,7 +66,6 @@ public class DataLoader {
         this.cache=cache;
         this.autoLoadTO=null;
         this.arguments=arguments;
-        this.isFirst=true;
         this.loadDataUseTime=0;
         this.tryCnt=0;
         return this;
@@ -91,7 +89,7 @@ public class DataLoader {
         this.cache=null;
         this.autoLoadTO=null;
         this.arguments=null;
-        this.isFirst=true;
+        this.isFirst=false;
         this.loadDataUseTime=0;
         this.tryCnt=0;
     }
@@ -167,12 +165,10 @@ public class DataLoader {
     }
 
     private void doWaitRequest(ProcessingTO processing, Object lock) throws Throwable {
-        long startWait=processing.getStartTime();
+		long startWait = null == processing ? 0l : processing.getStartTime();
         String tname=Thread.currentThread().getName();
         do {// 等待
-            if(null == processing) {
-                break;
-            }
+           
             if(processing.isFirstFinished()) {
                 CacheWrapper<Object> tmpcacheWrapper=processing.getCache();// 从本地内存获取数据， 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
                 log.trace("{} do FirstFinished" + " is null :{}" ,tname,  (null == tmpcacheWrapper));
