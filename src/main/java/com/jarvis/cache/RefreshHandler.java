@@ -142,13 +142,15 @@ public class RefreshHandler {
             DataLoaderFactory factory=DataLoaderFactory.getInstance();
             DataLoader dataLoader=factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper=null;
+            boolean isFirst = false;
             try {
                 newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, cacheHandler, arguments).loadData().getCacheWrapper();
+                isFirst=dataLoader.isFirst();
             } catch(Throwable ex) {
                 log.error(ex.getMessage(), ex);
+            } finally {
+                factory.returnObject(dataLoader);
             }
-            boolean isFirst=dataLoader.isFirst();
-            factory.returnObject(dataLoader);
             if(isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租
                 if(null == newCacheWrapper && null != cacheWrapper) {

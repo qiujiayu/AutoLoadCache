@@ -339,15 +339,18 @@ public class AutoLoadHandler {
             DataLoaderFactory factory = DataLoaderFactory.getInstance();
             DataLoader dataLoader = factory.getDataLoader();
             CacheWrapper<Object> newCacheWrapper = null;
+            boolean isFirst = false;
+            long loadDataUseTime = 0L;
             try {
                 newCacheWrapper = dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData()
                         .getCacheWrapper();
+                isFirst = dataLoader.isFirst();
+                loadDataUseTime = dataLoader.getLoadDataUseTime();
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
+            } finally {
+                factory.returnObject(dataLoader);
             }
-            boolean isFirst = dataLoader.isFirst();
-            long loadDataUseTime = dataLoader.getLoadDataUseTime();
-            factory.returnObject(dataLoader);
             if (isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租
                 if (null == newCacheWrapper && null != result) {

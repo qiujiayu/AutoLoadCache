@@ -193,7 +193,7 @@ public class CacheHandler {
         DataLoaderFactory factory=DataLoaderFactory.getInstance();
         DataLoader dataLoader=factory.getDataLoader();
         CacheWrapper<Object> newCacheWrapper=null;
-        long loadDataUseTime=0;
+        long loadDataUseTime=0L;
         boolean isFirst;
         try {
             newCacheWrapper=dataLoader.init(pjp, cacheKey, cache, this).loadData().getCacheWrapper();
