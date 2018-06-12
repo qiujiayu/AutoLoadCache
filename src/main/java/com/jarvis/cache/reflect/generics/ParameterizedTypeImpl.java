@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 /**
  * 代码拷贝来自：sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
+ * 
  * @author jiayu.qiu
  */
 public class ParameterizedTypeImpl implements ParameterizedType {
@@ -19,21 +20,21 @@ public class ParameterizedTypeImpl implements ParameterizedType {
     private Type ownerType;
 
     private ParameterizedTypeImpl(Class<?> paramClass, Type[] paramArrayOfType, Type paramType) {
-        this.actualTypeArguments=paramArrayOfType;
-        this.rawType=paramClass;
-        if(paramType != null) {
-            this.ownerType=paramType;
+        this.actualTypeArguments = paramArrayOfType;
+        this.rawType = paramClass;
+        if (paramType != null) {
+            this.ownerType = paramType;
         } else {
-            this.ownerType=paramClass.getDeclaringClass();
+            this.ownerType = paramClass.getDeclaringClass();
         }
         validateConstructorArguments();
     }
 
     private void validateConstructorArguments() {
         @SuppressWarnings("rawtypes")
-        TypeVariable[] arrayOfTypeVariable=this.rawType.getTypeParameters();
+        TypeVariable[] arrayOfTypeVariable = this.rawType.getTypeParameters();
 
-        if(arrayOfTypeVariable.length != this.actualTypeArguments.length) {
+        if (arrayOfTypeVariable.length != this.actualTypeArguments.length) {
             throw new MalformedParameterizedTypeException();
         }
         // for(int i=0; i < this.actualTypeArguments.length; i++);
@@ -45,7 +46,7 @@ public class ParameterizedTypeImpl implements ParameterizedType {
 
     @Override
     public Type[] getActualTypeArguments() {
-        return (Type[])this.actualTypeArguments.clone();
+        return (Type[]) this.actualTypeArguments.clone();
     }
 
     @Override
@@ -60,17 +61,18 @@ public class ParameterizedTypeImpl implements ParameterizedType {
 
     @Override
     public boolean equals(Object paramObject) {
-        if((paramObject instanceof ParameterizedType)) {
-            ParameterizedType localParameterizedType=(ParameterizedType)paramObject;
+        if ((paramObject instanceof ParameterizedType)) {
+            ParameterizedType localParameterizedType = (ParameterizedType) paramObject;
 
-            if(this == localParameterizedType) {
+            if (this == localParameterizedType) {
                 return true;
             }
-            Type localType1=localParameterizedType.getOwnerType();
-            Type localType2=localParameterizedType.getRawType();
+            Type localType1 = localParameterizedType.getOwnerType();
+            Type localType2 = localParameterizedType.getRawType();
 
-            return (this.ownerType == null ? localType1 == null : this.ownerType.equals(localType1)) && (this.rawType == null ? localType2 == null : this.rawType.equals(localType2))
-                && (Arrays.equals(this.actualTypeArguments, localParameterizedType.getActualTypeArguments()));
+            return (this.ownerType == null ? localType1 == null : this.ownerType.equals(localType1))
+                    && (this.rawType == null ? localType2 == null : this.rawType.equals(localType2))
+                    && (Arrays.equals(this.actualTypeArguments, localParameterizedType.getActualTypeArguments()));
         }
 
         return false;
@@ -78,45 +80,47 @@ public class ParameterizedTypeImpl implements ParameterizedType {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(this.actualTypeArguments) ^ (this.ownerType == null ? 0 : this.ownerType.hashCode()) ^ (this.rawType == null ? 0 : this.rawType.hashCode());
+        return Arrays.hashCode(this.actualTypeArguments) ^ (this.ownerType == null ? 0 : this.ownerType.hashCode())
+                ^ (this.rawType == null ? 0 : this.rawType.hashCode());
     }
 
     @Override
     public String toString() {
-        StringBuilder localStringBuilder=new StringBuilder();
+        StringBuilder localStringBuilder = new StringBuilder();
 
-        if(this.ownerType != null) {
-            if((this.ownerType instanceof Class<?>))
-                localStringBuilder.append(((Class<?>)this.ownerType).getName());
+        if (this.ownerType != null) {
+            if ((this.ownerType instanceof Class<?>))
+                localStringBuilder.append(((Class<?>) this.ownerType).getName());
             else {
                 localStringBuilder.append(this.ownerType.toString());
             }
             localStringBuilder.append(".");
 
-            if((this.ownerType instanceof ParameterizedTypeImpl)) {
-                localStringBuilder.append(this.rawType.getName().replace(((ParameterizedTypeImpl)this.ownerType).rawType.getName() + "$", ""));
+            if ((this.ownerType instanceof ParameterizedTypeImpl)) {
+                localStringBuilder.append(this.rawType.getName()
+                        .replace(((ParameterizedTypeImpl) this.ownerType).rawType.getName() + "$", ""));
             } else {
                 localStringBuilder.append(this.rawType.getName());
             }
         } else {
             localStringBuilder.append(this.rawType.getName());
         }
-        if((this.actualTypeArguments != null) && (this.actualTypeArguments.length > 0)) {
+        if ((this.actualTypeArguments != null) && (this.actualTypeArguments.length > 0)) {
             localStringBuilder.append("<");
-            int i=1;
-            for(Type localType: this.actualTypeArguments) {
-                if(i == 0) {
+            int i = 1;
+            for (Type localType : this.actualTypeArguments) {
+                if (i == 0) {
                     localStringBuilder.append(", ");
                 }
-                if((localType instanceof Class<?>)) {
-                    localStringBuilder.append(((Class<?>)localType).getName());
+                if ((localType instanceof Class<?>)) {
+                    localStringBuilder.append(((Class<?>) localType).getName());
                 } else {
                     // if(null!=localType){
                     localStringBuilder.append(localType.toString());
                     // }
                 }
 
-                i=0;
+                i = 0;
             }
             localStringBuilder.append(">");
         }

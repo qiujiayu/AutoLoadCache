@@ -18,22 +18,22 @@ public class JdkSerializer implements ISerializer<Object> {
 
     @Override
     public Object deserialize(byte[] bytes, Type returnType) throws Exception {
-        if(null == bytes || bytes.length == 0) {
+        if (null == bytes || bytes.length == 0) {
             return null;
         }
-        ByteArrayInputStream inputStream=new ByteArrayInputStream(bytes);
-        ObjectInputStream input=new ObjectInputStream(inputStream);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        ObjectInputStream input = new ObjectInputStream(inputStream);
         return input.readObject();
     }
 
     @Override
     public byte[] serialize(Object obj) throws Exception {
-        if(obj == null) {
+        if (obj == null) {
             return new byte[0];
         }
         // 将对象写到流里
-        ByteArrayOutputStream outputStream=new ByteArrayOutputStream();
-        ObjectOutputStream output=new ObjectOutputStream(outputStream);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream output = new ObjectOutputStream(outputStream);
         output.writeObject(obj);
         output.flush();
         return outputStream.toByteArray();
@@ -41,18 +41,19 @@ public class JdkSerializer implements ISerializer<Object> {
 
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
-        if(null == obj) {
+        if (null == obj) {
             return obj;
         }
-        Class<?> clazz=obj.getClass();
-        if(BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
+        Class<?> clazz = obj.getClass();
+        if (BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation()
+                || clazz.isSynthetic()) {// 常见不会被修改的数据类型
             return obj;
         }
-        if(obj instanceof Date) {
-            return ((Date)obj).clone();
-        } else if(obj instanceof Calendar) {
-            Calendar cal=Calendar.getInstance();
-            cal.setTimeInMillis(((Calendar)obj).getTime().getTime());
+        if (obj instanceof Date) {
+            return ((Date) obj).clone();
+        } else if (obj instanceof Calendar) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(((Calendar) obj).getTime().getTime());
             return cal;
         }
         return deserialize(serialize(obj), null);
@@ -60,17 +61,18 @@ public class JdkSerializer implements ISerializer<Object> {
 
     @Override
     public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
-        if(null == args || args.length == 0) {
+        if (null == args || args.length == 0) {
             return args;
         }
-        Type[] genericParameterTypes=method.getGenericParameterTypes();
-        if(args.length != genericParameterTypes.length) {
-            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must " + genericParameterTypes.length);
+        Type[] genericParameterTypes = method.getGenericParameterTypes();
+        if (args.length != genericParameterTypes.length) {
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName()
+                    + " must " + genericParameterTypes.length);
         }
-        Object[] res=new Object[args.length];
-        int len=genericParameterTypes.length;
-        for(int i=0; i < len; i++) {
-            res[i]=deepClone(args[i], null);
+        Object[] res = new Object[args.length];
+        int len = genericParameterTypes.length;
+        for (int i = 0; i < len; i++) {
+            res[i] = deepClone(args[i], null);
         }
         return res;
     }

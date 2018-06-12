@@ -9,7 +9,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 
 /**
- * 
  * @author: jiayu.qiu
  */
 public class AspectjDeleteCacheAopProxyChain implements DeleteCacheAopProxyChain {
@@ -17,7 +16,7 @@ public class AspectjDeleteCacheAopProxyChain implements DeleteCacheAopProxyChain
     private JoinPoint jp;
 
     public AspectjDeleteCacheAopProxyChain(JoinPoint jp) {
-        this.jp=jp;
+        this.jp = jp;
     }
 
     @Override
@@ -32,8 +31,8 @@ public class AspectjDeleteCacheAopProxyChain implements DeleteCacheAopProxyChain
 
     @Override
     public Method getMethod() {
-        Signature signature=jp.getSignature();
-        MethodSignature methodSignature=(MethodSignature)signature;
+        Signature signature = jp.getSignature();
+        MethodSignature methodSignature = (MethodSignature) signature;
         return methodSignature.getMethod();
     }
 

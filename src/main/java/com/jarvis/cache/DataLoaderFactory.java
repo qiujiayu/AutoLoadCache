@@ -17,24 +17,24 @@ public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
     private final GenericObjectPool<DataLoader> factory;
 
     private DataLoaderFactory() {
-        GenericObjectPoolConfig config=new GenericObjectPoolConfig();
+        GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         config.setMaxTotal(1024);
         config.setMaxIdle(50);
         config.setMinIdle(8);
         config.setBlockWhenExhausted(false);// 当Pool中没有对象时不等待，而是直接new个新的
 
-        AbandonedConfig abandonConfig=new AbandonedConfig();
+        AbandonedConfig abandonConfig = new AbandonedConfig();
         abandonConfig.setRemoveAbandonedTimeout(300);
         abandonConfig.setRemoveAbandonedOnBorrow(true);
         abandonConfig.setRemoveAbandonedOnMaintenance(true);
-        factory=new GenericObjectPool<DataLoader>(this, config, abandonConfig);
+        factory = new GenericObjectPool<DataLoader>(this, config, abandonConfig);
     }
 
     public static DataLoaderFactory getInstance() {
-        if(null == instance) {
-            synchronized(DataLoaderFactory.class) {
-                if(null == instance) {
-                    instance=new DataLoaderFactory();
+        if (null == instance) {
+            synchronized (DataLoaderFactory.class) {
+                if (null == instance) {
+                    instance = new DataLoaderFactory();
                 }
             }
         }
@@ -44,7 +44,7 @@ public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
     public DataLoader getDataLoader() {
         try {
             return factory.borrowObject();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return new DataLoader();

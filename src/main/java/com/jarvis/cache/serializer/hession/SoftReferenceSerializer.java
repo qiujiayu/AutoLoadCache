@@ -20,22 +20,22 @@ public class SoftReferenceSerializer extends AbstractSerializer implements Objec
 
     @Override
     public void writeObject(Object obj, AbstractHessianOutput out) throws IOException {
-        if(out.addRef(obj)) {
+        if (out.addRef(obj)) {
             return;
         }
         @SuppressWarnings("unchecked")
-        SoftReference<Object> data=(SoftReference<Object>)obj;
+        SoftReference<Object> data = (SoftReference<Object>) obj;
 
-        int refV=out.writeObjectBegin(SoftReference.class.getName());
+        int refV = out.writeObjectBegin(SoftReference.class.getName());
 
-        if(refV == -1) {
+        if (refV == -1) {
             out.writeInt(1);
             out.writeString("ref");
             out.writeObjectBegin(SoftReference.class.getName());
         }
-        if(data != null) {
-            Object ref=data.get();
-            if(null != ref) {
+        if (data != null) {
+            Object ref = data.get();
+            if (null != ref) {
                 out.writeObject(ref);
             } else {
                 out.writeNull();

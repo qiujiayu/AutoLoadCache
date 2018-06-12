@@ -9,7 +9,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 
 /**
- * 
  * @author: jiayu.qiu
  */
 public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
@@ -19,7 +18,7 @@ public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
     private Method method;
 
     public AspectjCacheAopProxyChain(ProceedingJoinPoint jp) {
-        this.jp=jp;
+        this.jp = jp;
 
     }
 
@@ -35,10 +34,10 @@ public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
 
     @Override
     public Method getMethod() {
-        if(null == method) {
-            Signature signature=jp.getSignature();
-            MethodSignature methodSignature=(MethodSignature)signature;
-            this.method=methodSignature.getMethod();
+        if (null == method) {
+            Signature signature = jp.getSignature();
+            MethodSignature methodSignature = (MethodSignature) signature;
+            this.method = methodSignature.getMethod();
         }
         return method;
     }

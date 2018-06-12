@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 /**
  * 事务环境中批量删除缓存注解<br>
  * 注意：此注解放到service层，并且需要开启事务的方法上, 用于收集@CacheDeleteKey生成的Key,并在最后进行删除缓存。
+ * 
  * @author jiayu.qiu
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -19,6 +20,7 @@ import java.lang.annotation.Target;
 public @interface CacheDeleteTransactional {
     /**
      * 在事务环境中是否使用缓存数据，默认为false
+     * 
      * @return
      */
     boolean useCache() default false;

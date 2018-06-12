@@ -15,21 +15,21 @@ public class WeakReferenceDeserializer extends AbstractMapDeserializer {
     @Override
     public Object readObject(AbstractHessianInput in, Object[] fields) throws IOException {
         try {
-            WeakReference<Object> obj=instantiate();
+            WeakReference<Object> obj = instantiate();
             in.addRef(obj);
-            Object value=in.readObject();
-            obj=null;
+            Object value = in.readObject();
+            obj = null;
             return new WeakReference<Object>(value);
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw e;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new IOExceptionWrapper(e);
         }
 
     }
 
     protected WeakReference<Object> instantiate() throws Exception {
-        Object obj=new Object();
+        Object obj = new Object();
         return new WeakReference<Object>(obj);
     }
 

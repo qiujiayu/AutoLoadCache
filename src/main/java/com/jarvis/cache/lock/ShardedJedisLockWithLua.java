@@ -11,17 +11,16 @@ import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
 /**
- * 
  * @author: jiayu.qiu
  */
 public class ShardedJedisLockWithLua extends AbstractRedisLockWithLua {
 
-    private static final Logger logger=LoggerFactory.getLogger(ShardedJedisLockWithLua.class);
+    private static final Logger logger = LoggerFactory.getLogger(ShardedJedisLockWithLua.class);
 
     private ShardedJedisPool shardedJedisPool;
 
     public ShardedJedisLockWithLua(ShardedJedisPool shardedJedisPool) {
-        this.shardedJedisPool=shardedJedisPool;
+        this.shardedJedisPool = shardedJedisPool;
     }
 
     private void returnResource(ShardedJedis shardedJedis) {
@@ -30,14 +29,14 @@ public class ShardedJedisLockWithLua extends AbstractRedisLockWithLua {
 
     @Override
     protected Long eval(byte[] lockScript, String key, List<byte[]> args) {
-        ShardedJedis shardedJedis=null;
+        ShardedJedis shardedJedis = null;
         try {
-            shardedJedis=shardedJedisPool.getResource();
-            Jedis jedis=shardedJedis.getShard(key);
-            List<byte[]> keys=new ArrayList<byte[]>();
+            shardedJedis = shardedJedisPool.getResource();
+            Jedis jedis = shardedJedis.getShard(key);
+            List<byte[]> keys = new ArrayList<byte[]>();
             keys.add(key.getBytes("UTF-8"));
-            return (Long)jedis.eval(lockScript, keys, args);
-        } catch(Exception ex) {
+            return (Long) jedis.eval(lockScript, keys, args);
+        } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
             returnResource(shardedJedis);
@@ -47,10 +46,10 @@ public class ShardedJedisLockWithLua extends AbstractRedisLockWithLua {
 
     @Override
     protected void del(String key) {
-        ShardedJedis shardedJedis=null;
+        ShardedJedis shardedJedis = null;
         try {
-            shardedJedis=shardedJedisPool.getResource();
-            Jedis jedis=shardedJedis.getShard(key);
+            shardedJedis = shardedJedisPool.getResource();
+            Jedis jedis = shardedJedis.getShard(key);
             jedis.del(key);
         } finally {
             returnResource(shardedJedis);

@@ -7,17 +7,17 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.type.CacheOpType;
 
 /**
- * 
  * @author: jiayu.qiu
  */
 public class CacheHelper {
 
-    private static final ThreadLocal<CacheOpType> OP_TYPE=new ThreadLocal<CacheOpType>();
+    private static final ThreadLocal<CacheOpType> OP_TYPE = new ThreadLocal<CacheOpType>();
 
-    private static final ThreadLocal<Set<CacheKeyTO>> DELETE_CACHE_KEYS=new ThreadLocal<Set<CacheKeyTO>>();
+    private static final ThreadLocal<Set<CacheKeyTO>> DELETE_CACHE_KEYS = new ThreadLocal<Set<CacheKeyTO>>();
 
     /**
      * 获取CacheOpType
+     * 
      * @return ThreadLocal中设置的CacheOpType
      */
     public static CacheOpType getCacheOpType() {
@@ -26,6 +26,7 @@ public class CacheHelper {
 
     /**
      * 设置CacheOpType
+     * 
      * @param opType CacheOpType
      */
     public static void setCacheOpType(CacheOpType opType) {
@@ -40,9 +41,9 @@ public class CacheHelper {
     }
 
     public static void initDeleteCacheKeysSet() {
-        Set<CacheKeyTO> set=DELETE_CACHE_KEYS.get();
-        if(null == set) {
-            set=new HashSet<CacheKeyTO>();
+        Set<CacheKeyTO> set = DELETE_CACHE_KEYS.get();
+        if (null == set) {
+            set = new HashSet<CacheKeyTO>();
             DELETE_CACHE_KEYS.set(set);
         }
     }
@@ -52,8 +53,8 @@ public class CacheHelper {
     }
 
     public static boolean addDeleteCacheKey(CacheKeyTO key) {
-        Set<CacheKeyTO> set=DELETE_CACHE_KEYS.get();
-        if(null != set) {
+        Set<CacheKeyTO> set = DELETE_CACHE_KEYS.get();
+        if (null != set) {
             set.add(key);
             return true;
         }

@@ -20,22 +20,22 @@ public class WeakReferenceSerializer extends AbstractSerializer implements Objec
 
     @Override
     public void writeObject(Object obj, AbstractHessianOutput out) throws IOException {
-        if(out.addRef(obj)) {
+        if (out.addRef(obj)) {
             return;
         }
         @SuppressWarnings("unchecked")
-        WeakReference<Object> data=(WeakReference<Object>)obj;
+        WeakReference<Object> data = (WeakReference<Object>) obj;
 
-        int refV=out.writeObjectBegin(WeakReference.class.getName());
+        int refV = out.writeObjectBegin(WeakReference.class.getName());
 
-        if(refV == -1) {
+        if (refV == -1) {
             out.writeInt(1);
             out.writeString("ref");
             out.writeObjectBegin(WeakReference.class.getName());
         }
-        if(data != null) {
-            Object ref=data.get();
-            if(null != ref) {
+        if (data != null) {
+            Object ref = data.get();
+            if (null != ref) {
                 out.writeObject(ref);
             } else {
                 out.writeNull();
