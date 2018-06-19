@@ -175,8 +175,8 @@ public class DataLoader {
         String tname = Thread.currentThread().getName();
         do {// 等待
             if (processing.isFirstFinished()) {
-                CacheWrapper<Object> tmpcacheWrapper = processing.getCache();// 从本地内存获取数据，
-                                                                             // 防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                // 从本地内存获取数据，防止频繁去缓存服务器取数据，造成缓存服务器压力过大
+                CacheWrapper<Object> tmpcacheWrapper = processing.getCache();
                 if (log.isTraceEnabled()) {
                     log.trace("{} do FirstFinished" + " is null :{}", tname, (null == tmpcacheWrapper));
                 }
@@ -233,13 +233,12 @@ public class DataLoader {
             Object result = pjp.doProxyChain(arguments);
             loadDataUseTime = System.currentTimeMillis() - loadDataStartTime;
             AutoLoadConfig config = cacheHandler.getAutoLoadConfig();
-            String className = pjp.getTarget().getClass().getName();
+            String className = pjp.getMethod().getDeclaringClass().getName();
             if (config.isPrintSlowLog() && loadDataUseTime >= config.getSlowLoadTime()) {
-                log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), loadDataUseTime);
+                log.warn("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), loadDataUseTime);
             }
             if (log.isDebugEnabled()) {
-                log.debug("{}.{}, use time:{}ms, result is null :", className, pjp.getMethod().getName(),
-                        loadDataUseTime, null == result);
+                log.debug("{}.{}, result is null : {}", className, pjp.getMethod().getName(), null == result);
             }
             buildCacheWrapper(result);
         } catch (Throwable e) {
