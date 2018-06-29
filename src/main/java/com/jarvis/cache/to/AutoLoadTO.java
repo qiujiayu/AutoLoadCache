@@ -155,7 +155,7 @@ public class AutoLoadTO implements Serializable {
     public AutoLoadTO addUseTotalTime(long useTime) {
         synchronized (this) {
             this.loadCnt++;
-            this.useTotalTime += useTotalTime;
+            this.useTotalTime += useTime;
         }
         return this;
     }
