@@ -116,8 +116,9 @@
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
-      <artifactId>asm-all</artifactId>
-      <version>5.1</version>
+      <artifactId>asm</artifactId>
+      <version>6.2</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.msgpack</groupId>

@@ -14,7 +14,7 @@ public class AddSecurityCheckClassAdapter extends ClassVisitor implements Opcode
     public AddSecurityCheckClassAdapter(ClassVisitor cv) {
         // Responsechain 的下一个 ClassVisitor，这里我们将传入 ClassWriter，
         // 负责改写后代码的输出
-        super(ASM5, cv);
+        super(ASM6, cv);
     }
 
     @Override
@@ -31,10 +31,12 @@ public class AddSecurityCheckClassAdapter extends ClassVisitor implements Opcode
         MethodVisitor mv=cv.visitMethod(access, name, desc, signature, exceptions);
         MethodVisitor wrappedMv=mv;
         if(mv != null) {
+            System.out.println("visitMethod:"+name);
             if("operation".equals(name)) {
                 wrappedMv=new AddSecurityCheckMethodAdapter(mv);
             } else if("<init>".equals(name)) {
                 wrappedMv=new ChangeToChildConstructorMethodAdapter(mv, enhancedSuperName, desc, access);
+                //return mv;
             }
         }
         return wrappedMv;

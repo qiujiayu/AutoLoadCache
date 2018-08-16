@@ -13,7 +13,7 @@ public class ChangeToChildConstructorMethodAdapter extends MethodVisitor impleme
     private String desc;
 
     public ChangeToChildConstructorMethodAdapter(MethodVisitor mv, String superClassName, String desc, int access) {
-        super(ASM5, mv);
+        super(ASM6, mv);
         this.superClassName=superClassName;
         this.desc=desc;
     }

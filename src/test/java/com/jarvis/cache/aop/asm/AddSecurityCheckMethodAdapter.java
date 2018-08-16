@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
 public class AddSecurityCheckMethodAdapter extends MethodVisitor implements Opcodes {
 
     public AddSecurityCheckMethodAdapter(MethodVisitor mv) {
-        super(ASM5, mv);
+        super(ASM6, mv);
     }
 
     // 此方法在访问方法的头部时被访问到，仅被访问一次
