@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
@@ -26,6 +27,8 @@ public class FastjsonSerializer implements ISerializer<Object> {
     private final Charset charset;
 
     private static final SerializerFeature[] FEATURES = { SerializerFeature.DisableCircularReferenceDetect };
+
+    private static final Map<Type, ParameterizedTypeImpl> TYPE_CACHE =new ConcurrentHashMap<>(1024);
 
     public FastjsonSerializer() {
         this(Charset.forName("UTF8"));
@@ -49,10 +52,15 @@ public class FastjsonSerializer implements ISerializer<Object> {
         if (null == bytes || bytes.length == 0) {
             return null;
         }
-        String json = new String(bytes, charset);
-        Type[] agsType = new Type[] { returnType };
+        ParameterizedTypeImpl type = TYPE_CACHE.get(returnType);
+        if(null == type) {
+            Type[] agsType = new Type[]{returnType};
+            type = ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null);
+            TYPE_CACHE.put(returnType, type);
+        }
 
-        return JSON.parseObject(json, ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
+        String json = new String(bytes, charset);
+        return JSON.parseObject(json, type);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
