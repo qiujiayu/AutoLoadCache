@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>6.9.2</version>
+  <version>6.9.3</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>User AOP and annotation to do with cache.</description>

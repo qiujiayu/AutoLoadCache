@@ -26,7 +26,7 @@ public abstract class AbstractRedisLock implements ILock {
      * @param val
      * @return
      */
-    protected abstract Long setnx(String key, String val);
+    protected abstract Boolean setnx(String key, String val);
 
     /**
      * EXPIRE
@@ -85,7 +85,7 @@ public abstract class AbstractRedisLock implements ILock {
     private boolean getLock(String key, int lockExpire) {
         long lockExpireTime = serverTimeMillis() + (lockExpire * 1000) + 1;// 锁超时时间
         String lockExpireTimeStr = String.valueOf(lockExpireTime);
-        if (setnx(key, lockExpireTimeStr).intValue() == 1) {// 获取到锁
+        if (setnx(key, lockExpireTimeStr)) {// 获取到锁
             try {
                 expire(key, lockExpire);
             } catch (Throwable e) {

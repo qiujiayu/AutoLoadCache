@@ -25,18 +25,18 @@ public class ShardedJedisLock extends AbstractRedisLock {
     }
 
     @Override
-    protected Long setnx(String key, String val) {
+    protected Boolean setnx(String key, String val) {
         ShardedJedis shardedJedis = null;
         try {
             shardedJedis = shardedJedisPool.getResource();
             Jedis jedis = shardedJedis.getShard(key);
-            return jedis.setnx(key, val);
+            return jedis.setnx(key, val).intValue() == 1;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {
             returnResource(shardedJedis);
         }
-        return 0L;
+        return false;
     }
 
     @Override

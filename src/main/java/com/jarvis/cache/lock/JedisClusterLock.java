@@ -14,8 +14,8 @@ public class JedisClusterLock extends AbstractRedisLock {
     }
 
     @Override
-    protected Long setnx(String key, String val) {
-        return this.jedisCluster.setnx(key, val);
+    protected Boolean setnx(String key, String val) {
+        return this.jedisCluster.setnx(key, val).intValue() == 1;
     }
 
     @Override
