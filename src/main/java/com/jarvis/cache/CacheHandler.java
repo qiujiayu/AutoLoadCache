@@ -281,39 +281,52 @@ public class CacheHandler {
         Set<CacheKeyTO> set0 = CacheHelper.getDeleteCacheKeysSet();
         boolean isStart = null == set0;
         if (!cacheDeleteTransactional.useCache()) {
-            CacheHelper.setCacheOpType(CacheOpType.LOAD); // 在事务环境下尽量直接去数据源加载数据，而不是从缓存中加载，减少数据不一致的可能
+            // 在事务环境下尽量直接去数据源加载数据，而不是从缓存中加载，减少数据不一致的可能
+            CacheHelper.setCacheOpType(CacheOpType.LOAD);
         }
+        boolean getError = false;
         try {
             CacheHelper.initDeleteCacheKeysSet();// 初始化Set
             result = pjp.doProxyChain();
         } catch (Throwable e) {
+            getError = true;
             throw e;
         } finally {
             CacheHelper.clearCacheOpType();
-        }
-        Set<CacheKeyTO> set = CacheHelper.getDeleteCacheKeysSet();
-        if (isStart) {
-            try {
-                if (null != set && set.size() > 0) {
-                    for (CacheKeyTO key : set) {
-                        this.delete(key);
-                        if (log.isTraceEnabled()) {
-                            log.trace("proceedDeleteCacheTransactional delete-->{}", key);
-                        }
-                    }
+            if (isStart) {
+                if (getError && !cacheDeleteTransactional.deleteCacheOnError()) {
+                    // do nothing
                 } else {
-                    if (log.isWarnEnabled()) {
-                        log.warn("proceedDeleteCacheTransactional: key set is empty!");
-                    }
+                    clearCache();
                 }
-            } catch (Throwable e) {
-                log.error(e.getMessage(), e);
-                throw e; // 抛出异常，让事务回滚，避免数据库和缓存双写不一致问题
-            } finally {
-                CacheHelper.clearDeleteCacheKeysSet();
             }
         }
+
         return result;
+    }
+
+    private void clearCache() throws Throwable {
+        try {
+            Set<CacheKeyTO> set = CacheHelper.getDeleteCacheKeysSet();
+            if (null != set && set.size() > 0) {
+                for (CacheKeyTO key : set) {
+                    this.delete(key);
+                    if (log.isTraceEnabled()) {
+                        log.trace("proceedDeleteCacheTransactional delete-->{}", key);
+                    }
+                }
+            } else {
+                if (log.isWarnEnabled()) {
+                    log.warn("proceedDeleteCacheTransactional: key set is empty!");
+                }
+            }
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            // 抛出异常，让事务回滚，避免数据库和缓存双写不一致问题
+            throw e;
+        } finally {
+            CacheHelper.clearDeleteCacheKeysSet();
+        }
     }
 
     /**

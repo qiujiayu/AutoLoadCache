@@ -24,4 +24,10 @@ public @interface CacheDeleteTransactional {
      * @return
      */
     boolean useCache() default false;
+
+    /**
+     * 当发生异常时，还删除缓存
+     * @return
+     */
+    boolean deleteCacheOnError() default true;
 }
