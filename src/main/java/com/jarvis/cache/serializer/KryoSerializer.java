@@ -1,8 +1,10 @@
 package com.jarvis.cache.serializer;
 
+import com.jarvis.cache.serializer.kryo.CacheWrapperSerializer;
+import com.jarvis.cache.serializer.kryo.DefaultKryoContext;
+import com.jarvis.cache.serializer.kryo.KryoContext;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
-import com.yuntrex.kaoqin.common.serializer.kryo.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
@@ -22,8 +24,9 @@ public class KryoSerializer implements ISerializer<Object> {
     public KryoSerializer() {
         this.kryoContext = DefaultKryoContext.newKryoContextFactory(kryo -> {
             kryo.register(CacheWrapper.class, new CacheWrapperSerializer());
-
-            log.debug("kryo register classes successfully.");
+            if(log.isDebugEnabled()) {
+                log.debug("kryo register classes successfully.");
+            }
         });
     }
 
@@ -52,8 +55,7 @@ public class KryoSerializer implements ISerializer<Object> {
             return null;
         }
         Class<?> clazz = obj.getClass();
-        if (BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation()
-                || clazz.isSynthetic()) {// 常见不会被修改的数据类型
+        if (BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {// 常见不会被修改的数据类型
             return obj;
         }
         if (obj instanceof Date) {
@@ -73,8 +75,7 @@ public class KryoSerializer implements ISerializer<Object> {
         }
         Type[] genericParameterTypes = method.getGenericParameterTypes();
         if (args.length != genericParameterTypes.length) {
-            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName()
-                    + " must " + genericParameterTypes.length);
+            throw new Exception("the length of " + method.getDeclaringClass().getName() + "." + method.getName() + " must " + genericParameterTypes.length);
         }
         Object[] res = new Object[args.length];
         int len = genericParameterTypes.length;
