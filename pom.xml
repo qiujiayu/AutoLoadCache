@@ -97,6 +97,12 @@
       <optional>true</optional>
     </dependency>
     <dependency>
+      <groupId>com.esotericsoftware</groupId>
+      <artifactId>kryo</artifactId>
+      <version>4.0.2</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>uk.com.robust-it</groupId>
       <artifactId>cloning</artifactId>
       <version>1.9.2</version>
