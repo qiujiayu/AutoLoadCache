@@ -55,8 +55,15 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
 
         @Override
         public void hset(byte[] key, byte[] field, byte[] value, int seconds) {
-            jedisCluster.hset(key, field, value);
-            jedisCluster.expire(key, seconds);
+            JedisClusterPipeline pipeline = JedisClusterPipeline.pipelined(jedisCluster);
+            try {
+                pipeline.refreshCluster();
+                pipeline.hset(key, field, value);
+                pipeline.expire(key, seconds);
+                pipeline.sync();
+            } finally {
+                pipeline.close();
+            }
         }
 
         @Override
