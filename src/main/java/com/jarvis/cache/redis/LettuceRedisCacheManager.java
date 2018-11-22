@@ -1,11 +1,14 @@
 package com.jarvis.cache.redis;
 
 import java.io.IOException;
+import java.util.Set;
 
 import com.jarvis.cache.serializer.ISerializer;
 
+import com.jarvis.cache.to.CacheKeyTO;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +25,7 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
     }
 
     @Override
-    protected IRedis getRedis(String cacheKey) {
+    protected IRedis getRedis() {
         StatefulRedisConnection<byte[], byte[]> connection = redisClient.connect(byteArrayCodec);
         return new LettuceRedisClient(connection);
     }
@@ -33,10 +36,13 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
         public LettuceRedisClient(StatefulRedisConnection<byte[], byte[]> connection) {
             this.connection = connection;
+            // 为了提升性能，开启pipeline
+            this.connection.setAutoFlushCommands(false);
         }
 
         @Override
         public void close() throws IOException {
+            this.connection.flushCommands();
             this.connection.close();
         }
 
@@ -57,12 +63,9 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
         @Override
         public void hset(byte[] key, byte[] field, byte[] value, int seconds) {
-            connection.async().hset(key, field, value).whenComplete((res, throwable) -> {
-                if (res) {
-                    connection.async().expire(key, seconds);
-                }
-            });
-
+            RedisAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
+            asyncCommands.hset(key, field, value);
+            asyncCommands.expire(key, seconds);
         }
 
         @Override
@@ -86,13 +89,30 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public void del(byte[] key) {
-            connection.async().del(key);
-        }
-
-        @Override
-        public void hdel(byte[] key, byte[]... fields) {
-            connection.async().hdel(key, fields);
+        public void delete(Set<CacheKeyTO> keys) {
+            if (null == keys || keys.isEmpty()) {
+                return;
+            }
+            RedisAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
+            try {
+                for (CacheKeyTO cacheKeyTO : keys) {
+                    String cacheKey = cacheKeyTO.getCacheKey();
+                    if (null == cacheKey || cacheKey.length() == 0) {
+                        continue;
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("delete cache {}", cacheKey);
+                    }
+                    String hfield = cacheKeyTO.getHfield();
+                    if (null == hfield || hfield.length() == 0) {
+                        asyncCommands.del(KEY_SERIALIZER.serialize(cacheKey));
+                    } else {
+                        asyncCommands.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
+                    }
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 

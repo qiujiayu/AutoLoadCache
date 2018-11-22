@@ -1,6 +1,7 @@
 package com.jarvis.cache;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 import com.jarvis.cache.annotation.LocalCache;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
@@ -105,8 +106,8 @@ public class ComboCacheManager implements ICacheManager {
     }
 
     @Override
-    public void delete(CacheKeyTO key) throws CacheCenterConnectionException {
-        localCache.delete(key);
-        remoteCache.delete(key);
+    public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        localCache.delete(keys);
+        remoteCache.delete(keys);
     }
 }

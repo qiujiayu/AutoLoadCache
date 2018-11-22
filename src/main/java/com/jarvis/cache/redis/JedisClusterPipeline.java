@@ -13,6 +13,9 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 /**
+ *
+ * 代码来自：https://github.com/youaremoon/jedis-ext/blob/master/jedis-ext/src/main/java/com/yam/redis/JedisClusterPipeline.java
+ *
  * 在集群模式下提供批量操作的功能。 <br/>
  * 由于集群模式存在节点的动态添加删除，且client不能实时感知（只有在执行命令时才可能知道集群发生变更），
  * 因此，该实现不保证一定成功，建议在批量操作之前调用 refreshCluster() 方法重新获取集群信息。<br />

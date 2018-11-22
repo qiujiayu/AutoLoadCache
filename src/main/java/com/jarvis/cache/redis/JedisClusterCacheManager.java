@@ -1,16 +1,19 @@
 package com.jarvis.cache.redis;
 
-import java.io.IOException;
-
 import com.jarvis.cache.serializer.ISerializer;
-
+import com.jarvis.cache.to.CacheKeyTO;
+import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.JedisCluster;
+
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * Redis缓存管理
- * 
+ *
  * @author jiayu.qiu
  */
+@Slf4j
 public class JedisClusterCacheManager extends AbstractRedisCacheManager {
 
     private final JedisClusterClient redis;
@@ -21,7 +24,7 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
     }
 
     @Override
-    protected IRedis getRedis(String cacheKey) {
+    protected IRedis getRedis() {
         return redis;
     }
 
@@ -77,13 +80,34 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public void del(byte[] key) {
-            jedisCluster.del(key);
-        }
-
-        @Override
-        public void hdel(byte[] key, byte[]... fields) {
-            jedisCluster.hdel(key, fields);
+        public void delete(Set<CacheKeyTO> keys) {
+            if (null == keys || keys.isEmpty()) {
+                return;
+            }
+            JedisClusterPipeline pipeline = JedisClusterPipeline.pipelined(jedisCluster);
+            try {
+                pipeline.refreshCluster();
+                for (CacheKeyTO cacheKeyTO : keys) {
+                    String cacheKey = cacheKeyTO.getCacheKey();
+                    if (null == cacheKey || cacheKey.length() == 0) {
+                        continue;
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("delete cache {}", cacheKey);
+                    }
+                    String hfield = cacheKeyTO.getHfield();
+                    if (null == hfield || hfield.length() == 0) {
+                        pipeline.del(KEY_SERIALIZER.serialize(cacheKey));
+                    } else {
+                        pipeline.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
+                    }
+                }
+                pipeline.sync();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            } finally {
+                pipeline.close();
+            }
         }
 
     }

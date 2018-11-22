@@ -1,6 +1,9 @@
 package com.jarvis.cache.redis;
 
+import com.jarvis.cache.to.CacheKeyTO;
+
 import java.io.Closeable;
+import java.util.Set;
 
 /**
  * Redis缓存操作
@@ -21,7 +24,5 @@ public interface IRedis extends Closeable {
 
     byte[] hget(final byte[] key, final byte[] field);
 
-    void del(final byte[] key);
-
-    void hdel(final byte[] key, final byte[]... fields);
+    void delete(Set<CacheKeyTO> keys);
 }

@@ -3,6 +3,8 @@ package com.jarvis.cache;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import java.util.Set;
+
 /**
  * 缓存更新
  * 
@@ -21,7 +23,7 @@ public interface ChangeListener {
     /**
      * 缓存删除
      * 
-     * @param cacheKey 缓存Key
+     * @param keys 缓存Key
      */
-    void delete(CacheKeyTO cacheKey);
+    void delete(Set<CacheKeyTO> keys);
 }

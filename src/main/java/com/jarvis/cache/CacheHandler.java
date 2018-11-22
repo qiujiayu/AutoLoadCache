@@ -1,16 +1,6 @@
 package com.jarvis.cache;
 
-import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.jarvis.cache.annotation.Cache;
-import com.jarvis.cache.annotation.CacheDelete;
-import com.jarvis.cache.annotation.CacheDeleteKey;
-import com.jarvis.cache.annotation.CacheDeleteTransactional;
-import com.jarvis.cache.annotation.ExCache;
+import com.jarvis.cache.annotation.*;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheTransactionalAopProxyChain;
@@ -18,18 +8,20 @@ import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.lock.ILock;
 import com.jarvis.cache.script.AbstractScriptParser;
-import com.jarvis.cache.to.AutoLoadConfig;
-import com.jarvis.cache.to.AutoLoadTO;
-import com.jarvis.cache.to.CacheKeyTO;
-import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.cache.to.ProcessingTO;
+import com.jarvis.cache.to.*;
 import com.jarvis.cache.type.CacheOpType;
-
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 处理AOP
- * 
+ *
  * @author jiayu.qiu
  */
 @Slf4j
@@ -63,8 +55,8 @@ public class CacheHandler {
     private ChangeListener changeListener;
 
     public CacheHandler(ICacheManager cacheManager, AbstractScriptParser scriptParser, AutoLoadConfig config,
-            ICloner cloner) {
-        this.processing = new ConcurrentHashMap<CacheKeyTO, ProcessingTO>(config.getProcessingMapSize());
+                        ICloner cloner) {
+        this.processing = new ConcurrentHashMap<>(config.getProcessingMapSize());
         this.cacheManager = cacheManager;
         this.config = config;
         this.cloner = cloner;
@@ -76,8 +68,8 @@ public class CacheHandler {
 
     /**
      * 从数据源中获取最新数据，并写入缓存。注意：这里不使用“拿来主义”机制，是因为当前可能是更新数据的方法。
-     * 
-     * @param pjp CacheAopProxyChain
+     *
+     * @param pjp   CacheAopProxyChain
      * @param cache Cache注解
      * @return 最新数据
      * @throws Throwable 异常
@@ -117,8 +109,8 @@ public class CacheHandler {
      * 2. 从ThreadLocal中获取；<br>
      * 3. 从参数中获取；<br>
      * 上面三者的优先级：从低到高。
-     * 
-     * @param cache 注解
+     *
+     * @param cache     注解
      * @param arguments 参数
      * @return CacheOpType
      */
@@ -144,8 +136,8 @@ public class CacheHandler {
 
     /**
      * 处理@Cache 拦截
-     * 
-     * @param pjp 切面
+     *
+     * @param pjp   切面
      * @param cache 注解
      * @return T 返回值
      * @throws Exception 异常
@@ -232,10 +224,10 @@ public class CacheHandler {
 
     /**
      * 处理@CacheDelete 拦截
-     * 
-     * @param jp 切点
+     *
+     * @param jp          切点
      * @param cacheDelete 拦截到的注解
-     * @param retVal 返回值
+     * @param retVal      返回值
      */
     public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) throws Throwable {
         Object[] arguments = jp.getArgs();
@@ -246,6 +238,11 @@ public class CacheHandler {
         Object target = jp.getTarget();
         String methodName = jp.getMethod().getName();
         try {
+            boolean isOnTransactional = CacheHelper.isOnTransactional();
+            Set<CacheKeyTO> keySet = null;
+            if (!isOnTransactional) {
+                keySet = new HashSet<>(keys.length);
+            }
             for (int i = 0; i < keys.length; i++) {
                 CacheDeleteKey keyConfig = keys[i];
                 String[] tempKeys = keyConfig.value();
@@ -255,12 +252,18 @@ public class CacheHandler {
                 }
                 for (String tempKey : tempKeys) {
                     CacheKeyTO key = getCacheKey(target, methodName, arguments, tempKey, tempHfield, retVal, true);
-                    if (null != key && !CacheHelper.addDeleteCacheKey(key)) {
-                        this.delete(key);
-                        this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
+                    if (null == key) {
+                        continue;
                     }
+                    if (isOnTransactional) {
+                        CacheHelper.addDeleteCacheKey(key);
+                    } else {
+                        keySet.add(key);
+                    }
+                    this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
                 }
             }
+            this.delete(keySet);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
             throw e;
@@ -269,14 +272,14 @@ public class CacheHandler {
 
     /**
      * 用于处理事务下，事务处理完后才删除缓存，避免因事务失败造成缓存中的数据不一致问题。
-     * 
-     * @param pjp 切面
+     *
+     * @param pjp                      切面
      * @param cacheDeleteTransactional 注解
      * @return Object 返回值
      * @throws Exception 异常
      */
     public Object proceedDeleteCacheTransactional(DeleteCacheTransactionalAopProxyChain pjp,
-            CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
+                                                  CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
         Object result = null;
         Set<CacheKeyTO> set0 = CacheHelper.getDeleteCacheKeysSet();
         boolean isStart = null == set0;
@@ -309,12 +312,7 @@ public class CacheHandler {
         try {
             Set<CacheKeyTO> set = CacheHelper.getDeleteCacheKeysSet();
             if (null != set && set.size() > 0) {
-                for (CacheKeyTO key : set) {
-                    this.delete(key);
-                    if (log.isTraceEnabled()) {
-                        log.trace("proceedDeleteCacheTransactional delete-->{}", key);
-                    }
-                }
+                this.delete(set);
             } else {
                 if (log.isWarnEnabled()) {
                     log.warn("proceedDeleteCacheTransactional: key set is empty!");
@@ -331,7 +329,7 @@ public class CacheHandler {
 
     /**
      * 直接加载数据（加载后的数据不往缓存放）
-     * 
+     *
      * @param pjp CacheAopProxyChain
      * @return Object
      * @throws Throwable
@@ -353,7 +351,7 @@ public class CacheHandler {
     }
 
     public void writeCache(CacheAopProxyChain pjp, Object[] arguments, Cache cache, CacheKeyTO cacheKey,
-            CacheWrapper<Object> cacheWrapper) throws Exception {
+                           CacheWrapper<Object> cacheWrapper) throws Exception {
         if (null == cacheKey) {
             return;
         }
@@ -412,17 +410,17 @@ public class CacheHandler {
 
     /**
      * 生成缓存KeyTO
-     * 
-     * @param target 类名
-     * @param methodName 方法名
-     * @param arguments 参数
-     * @param keyExpression key表达式
+     *
+     * @param target           类名
+     * @param methodName       方法名
+     * @param arguments        参数
+     * @param keyExpression    key表达式
      * @param hfieldExpression hfield表达式
-     * @param result 执行实际方法的返回值
+     * @param result           执行实际方法的返回值
      * @return CacheKeyTO
      */
     private CacheKeyTO getCacheKey(Object target, String methodName, Object[] arguments, String keyExpression,
-            String hfieldExpression, Object result, boolean hasRetVal) {
+                                   String hfieldExpression, Object result, boolean hasRetVal) {
         String key = null;
         String hfield = null;
         if (null != keyExpression && keyExpression.trim().length() > 0) {
@@ -446,7 +444,7 @@ public class CacheHandler {
 
     /**
      * 生成缓存 Key
-     * 
+     *
      * @param pjp
      * @param cache
      * @return String 缓存Key
@@ -462,7 +460,7 @@ public class CacheHandler {
 
     /**
      * 生成缓存 Key
-     * 
+     *
      * @param pjp
      * @param cache
      * @param result 执行结果值
@@ -479,11 +477,11 @@ public class CacheHandler {
 
     /**
      * 生成缓存 Key
-     * 
+     *
      * @param pjp
      * @param arguments
      * @param exCache
-     * @param result 执行结果值
+     * @param result    执行结果值
      * @return 缓存Key
      */
     private CacheKeyTO getCacheKey(CacheAopProxyChain pjp, Object[] arguments, ExCache exCache, Object result) {
@@ -518,7 +516,7 @@ public class CacheHandler {
             try {
                 String name = entry.getKey();
                 Class<?> cls = Class.forName(entry.getValue());
-                Method method = cls.getDeclaredMethod(name, new Class[] { Object.class });
+                Method method = cls.getDeclaredMethod(name, new Class[]{Object.class});
                 scriptParser.addFunction(name, method);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -547,10 +545,10 @@ public class CacheHandler {
         return cacheManager.get(key, method, args);
     }
 
-    public void delete(CacheKeyTO key) throws CacheCenterConnectionException {
-        cacheManager.delete(key);
+    public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        cacheManager.delete(keys);
         if (null != changeListener) {
-            changeListener.delete(key);
+            changeListener.delete(keys);
         }
     }
 

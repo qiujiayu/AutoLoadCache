@@ -1,6 +1,7 @@
 package com.jarvis.cache;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.to.CacheKeyTO;
@@ -40,9 +41,9 @@ public interface ICacheManager {
     /**
      * 删除缓存
      * 
-     * @param key 缓存key
+     * @param keys 缓存keys
      * @throws CacheCenterConnectionException 缓存异常
      */
-    void delete(final CacheKeyTO key) throws CacheCenterConnectionException;
+    void delete(final Set<CacheKeyTO> keys) throws CacheCenterConnectionException;
 
 }

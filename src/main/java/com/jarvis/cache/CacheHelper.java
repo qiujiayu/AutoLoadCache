@@ -52,13 +52,16 @@ public class CacheHelper {
         return DELETE_CACHE_KEYS.get();
     }
 
-    public static boolean addDeleteCacheKey(CacheKeyTO key) {
+    public static void addDeleteCacheKey(CacheKeyTO key) {
         Set<CacheKeyTO> set = DELETE_CACHE_KEYS.get();
         if (null != set) {
             set.add(key);
-            return true;
         }
-        return false;
+    }
+
+    public static boolean isOnTransactional(){
+        Set<CacheKeyTO> set = DELETE_CACHE_KEYS.get();
+        return null != set;
     }
 
     public static void clearDeleteCacheKeysSet() {

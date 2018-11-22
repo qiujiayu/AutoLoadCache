@@ -1,12 +1,14 @@
 package com.jarvis.cache.memcache;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 import com.jarvis.cache.ICacheManager;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
+import lombok.extern.slf4j.Slf4j;
 import net.spy.memcached.MemcachedClient;
 
 /**
@@ -14,6 +16,7 @@ import net.spy.memcached.MemcachedClient;
  * 
  * @author: jiayu.qiu
  */
+@Slf4j
 public class MemcachedCacheManager implements ICacheManager {
 
     private MemcachedClient memcachedClient;
@@ -58,32 +61,34 @@ public class MemcachedCacheManager implements ICacheManager {
         return (CacheWrapper<Object>) memcachedClient.get(cacheKey);
     }
 
-    /**
-     * 通过组成Key直接删除
-     * 
-     * @param cacheKeyTO 缓存Key
-     */
     @Override
-    public void delete(CacheKeyTO cacheKeyTO) throws CacheCenterConnectionException {
-        if (null == memcachedClient || null == cacheKeyTO) {
+    public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        if (null == memcachedClient || null == keys || keys.isEmpty()) {
             return;
         }
-        String cacheKey = cacheKeyTO.getCacheKey();
-        if (null == cacheKey || cacheKey.length() == 0) {
-            return;
-        }
-        String hfield = cacheKeyTO.getHfield();
-        if (null != hfield && hfield.length() > 0) {
-            throw new RuntimeException("memcached does not support hash cache.");
-        }
-        try {
-            String allKeysPattern = "*";
-            if (allKeysPattern.equals(cacheKey)) {
-                memcachedClient.flush();
-            } else {
-                memcachedClient.delete(cacheKey);
+        String hfield;
+        for(CacheKeyTO cacheKeyTO: keys) {
+            if (null == cacheKeyTO) {
+                continue;
             }
-        } catch (Exception e) {
+            String cacheKey = cacheKeyTO.getCacheKey();
+            if (null == cacheKey || cacheKey.length() == 0) {
+                continue;
+            }
+            hfield = cacheKeyTO.getHfield();
+            if (null != hfield && hfield.length() > 0) {
+                throw new RuntimeException("memcached does not support hash cache.");
+            }
+            try {
+                String allKeysPattern = "*";
+                if (allKeysPattern.equals(cacheKey)) {
+                    memcachedClient.flush();
+                } else {
+                    memcachedClient.delete(cacheKey);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
