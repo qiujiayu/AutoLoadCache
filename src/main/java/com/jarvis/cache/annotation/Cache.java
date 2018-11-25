@@ -116,6 +116,7 @@ public @interface Cache {
 
     /**
      * 是否打开对参数进行深度复制,默认是true,是为了避免外部改变参数值。如果确保不被修改，最好是设置为false,这样性能会更高。
+     * @return 是否打开对参数进行深度复制
      */
     boolean argumentsDeepcloneEnable() default true;
 }

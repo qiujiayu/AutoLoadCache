@@ -17,7 +17,7 @@ public interface CacheAopProxyChain {
     /**
      * 获取目标实例
      * 
-     * @return
+     * @return 目标实例
      */
     Object getTarget();
 

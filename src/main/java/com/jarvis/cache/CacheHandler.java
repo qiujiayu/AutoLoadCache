@@ -228,6 +228,7 @@ public class CacheHandler {
      * @param jp          切点
      * @param cacheDelete 拦截到的注解
      * @param retVal      返回值
+     * @throws Throwable 异常
      */
     public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) throws Throwable {
         Object[] arguments = jp.getArgs();
@@ -276,7 +277,7 @@ public class CacheHandler {
      * @param pjp                      切面
      * @param cacheDeleteTransactional 注解
      * @return Object 返回值
-     * @throws Exception 异常
+     * @throws Throwable 异常
      */
     public Object proceedDeleteCacheTransactional(DeleteCacheTransactionalAopProxyChain pjp,
                                                   CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
@@ -332,7 +333,7 @@ public class CacheHandler {
      *
      * @param pjp CacheAopProxyChain
      * @return Object
-     * @throws Throwable
+     * @throws Throwable 异常
      */
     private Object getData(CacheAopProxyChain pjp) throws Throwable {
         try {

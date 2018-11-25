@@ -22,34 +22,34 @@ public abstract class AbstractRedisLock implements ILock {
     /**
      * SETNX
      * 
-     * @param key
-     * @param val
-     * @return
+     * @param key key
+     * @param val vale
+     * @return 是否设置成功
      */
     protected abstract Boolean setnx(String key, String val);
 
     /**
      * EXPIRE
      * 
-     * @param key
-     * @param expire
+     * @param key key
+     * @param expire 过期时间
      */
     protected abstract void expire(String key, int expire);
 
     /**
      * GET
      * 
-     * @param key
-     * @return
+     * @param key key
+     * @return 缓存数据
      */
     protected abstract String get(String key);
 
     /**
      * GETSET
      * 
-     * @param key
-     * @param newVal
-     * @return
+     * @param key key
+     * @param newVal new value
+     * @return redis 中的老数据
      */
     protected abstract String getSet(String key, String newVal);
 
@@ -64,7 +64,7 @@ public abstract class AbstractRedisLock implements ILock {
     /**
      * DEL
      * 
-     * @param key
+     * @param key key
      */
     protected abstract void del(String key);
 

@@ -16,28 +16,28 @@ import java.util.*;
  *
  * 代码来自：https://github.com/youaremoon/jedis-ext/blob/master/jedis-ext/src/main/java/com/yam/redis/JedisClusterPipeline.java
  *
- * 在集群模式下提供批量操作的功能。 <br/>
+ * 在集群模式下提供批量操作的功能。 <br>
  * 由于集群模式存在节点的动态添加删除，且client不能实时感知（只有在执行命令时才可能知道集群发生变更），
- * 因此，该实现不保证一定成功，建议在批量操作之前调用 refreshCluster() 方法重新获取集群信息。<br />
- * 应用需要保证不论成功还是失败都会调用close() 方法，否则可能会造成泄露。<br/>
- * 如果失败需要应用自己去重试，因此每个批次执行的命令数量需要控制。防止失败后重试的数量过多。<br />
- * 基于以上说明，建议在集群环境较稳定（增减节点不会过于频繁）的情况下使用，且允许失败或有对应的重试策略。<br />
+ * 因此，该实现不保证一定成功，建议在批量操作之前调用 refreshCluster() 方法重新获取集群信息。<br>
+ * 应用需要保证不论成功还是失败都会调用close() 方法，否则可能会造成泄露。<br>
+ * 如果失败需要应用自己去重试，因此每个批次执行的命令数量需要控制。防止失败后重试的数量过多。<br>
+ * 基于以上说明，建议在集群环境较稳定（增减节点不会过于频繁）的情况下使用，且允许失败或有对应的重试策略。<br>
  *
  * 该类非线程安全
  *
  *
  * JedisClusterPipeline jcp = JedisClusterPipeline.pipelined(jedisCluster);
  * jcp.refreshCluster();
- * List<Object> batchResult = null;
+ * List&lt;Object&gt; batchResult = null;
  * try {
  *     // batch write
- *     for (int i = 0; i < 10000; i++) {
+ *     for (int i = 0; i &lt; 10000; i++) {
  *         jcp.set("k" + i, "v1" + i);
  *     }
  *     jcp.sync();
  *
  *     // batch read
- *     for (int i = 0; i < 10000; i++) {
+ *     for (int i = 0; i &lt; 10000; i++) {
  *         jcp.get("k" + i);
  *     }
  *     batchResult = jcp.syncAndReturnAll();
@@ -46,8 +46,6 @@ import java.util.*;
  * }
  *
  * @author youaremoon
- * @version
- * @since Ver 1.1
  */
 public class JedisClusterPipeline extends PipelineBase implements Closeable {
     private static final Logger LOGGER = LoggerFactory.getLogger(JedisClusterPipeline.class);
@@ -79,8 +77,8 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
 
     /**
      * 根据jedisCluster实例生成对应的JedisClusterPipeline
-     * @param
-     * @return
+     * @param jedisCluster JedisCluster
+     * @return JedisClusterPipeline
      */
     public static JedisClusterPipeline pipelined(JedisCluster jedisCluster) {
         return new JedisClusterPipeline(jedisCluster);
@@ -93,8 +91,6 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
 
     /**
      * 刷新集群信息，当集群信息发生变更时调用
-     * @param
-     * @return
      */
     public void refreshCluster() {
         connectionHandler.renewSlotCache();

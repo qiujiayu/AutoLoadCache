@@ -21,13 +21,13 @@ public @interface CacheDeleteTransactional {
     /**
      * 在事务环境中是否使用缓存数据，默认为false
      * 
-     * @return
+     * @return true or false
      */
     boolean useCache() default false;
 
     /**
      * 当发生异常时，还删除缓存
-     * @return
+     * @return true or false
      */
     boolean deleteCacheOnError() default true;
 }

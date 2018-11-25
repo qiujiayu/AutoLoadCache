@@ -42,18 +42,18 @@ public abstract class AbstractRedisLockWithLua implements ILock {
     /**
      * eval
      * 
-     * @param lockScript
-     * @param key
-     * @param args
-     * @return
-     * @throws UnsupportedEncodingException
+     * @param lockScript lua 脚本
+     * @param key key
+     * @param args 参数
+     * @return 是否获取锁成功，1成功，否则失败
+     * @throws UnsupportedEncodingException 编码异常
      */
     protected abstract Long eval(byte[] lockScript, String key, List<byte[]> args) throws UnsupportedEncodingException;
 
     /**
      * del
      * 
-     * @param key
+     * @param key key
      */
     protected abstract void del(String key);
 
