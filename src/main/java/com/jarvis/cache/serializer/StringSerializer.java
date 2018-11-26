@@ -14,7 +14,7 @@ import java.nio.charset.Charset;
  * Does not perform any null conversion since empty strings are valid
  * keys/values.
  * </p>
- * 
+ *
  * @author: jiayu.qiu
  */
 public class StringSerializer implements ISerializer<String> {
@@ -30,17 +30,17 @@ public class StringSerializer implements ISerializer<String> {
     }
 
     @Override
-    public String deserialize(byte[] bytes, Type returnType) throws Exception {
+    public String deserialize(byte[] bytes, Type returnType) {
         return (bytes == null ? null : new String(bytes, charset));
     }
 
     @Override
-    public byte[] serialize(String string) throws Exception {
+    public byte[] serialize(String string) {
         return (string == null ? null : string.getBytes(charset));
     }
 
     @Override
-    public Object deepClone(Object obj, final Type type) throws Exception {
+    public Object deepClone(Object obj, final Type type) {
         if (null == obj) {
             return obj;
         }
@@ -49,7 +49,7 @@ public class StringSerializer implements ISerializer<String> {
     }
 
     @Override
-    public Object[] deepCloneMethodArgs(Method method, Object[] args) throws Exception {
+    public Object[] deepCloneMethodArgs(Method method, Object[] args) {
         return (Object[]) deepClone(args, null);
     }
 }

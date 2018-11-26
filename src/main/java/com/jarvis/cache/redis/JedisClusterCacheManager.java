@@ -58,15 +58,14 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
 
         @Override
         public void hset(byte[] key, byte[] field, byte[] value, int seconds) {
-            JedisClusterPipeline pipeline = JedisClusterPipeline.pipelined(jedisCluster);
-            try {
-                pipeline.refreshCluster();
-                pipeline.hset(key, field, value);
-                pipeline.expire(key, seconds);
-                pipeline.sync();
-            } finally {
-                pipeline.close();
-            }
+            RetryableJedisClusterPipeline retryableJedisClusterPipeline = new RetryableJedisClusterPipeline(jedisCluster) {
+                @Override
+                public void execute(JedisClusterPipeline pipeline) {
+                    pipeline.hset(key, field, value);
+                    pipeline.expire(key, seconds);
+                }
+            };
+            retryableJedisClusterPipeline.sync();
         }
 
         @Override
@@ -84,30 +83,27 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
             if (null == keys || keys.isEmpty()) {
                 return;
             }
-            JedisClusterPipeline pipeline = JedisClusterPipeline.pipelined(jedisCluster);
-            try {
-                pipeline.refreshCluster();
-                for (CacheKeyTO cacheKeyTO : keys) {
-                    String cacheKey = cacheKeyTO.getCacheKey();
-                    if (null == cacheKey || cacheKey.length() == 0) {
-                        continue;
-                    }
-                    if (log.isDebugEnabled()) {
-                        log.debug("delete cache {}", cacheKey);
-                    }
-                    String hfield = cacheKeyTO.getHfield();
-                    if (null == hfield || hfield.length() == 0) {
-                        pipeline.del(KEY_SERIALIZER.serialize(cacheKey));
-                    } else {
-                        pipeline.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
+            RetryableJedisClusterPipeline retryableJedisClusterPipeline = new RetryableJedisClusterPipeline(jedisCluster) {
+                @Override
+                public void execute(JedisClusterPipeline pipeline) {
+                    for (CacheKeyTO cacheKeyTO : keys) {
+                        String cacheKey = cacheKeyTO.getCacheKey();
+                        if (null == cacheKey || cacheKey.length() == 0) {
+                            continue;
+                        }
+                        if (log.isDebugEnabled()) {
+                            log.debug("delete cache {}", cacheKey);
+                        }
+                        String hfield = cacheKeyTO.getHfield();
+                        if (null == hfield || hfield.length() == 0) {
+                            pipeline.del(KEY_SERIALIZER.serialize(cacheKey));
+                        } else {
+                            pipeline.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
+                        }
                     }
                 }
-                pipeline.sync();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            } finally {
-                pipeline.close();
-            }
+            };
+            retryableJedisClusterPipeline.sync();
         }
 
     }

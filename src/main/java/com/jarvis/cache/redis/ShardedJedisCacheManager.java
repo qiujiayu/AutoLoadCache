@@ -5,16 +5,11 @@ import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.ShardedJedis;
-import redis.clients.jedis.ShardedJedisPool;
+import redis.clients.jedis.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -129,23 +124,12 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
         }
         ShardedJedis shardedJedis = shardedJedisPool.getResource();
         try {
-            if (keys.size() == 1) {
-                CacheKeyTO cacheKeyTO = keys.iterator().next();
-                String cacheKey = cacheKeyTO.getCacheKey();
-                if (null == cacheKey || cacheKey.length() == 0) {
-                    return;
-                }
-                Jedis jedis = shardedJedis.getShard(cacheKey);
-                Pipeline pipeline = jedis.pipelined();
-                String hfield = cacheKeyTO.getHfield();
-                delete(pipeline, cacheKey, hfield);
-            }
-            Map<Jedis, Pipeline> pipelineMap = new HashMap<>(keys.size());
+            ShardedJedisPipeline pipeline = new ShardedJedisPipeline();
+            pipeline.setShardedJedis(shardedJedis);
+
             Iterator<CacheKeyTO> keysIterator = keys.iterator();
-            Jedis jedis;
             CacheKeyTO cacheKeyTO;
             String cacheKey;
-            Pipeline pipeline;
             String hfield;
             while (keysIterator.hasNext()) {
                 cacheKeyTO = keysIterator.next();
@@ -153,19 +137,17 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
                 if (null == cacheKey || cacheKey.length() == 0) {
                     continue;
                 }
-                jedis = shardedJedis.getShard(cacheKey);
-                pipeline = pipelineMap.get(jedis);
-                if (null == pipeline) {
-                    pipeline = jedis.pipelined();
-                    pipelineMap.put(jedis, pipeline);
-                }
                 hfield = cacheKeyTO.getHfield();
-                delete(pipeline, cacheKey, hfield);
+                if (log.isDebugEnabled()) {
+                    log.debug("delete cache {}, hfield {}", cacheKey, hfield);
+                }
+                if (null == hfield || hfield.isEmpty()) {
+                    pipeline.del(KEY_SERIALIZER.serialize(cacheKey));
+                } else {
+                    pipeline.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
+                }
             }
-            Iterator<Map.Entry<Jedis, Pipeline>> iterator = pipelineMap.entrySet().iterator();
-            while (iterator.hasNext()) {
-                iterator.next().getValue().sync();
-            }
+            pipeline.sync();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         } finally {
@@ -173,15 +155,5 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
         }
     }
 
-    private void delete(Pipeline pipeline, String cacheKey, String hfield) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("delete cache {}, hfield {}", cacheKey, hfield);
-        }
-        if (null == hfield || hfield.isEmpty()) {
-            pipeline.del(KEY_SERIALIZER.serialize(cacheKey));
-        } else {
-            pipeline.hdel(KEY_SERIALIZER.serialize(cacheKey), KEY_SERIALIZER.serialize(hfield));
-        }
-    }
 
 }
