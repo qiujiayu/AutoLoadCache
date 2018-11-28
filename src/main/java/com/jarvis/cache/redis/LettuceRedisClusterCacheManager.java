@@ -1,24 +1,20 @@
 package com.jarvis.cache.redis;
 
-import java.io.IOException;
-import java.util.Set;
-
 import com.jarvis.cache.serializer.ISerializer;
-
 import com.jarvis.cache.to.CacheKeyTO;
-import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.util.Set;
+
 @Slf4j
 public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClusterClient redisClusterClient;
-
-    private final ByteArrayCodec byteArrayCodec = new ByteArrayCodec();
 
     public LettuceRedisClusterCacheManager(RedisClusterClient redisClusterClient, ISerializer<Object> serializer) {
         super(serializer);
@@ -27,7 +23,7 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
 
     @Override
     protected IRedis getRedis() {
-        StatefulRedisClusterConnection<byte[], byte[]> connection = redisClusterClient.connect(byteArrayCodec);
+        StatefulRedisClusterConnection<byte[], byte[]> connection = redisClusterClient.connect(ByteArrayCodec.INSTANCE);
         return new LettuceRedisClusterClient(connection);
     }
 

@@ -320,7 +320,7 @@ public class AutoLoadHandler {
                 try {
                     Method method = autoLoadTO.getJoinPoint().getMethod();
                     // Type returnType=method.getGenericReturnType();
-                    result = cacheHandler.get(autoLoadTO.getCacheKey(), method, autoLoadTO.getArgs());
+                    result = cacheHandler.get(autoLoadTO.getCacheKey(), method);
                 } catch (Exception ex) {
                     log.error(ex.getMessage(), ex);
                 }

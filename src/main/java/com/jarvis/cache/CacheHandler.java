@@ -166,7 +166,7 @@ public class CacheHandler {
         Method method = pjp.getMethod();
         CacheWrapper<Object> cacheWrapper = null;
         try {
-            cacheWrapper = this.get(cacheKey, method, arguments);// 从缓存中获取数据
+            cacheWrapper = this.get(cacheKey, method);// 从缓存中获取数据
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
@@ -358,7 +358,7 @@ public class CacheHandler {
         }
         Method method = pjp.getMethod();
         if (cacheWrapper.getExpire() >= 0) {
-            this.setCache(cacheKey, cacheWrapper, method, arguments);
+            this.setCache(cacheKey, cacheWrapper, method);
         }
         ExCache[] exCaches = cache.exCache();
         if (null == exCaches || exCaches.length == 0) {
@@ -389,7 +389,7 @@ public class CacheHandler {
                 CacheWrapper<Object> exCacheWrapper = new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO = this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if (exCacheExpire >= 0) {
-                    this.setCache(exCacheKey, exCacheWrapper, method, arguments);
+                    this.setCache(exCacheKey, exCacheWrapper, method);
                     if (null != tmpAutoLoadTO) {
                         tmpAutoLoadTO.setExpire(exCacheExpire)//
                                 .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
@@ -533,17 +533,15 @@ public class CacheHandler {
         this.lock = lock;
     }
 
-    public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args)
-            throws CacheCenterConnectionException {
-        cacheManager.setCache(cacheKey, result, method, args);
+    public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method) throws CacheCenterConnectionException {
+        cacheManager.setCache(cacheKey, result, method);
         if (null != changeListener) {
             changeListener.update(cacheKey, result);
         }
     }
 
-    public CacheWrapper<Object> get(CacheKeyTO key, Method method, Object[] args)
-            throws CacheCenterConnectionException {
-        return cacheManager.get(key, method, args);
+    public CacheWrapper<Object> get(CacheKeyTO key, Method method) throws CacheCenterConnectionException {
+        return cacheManager.get(key, method);
     }
 
     public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {

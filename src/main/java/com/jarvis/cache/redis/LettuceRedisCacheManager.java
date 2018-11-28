@@ -17,8 +17,6 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClient redisClient;
 
-    private final ByteArrayCodec byteArrayCodec = new ByteArrayCodec();
-
     public LettuceRedisCacheManager(RedisClient redisClient, ISerializer<Object> serializer) {
         super(serializer);
         this.redisClient = redisClient;
@@ -26,7 +24,7 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
     @Override
     protected IRedis getRedis() {
-        StatefulRedisConnection<byte[], byte[]> connection = redisClient.connect(byteArrayCodec);
+        StatefulRedisConnection<byte[], byte[]> connection = redisClient.connect(ByteArrayCodec.INSTANCE);
         return new LettuceRedisClient(connection);
     }
 

@@ -95,8 +95,7 @@ public class MapCacheManager implements ICacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method,
-                         final Object args[]) throws CacheCenterConnectionException {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method) throws CacheCenterConnectionException {
         if (null == cacheKeyTO) {
             return;
         }
@@ -137,8 +136,7 @@ public class MapCacheManager implements ICacheManager {
                 if (tmpObj instanceof ConcurrentHashMap) {
                     hash = (ConcurrentHashMap<String, SoftReference<CacheWrapper<Object>>>) tmpObj;
                 } else {
-                    logger.error(method.getClass().getName() + "." + method.getName() + "中key为" + cacheKey
-                            + "的缓存，已经被占用，请删除缓存再试。");
+                    logger.error("key为" + cacheKey + "的缓存，已经被占用，请删除缓存再试。");
                     return;
                 }
             }
@@ -149,7 +147,7 @@ public class MapCacheManager implements ICacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[])
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method)
             throws CacheCenterConnectionException {
         if (null == cacheKeyTO) {
             return null;

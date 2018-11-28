@@ -35,8 +35,7 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
     protected abstract IRedis getRedis();
 
     @Override
-    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method,
-            final Object args[]) throws CacheCenterConnectionException {
+    public void setCache(final CacheKeyTO cacheKeyTO, final CacheWrapper<Object> result, final Method method) throws CacheCenterConnectionException {
         if (null == cacheKeyTO) {
             return;
         }
@@ -80,8 +79,7 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
 
     @SuppressWarnings("unchecked")
     @Override
-    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method, final Object args[])
-            throws CacheCenterConnectionException {
+    public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method) throws CacheCenterConnectionException {
         if (null == cacheKeyTO) {
             return null;
         }

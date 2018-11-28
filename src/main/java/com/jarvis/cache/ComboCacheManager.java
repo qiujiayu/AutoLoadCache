@@ -43,47 +43,45 @@ public class ComboCacheManager implements ICacheManager {
     }
 
     @Override
-    public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method, Object[] args)
+    public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method)
             throws CacheCenterConnectionException {
         LocalCache lCache = null;
         if (method.isAnnotationPresent(LocalCache.class)) {
             lCache = method.getAnnotation(LocalCache.class);
-            setLocalCache(lCache, cacheKey, result, method, args);
+            setLocalCache(lCache, cacheKey, result, method);
             if (lCache.localOnly()) {// 只本地缓存
                 return;
             }
         }
-        remoteCache.setCache(cacheKey, result, method, args);
+        remoteCache.setCache(cacheKey, result, method);
     }
 
-    private void setLocalCache(LocalCache lCache, CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method,
-            Object[] args) {
+    private void setLocalCache(LocalCache lCache, CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method) {
         try {
             LocalCacheWrapper<Object> localResult = new LocalCacheWrapper<Object>();
             localResult.setLastLoadTime(System.currentTimeMillis());
-            int expire = scriptParser.getRealExpire(lCache.expire(), lCache.expireExpression(), args,
+            int expire = scriptParser.getRealExpire(lCache.expire(), lCache.expireExpression(), null,
                     result.getCacheObject());
             localResult.setExpire(expire);
             localResult.setCacheObject(result.getCacheObject());
 
             localResult.setRemoteExpire(result.getExpire());
             localResult.setRemoteLastLoadTime(result.getLastLoadTime());
-            localCache.setCache(cacheKey, result, method, args);
+            localCache.setCache(cacheKey, result, method);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
     }
 
     @Override
-    public CacheWrapper<Object> get(CacheKeyTO key, Method method, Object[] args)
-            throws CacheCenterConnectionException {
+    public CacheWrapper<Object> get(CacheKeyTO key, Method method) throws CacheCenterConnectionException {
         String threadName = Thread.currentThread().getName();
         if (threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {// 如果是自动加载线程，则只从远程缓存获取。
-            return remoteCache.get(key, method, args);
+            return remoteCache.get(key, method);
         }
         LocalCache lCache = null;
         if (method.isAnnotationPresent(LocalCache.class)) {
-            CacheWrapper<Object> result = localCache.get(key, method, args);
+            CacheWrapper<Object> result = localCache.get(key, method);
             lCache = method.getAnnotation(LocalCache.class);
             if (null != result) {
                 if (result instanceof LocalCacheWrapper) {
@@ -98,9 +96,9 @@ public class ComboCacheManager implements ICacheManager {
                 }
             }
         }
-        CacheWrapper<Object> result = remoteCache.get(key, method, args);
+        CacheWrapper<Object> result = remoteCache.get(key, method);
         if (null != lCache && result != null) { // 如果取到了则先放到本地缓存里
-            setLocalCache(lCache, key, result, method, args);
+            setLocalCache(lCache, key, result, method);
         }
         return result;
     }

@@ -20,23 +20,19 @@ public interface ICacheManager {
      * @param cacheKey 缓存Key
      * @param result 缓存数据
      * @param method Method
-     * @param args args
      * @throws CacheCenterConnectionException 缓存异常
      */
-    void setCache(final CacheKeyTO cacheKey, final CacheWrapper<Object> result, final Method method,
-            final Object args[]) throws CacheCenterConnectionException;
+    void setCache(final CacheKeyTO cacheKey, final CacheWrapper<Object> result, final Method method) throws CacheCenterConnectionException;
 
     /**
      * 根据缓存Key获得缓存中的数据
      * 
      * @param key 缓存key
      * @param method Method
-     * @param args args
      * @return 缓存数据
      * @throws CacheCenterConnectionException 缓存异常
      */
-    CacheWrapper<Object> get(final CacheKeyTO key, final Method method, final Object args[])
-            throws CacheCenterConnectionException;
+    CacheWrapper<Object> get(final CacheKeyTO key, final Method method) throws CacheCenterConnectionException;
 
     /**
      * 删除缓存

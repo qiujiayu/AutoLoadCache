@@ -9,12 +9,11 @@ import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * 数据加载器
- * 
+ *
  * @author jiayu.qiu
  */
 @Slf4j
@@ -44,7 +43,7 @@ public class DataLoader {
     }
 
     public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache,
-            CacheHandler cacheHandler) {
+                           CacheHandler cacheHandler) {
         this.cacheHandler = cacheHandler;
         this.pjp = pjp;
         this.cacheKey = cacheKey;
@@ -61,7 +60,7 @@ public class DataLoader {
     }
 
     public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler,
-            Object[] arguments) {
+                           Object[] arguments) {
         this.cacheHandler = cacheHandler;
         this.pjp = pjp;
         this.cacheKey = cacheKey;
@@ -105,7 +104,7 @@ public class DataLoader {
             } else {
                 isFirst = false;
                 processing = firstProcessing;// 获取到第一个线程的ProcessingTO
-                                             // 的引用，保证所有请求都指向同一个引用
+                // 的引用，保证所有请求都指向同一个引用
             }
         } else {
             isFirst = false;
@@ -150,7 +149,7 @@ public class DataLoader {
                 }
                 int tryCnt = 10;
                 for (int i = 0; i < tryCnt; i++) {// 没有获得锁时，定时缓存尝试获取数据
-                    cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod(), this.arguments);
+                    cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
                     if (null != cacheWrapper) {
                         break;
                     }
@@ -206,7 +205,7 @@ public class DataLoader {
             }
         } while (System.currentTimeMillis() - startWait < cache.waitTimeOut());
         if (null == cacheWrapper) {
-            cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod(), this.arguments);
+            cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
         }
         if (null == cacheWrapper) {
             AutoLoadConfig config = cacheHandler.getAutoLoadConfig();
