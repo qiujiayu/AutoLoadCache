@@ -2,10 +2,10 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>7.0.0-SNAPSHOT</version>
+  <version>7.0.0</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
-  <description>User AOP and annotation to do with cache.</description>
+  <description>Use AOP and Annotation manage cache.</description>
   <url>https://github.com/qiujiayu/AutoLoadCache</url>
   <licenses>
     <license>
