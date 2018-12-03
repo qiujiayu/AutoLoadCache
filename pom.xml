@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>7.0.0</version>
+  <version>7.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>Use AOP and Annotation manage cache.</description>
@@ -35,6 +35,7 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.23</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -89,6 +90,7 @@
       <artifactId>lombok</artifactId>
       <version>1.16.8</version>
       <scope>compile</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.caucho</groupId>

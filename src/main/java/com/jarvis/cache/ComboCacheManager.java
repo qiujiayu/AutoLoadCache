@@ -1,20 +1,20 @@
 package com.jarvis.cache;
 
-import java.lang.reflect.Method;
-import java.util.Set;
-
 import com.jarvis.cache.annotation.LocalCache;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.LocalCacheWrapper;
-
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 组合多种缓存管理方案，本地保存短期缓存，远程保存长期缓存
- * 
+ *
  * @author gongqin
  * @version 2016年6月8日
  */
@@ -45,15 +45,28 @@ public class ComboCacheManager implements ICacheManager {
     @Override
     public void setCache(CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method)
             throws CacheCenterConnectionException {
-        LocalCache lCache = null;
         if (method.isAnnotationPresent(LocalCache.class)) {
-            lCache = method.getAnnotation(LocalCache.class);
+            LocalCache lCache = method.getAnnotation(LocalCache.class);
             setLocalCache(lCache, cacheKey, result, method);
             if (lCache.localOnly()) {// 只本地缓存
                 return;
             }
         }
         remoteCache.setCache(cacheKey, result, method);
+    }
+
+    @Override
+    public void mset(Method method, MSetParam... params) throws CacheCenterConnectionException {
+        if (method.isAnnotationPresent(LocalCache.class)) {
+            LocalCache lCache = method.getAnnotation(LocalCache.class);
+            for (MSetParam param : params) {
+                setLocalCache(lCache, param.getCacheKey(), param.getResult(), method);
+            }
+            if (lCache.localOnly()) {// 只本地缓存
+                return;
+            }
+        }
+        remoteCache.mset(method, params);
     }
 
     private void setLocalCache(LocalCache lCache, CacheKeyTO cacheKey, CacheWrapper<Object> result, Method method) {
@@ -101,6 +114,11 @@ public class ComboCacheManager implements ICacheManager {
             setLocalCache(lCache, key, result, method);
         }
         return result;
+    }
+
+    @Override
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) throws CacheCenterConnectionException {
+        return remoteCache.mget(method, keys);
     }
 
     @Override

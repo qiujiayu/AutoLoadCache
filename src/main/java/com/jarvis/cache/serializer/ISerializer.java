@@ -23,7 +23,7 @@ public interface ISerializer<T> extends ICloner {
      * 
      * @param bytes object binary representation
      * @param returnType the GenericReturnType of AOP Method
-     * @return the equivalent object instance
+     * @return the equivalent object instance, 必须是CacheWrapper类型的
      * @throws Exception 异常
      */
     T deserialize(final byte[] bytes, final Type returnType) throws Exception;

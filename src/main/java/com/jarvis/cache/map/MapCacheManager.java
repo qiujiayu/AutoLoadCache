@@ -1,6 +1,7 @@
 package com.jarvis.cache.map;
 
 import com.jarvis.cache.ICacheManager;
+import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.clone.ICloner;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.to.AutoLoadConfig;
@@ -11,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,7 +73,7 @@ public class MapCacheManager implements ICacheManager {
     }
 
     public MapCacheManager(AutoLoadConfig config, ICloner cloner, int initSize) {
-        this.cache = new ConcurrentHashMap<String, Object>(initSize);
+        this.cache = new ConcurrentHashMap<>(initSize);
         this.config = config;
         this.config.setCheckFromCacheBeforeLoad(false);
         this.cloner = cloner;
@@ -103,7 +106,7 @@ public class MapCacheManager implements ICacheManager {
             return;
         }
         String cacheKey = cacheKeyTO.getCacheKey();
-        if (null == cacheKey || cacheKey.length() == 0) {
+        if (null == cacheKey || cacheKey.isEmpty()) {
             return;
         }
         CacheWrapper<Object> value = null;
@@ -119,7 +122,7 @@ public class MapCacheManager implements ICacheManager {
         }
         SoftReference<CacheWrapper<Object>> reference = new SoftReference<CacheWrapper<Object>>(value);
         String hfield = cacheKeyTO.getHfield();
-        if (null == hfield || hfield.length() == 0) {
+        if (null == hfield || hfield.isEmpty()) {
             cache.put(cacheKey, reference);
         } else {
             Object tmpObj = cache.get(cacheKey);
@@ -145,6 +148,16 @@ public class MapCacheManager implements ICacheManager {
         this.changeListener.cacheChange();
     }
 
+    @Override
+    public void mset(final Method method, final MSetParam... params) throws CacheCenterConnectionException {
+        if (null == params || params.length == 0) {
+            return;
+        }
+        for (MSetParam param : params) {
+            this.setCache(param.getCacheKey(), param.getResult(), method);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public CacheWrapper<Object> get(final CacheKeyTO cacheKeyTO, final Method method)
@@ -153,7 +166,7 @@ public class MapCacheManager implements ICacheManager {
             return null;
         }
         String cacheKey = cacheKeyTO.getCacheKey();
-        if (null == cacheKey || cacheKey.length() == 0) {
+        if (null == cacheKey || cacheKey.isEmpty()) {
             return null;
         }
         Object obj = cache.get(cacheKey);
@@ -162,7 +175,7 @@ public class MapCacheManager implements ICacheManager {
         }
         String hfield = cacheKeyTO.getHfield();
         CacheWrapper<Object> value = null;
-        if (null == hfield || hfield.length() == 0) {
+        if (null == hfield || hfield.isEmpty()) {
             if (obj instanceof SoftReference) {
                 SoftReference<CacheWrapper<Object>> reference = (SoftReference<CacheWrapper<Object>>) obj;
                 if (null != reference) {
@@ -198,6 +211,19 @@ public class MapCacheManager implements ICacheManager {
             }
         }
         return value;
+    }
+
+    @Override
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) throws CacheCenterConnectionException {
+        if (null == keys || keys.length == 0) {
+            return null;
+        }
+        int len = keys.length;
+        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(len);
+        for (int i = 0; i < len; i++) {
+            res.put(keys[i], get(keys[i], method));
+        }
+        return res;
     }
 
     @SuppressWarnings("unchecked")

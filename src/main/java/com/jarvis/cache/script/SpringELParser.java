@@ -19,6 +19,16 @@ import com.jarvis.cache.CacheUtil;
  */
 public class SpringELParser extends AbstractScriptParser {
 
+    /**
+     * # 号
+     */
+    private static final String POUND = "#";
+
+    /**
+     * 撇号
+     */
+    private static final String apostrophe = "'";
+
     private final ExpressionParser parser = new SpelExpressionParser();
 
     private final ConcurrentHashMap<String, Expression> expCache = new ConcurrentHashMap<String, Expression>();
@@ -40,7 +50,7 @@ public class SpringELParser extends AbstractScriptParser {
         }
     }
 
-    private final ConcurrentHashMap<String, Method> funcs = new ConcurrentHashMap<String, Method>(64);
+    private final ConcurrentHashMap<String, Method> funcs = new ConcurrentHashMap<String, Method>(8);
 
     /**
      * @param name 方法名
@@ -56,7 +66,8 @@ public class SpringELParser extends AbstractScriptParser {
     public <T> T getElValue(String keySpEL, Object target, Object[] arguments, Object retVal, boolean hasRetVal,
             Class<T> valueType) throws Exception {
         if (valueType.equals(String.class)) {
-            if (keySpEL.indexOf("#") == -1 && keySpEL.indexOf("'") == -1) {// 如果不是表达式，直接返回字符串
+            // 如果不是表达式，直接返回字符串
+            if (keySpEL.indexOf(POUND) == -1 && keySpEL.indexOf("'") == -1) {
                 return (T) keySpEL;
             }
         }

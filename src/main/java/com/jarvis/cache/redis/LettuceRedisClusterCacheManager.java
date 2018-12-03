@@ -1,7 +1,10 @@
 package com.jarvis.cache.redis;
 
+import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
+import com.jarvis.cache.to.CacheWrapper;
+import io.lettuce.core.AbstractRedisAsyncCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
@@ -9,6 +12,8 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -24,22 +29,22 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
     @Override
     protected IRedis getRedis() {
         StatefulRedisClusterConnection<byte[], byte[]> connection = redisClusterClient.connect(ByteArrayCodec.INSTANCE);
-        return new LettuceRedisClusterClient(connection);
+        return new LettuceRedisClusterClient(connection, this);
     }
 
     public static class LettuceRedisClusterClient implements IRedis {
 
         private final StatefulRedisClusterConnection<byte[], byte[]> connection;
 
-        public LettuceRedisClusterClient(StatefulRedisClusterConnection<byte[], byte[]> connection) {
+        private final AbstractRedisCacheManager cacheManager;
+
+        public LettuceRedisClusterClient(StatefulRedisClusterConnection<byte[], byte[]> connection, AbstractRedisCacheManager cacheManager) {
             this.connection = connection;
-            // 为了提升性能，开启pipeline
-            this.connection.setAutoFlushCommands(false);
+            this.cacheManager = cacheManager;
         }
 
         @Override
         public void close() throws IOException {
-            this.connection.flushCommands();
             this.connection.close();
         }
 
@@ -60,9 +65,26 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
 
         @Override
         public void hset(byte[] key, byte[] field, byte[] value, int seconds) {
+            // 为了提升性能，开启pipeline
+            this.connection.setAutoFlushCommands(false);
             RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
             asyncCommands.hset(key, field, value);
             asyncCommands.expire(key, seconds);
+            this.connection.flushCommands();
+        }
+
+        @Override
+        public void mset(MSetParam... params) {
+            // 为了提升性能，开启pipeline
+            this.connection.setAutoFlushCommands(false);
+            RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
+            try {
+                LettuceRedisUtil.executeMSet((AbstractRedisAsyncCommands<byte[], byte[]>) asyncCommands, cacheManager, params);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                this.connection.flushCommands();
+            }
         }
 
         @Override
@@ -86,10 +108,15 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
+        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, CacheKeyTO... keys) {
+            RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
+            return LettuceRedisUtil.executeMGet(connection, (AbstractRedisAsyncCommands<byte[], byte[]>) asyncCommands, cacheManager, returnType, keys);
+        }
+
+        @Override
         public void delete(Set<CacheKeyTO> keys) {
-            if (null == keys || keys.isEmpty()) {
-                return;
-            }
+            // 为了提升性能，开启pipeline
+            this.connection.setAutoFlushCommands(false);
             RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
             try {
                 for (CacheKeyTO cacheKeyTO : keys) {
@@ -109,6 +136,8 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
+            } finally {
+                this.connection.flushCommands();
             }
         }
 

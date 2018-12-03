@@ -33,12 +33,12 @@ public abstract class RetryableJedisClusterPipeline {
         clusterInfoCache = getValue(connectionHandler, FIELD_CACHE);
     }
 
-    public abstract void execute(JedisClusterPipeline pipeline);
+    public abstract void execute(JedisClusterPipeline pipeline) throws Exception;
 
     /**
      * 同步读取所有数据. 与syncAndReturnAll()相比，sync()只是没有对数据做反序列化
      */
-    public void sync() {
+    public void sync() throws Exception {
         try {
             JedisClusterPipeline pipeline = new JedisClusterPipeline(clusterInfoCache);
             execute(pipeline);
@@ -53,6 +53,8 @@ public abstract class RetryableJedisClusterPipeline {
                 return;
             }
             throw jre;
+        } catch (Exception e){
+            throw e;
         }
     }
 
@@ -61,7 +63,7 @@ public abstract class RetryableJedisClusterPipeline {
      *
      * @return 按照命令的顺序返回所有的数据
      */
-    public List<Object> syncAndReturnAll() {
+    public List<Object> syncAndReturnAll() throws Exception{
         try {
             JedisClusterPipeline pipeline = new JedisClusterPipeline(clusterInfoCache);
             execute(pipeline);
@@ -75,6 +77,8 @@ public abstract class RetryableJedisClusterPipeline {
                 return syncAndReturnAll();
             }
             throw jre;
+        } catch (Exception ex){
+            throw ex;
         }
     }
 

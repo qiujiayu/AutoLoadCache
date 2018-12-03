@@ -20,7 +20,7 @@ public class OgnlParser extends AbstractScriptParser {
 
     private final ConcurrentHashMap<String, Object> EXPRESSION_CACHE = new ConcurrentHashMap<String, Object>();
 
-    private final ConcurrentHashMap<String, Class<?>> funcs = new ConcurrentHashMap<String, Class<?>>(64);
+    private final ConcurrentHashMap<String, Class<?>> funcs = new ConcurrentHashMap<String, Class<?>>(8);
 
     public OgnlParser() {
     }
