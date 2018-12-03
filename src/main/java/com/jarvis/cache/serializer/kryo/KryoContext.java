@@ -8,6 +8,7 @@ package com.jarvis.cache.serializer.kryo;
 public interface KryoContext {
     /**
      * 序列化
+     *
      * @param obj 对象
      * @return byte[]
      */
@@ -15,7 +16,8 @@ public interface KryoContext {
 
     /**
      * 序列化
-     * @param obj 对象
+     *
+     * @param obj        对象
      * @param bufferSize 缓冲大小
      * @return byte[]
      */
@@ -23,6 +25,7 @@ public interface KryoContext {
 
     /**
      * 反序列化
+     *
      * @param serialized byte[]
      * @return 对象
      */

@@ -2,13 +2,23 @@ package com.jarvis.cache.redis;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.*;
+import redis.clients.jedis.Client;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisClusterInfoCache;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.PipelineBase;
+import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.util.JedisClusterCRC16;
 import redis.clients.util.SafeEncoder;
 
 import java.io.Closeable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 /**
  * 在集群模式下提供批量操作的功能。由于集群模式存在节点的动态添加删除，且client不能实时感知，所以需要有重试功能

@@ -1,10 +1,10 @@
 package com.jarvis.cache;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.type.CacheOpType;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author: jiayu.qiu
@@ -17,7 +17,7 @@ public class CacheHelper {
 
     /**
      * 获取CacheOpType
-     * 
+     *
      * @return ThreadLocal中设置的CacheOpType
      */
     public static CacheOpType getCacheOpType() {
@@ -26,7 +26,7 @@ public class CacheHelper {
 
     /**
      * 设置CacheOpType
-     * 
+     *
      * @param opType CacheOpType
      */
     public static void setCacheOpType(CacheOpType opType) {
@@ -59,7 +59,7 @@ public class CacheHelper {
         }
     }
 
-    public static boolean isOnTransactional(){
+    public static boolean isOnTransactional() {
         Set<CacheKeyTO> set = DELETE_CACHE_KEYS.get();
         return null != set;
     }

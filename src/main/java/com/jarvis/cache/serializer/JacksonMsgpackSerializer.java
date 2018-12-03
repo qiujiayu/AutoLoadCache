@@ -1,5 +1,12 @@
 package com.jarvis.cache.serializer;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
+import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.lib.util.BeanUtil;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -11,17 +18,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.msgpack.jackson.dataformat.MessagePackFactory;
-
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
-import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
-
 /**
  * 基于msgpack 和 Jackson进行处理
- * 
+ *
  * @author jiayu.qiu
  */
 public class JacksonMsgpackSerializer implements ISerializer<Object> {
@@ -41,13 +40,13 @@ public class JacksonMsgpackSerializer implements ISerializer<Object> {
         if (null == bytes || bytes.length == 0) {
             return null;
         }
-        Type[] agsType = new Type[] { returnType };
+        Type[] agsType = new Type[]{returnType};
         JavaType javaType = MAPPER.getTypeFactory()
                 .constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
         return MAPPER.readValue(bytes, javaType);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
         if (null == obj) {

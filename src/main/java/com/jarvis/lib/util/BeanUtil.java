@@ -24,7 +24,7 @@ public class BeanUtil {
 
     /**
      * 是否为基础数据类型
-     * 
+     *
      * @param obj Object
      * @return boolean true or false
      */
@@ -38,7 +38,7 @@ public class BeanUtil {
 
     /**
      * 把Bean转换为字符串
-     * 
+     *
      * @param obj Object
      * @return String String
      */

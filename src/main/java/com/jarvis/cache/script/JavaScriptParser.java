@@ -1,7 +1,7 @@
 package com.jarvis.cache.script;
 
-import java.lang.reflect.Method;
-import java.util.concurrent.ConcurrentHashMap;
+import com.jarvis.cache.CacheUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -9,14 +9,12 @@ import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.SimpleBindings;
-
-import com.jarvis.cache.CacheUtil;
-
-import lombok.extern.slf4j.Slf4j;
+import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 解析JavaScript表达式
- * 
+ *
  * @author jiayu.qiu
  */
 @Slf4j
@@ -51,8 +49,8 @@ public class JavaScriptParser extends AbstractScriptParser {
     public JavaScriptParser() {
         engine = manager.getEngineByName(versionCode >= 18 ? "nashorn" : "javascript");
         try {
-            addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[] { Object.class }));
-            addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[] { Object.class }));
+            addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
+            addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -72,7 +70,7 @@ public class JavaScriptParser extends AbstractScriptParser {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal,
-            Class<T> valueType) throws Exception {
+                            Class<T> valueType) throws Exception {
         Bindings bindings = new SimpleBindings();
         bindings.put(TARGET, target);
         bindings.put(ARGS, arguments);

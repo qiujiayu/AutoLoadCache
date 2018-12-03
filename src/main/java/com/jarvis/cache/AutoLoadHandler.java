@@ -1,23 +1,22 @@
 package com.jarvis.cache;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
- * 
+ *
  * @author jiayu.qiu
  */
 @Slf4j
@@ -63,7 +62,7 @@ public class AutoLoadHandler {
 
     /**
      * @param cacheHandler 缓存的set,get方法实现类
-     * @param config 配置
+     * @param config       配置
      */
     public AutoLoadHandler(CacheHandler cacheHandler, AutoLoadConfig config) {
         this.cacheHandler = cacheHandler;
@@ -113,7 +112,7 @@ public class AutoLoadHandler {
 
     /**
      * 重置自动加载时间
-     * 
+     *
      * @param cacheKey 缓存Key
      */
     public void resetAutoLoadLastLoadTime(CacheKeyTO cacheKey) {
@@ -135,7 +134,7 @@ public class AutoLoadHandler {
     }
 
     public AutoLoadTO putIfAbsent(CacheKeyTO cacheKey, CacheAopProxyChain joinPoint, Cache cache,
-            CacheWrapper<Object> cacheWrapper) {
+                                  CacheWrapper<Object> cacheWrapper) {
         if (null == autoLoadMap) {
             return null;
         }
@@ -180,7 +179,7 @@ public class AutoLoadHandler {
 
     /**
      * 获取自动加载队列，如果是web应用，建议把自动加载队列中的数据都输出到页面中，并增加一些管理功能。
-     * 
+     *
      * @return autoload 队列
      */
     public AutoLoadTO[] getAutoLoadQueue() {

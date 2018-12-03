@@ -1,15 +1,15 @@
 package com.jarvis.cache.script;
 
-import java.lang.reflect.Method;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.type.CacheOpType;
 
+import java.lang.reflect.Method;
+
 /**
  * 表达式处理
- * 
+ *
  * @author jiayu.qiu
  */
 public abstract class AbstractScriptParser {
@@ -26,37 +26,37 @@ public abstract class AbstractScriptParser {
 
     /**
      * 为了简化表达式，方便调用Java static 函数，在这里注入表达式自定义函数
-     * 
-     * @param name 自定义函数名
+     *
+     * @param name   自定义函数名
      * @param method 调用的方法
      */
     public abstract void addFunction(String name, Method method);
 
     /**
      * 将表达式转换期望的值
-     * 
-     * @param exp 生成缓存Key的表达式
-     * @param target AOP 拦截到的实例
+     *
+     * @param exp       生成缓存Key的表达式
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
-     * @param retVal 结果值（缓存数据）
+     * @param retVal    结果值（缓存数据）
      * @param hasRetVal 是否使用 retVal 参数
      * @param valueType 表达式最终返回值类型
+     * @param <T>       泛型
      * @return T value 返回值
-     * @param <T> 泛型
      * @throws Exception 异常
      */
     public abstract <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal,
-            Class<T> valueType) throws Exception;
+                                     Class<T> valueType) throws Exception;
 
     /**
      * 将表达式转换期望的值
-     * 
-     * @param keyEL 生成缓存Key的表达式
-     * @param target AOP 拦截到的实例
+     *
+     * @param keyEL     生成缓存Key的表达式
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
      * @param valueType 值类型
+     * @param <T>       泛型
      * @return T Value 返回值
-     * @param <T> 泛型
      * @throws Exception 异常
      */
     public <T> T getElValue(String keyEL, Object target, Object[] arguments, Class<T> valueType) throws Exception {
@@ -65,11 +65,11 @@ public abstract class AbstractScriptParser {
 
     /**
      * 根据请求参数和执行结果值，进行构造缓存Key
-     * 
-     * @param keyEL 生成缓存Key的表达式
-     * @param target AOP 拦截到的实例
+     *
+     * @param keyEL     生成缓存Key的表达式
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
-     * @param retVal 结果值
+     * @param retVal    结果值
      * @param hasRetVal 是否有retVal
      * @return CacheKey 缓存Key
      * @throws Exception 异常
@@ -81,9 +81,9 @@ public abstract class AbstractScriptParser {
 
     /**
      * 是否可以缓存
-     * 
-     * @param cache Cache
-     * @param target AOP 拦截到的实例
+     *
+     * @param cache     Cache
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
      * @return cacheAble 是否可以进行缓存
      * @throws Exception 异常
@@ -98,11 +98,11 @@ public abstract class AbstractScriptParser {
 
     /**
      * 是否可以缓存
-     * 
-     * @param cache Cache
-     * @param target AOP 拦截到的实例
+     *
+     * @param cache     Cache
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
-     * @param result 执行结果
+     * @param result    执行结果
      * @return cacheAble 是否可以进行缓存
      * @throws Exception 异常
      */
@@ -116,11 +116,11 @@ public abstract class AbstractScriptParser {
 
     /**
      * 是否可以缓存
-     * 
-     * @param cache ExCache
-     * @param target AOP 拦截到的实例
+     *
+     * @param cache     ExCache
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
-     * @param result 执行结果
+     * @param result    执行结果
      * @return cacheAble 是否可以进行缓存
      * @throws Exception 异常
      */
@@ -137,11 +137,11 @@ public abstract class AbstractScriptParser {
 
     /**
      * 是否可以自动加载
-     * 
-     * @param cache Cache 注解
-     * @param target AOP 拦截到的实例
+     *
+     * @param cache     Cache 注解
+     * @param target    AOP 拦截到的实例
      * @param arguments 参数
-     * @param retVal return value
+     * @param retVal    return value
      * @return autoload 是否自动加载
      * @throws Exception 异常
      */
@@ -159,10 +159,10 @@ public abstract class AbstractScriptParser {
 
     /**
      * 是否可以删除缓存
-     * 
+     *
      * @param cacheDeleteKey CacheDeleteKey注解
-     * @param arguments 参数
-     * @param retVal 结果值
+     * @param arguments      参数
+     * @param retVal         结果值
      * @return Can Delete
      * @throws Exception 异常
      */
@@ -177,11 +177,11 @@ public abstract class AbstractScriptParser {
 
     /**
      * 获取真实的缓存时间值
-     * 
-     * @param expire 缓存时间
+     *
+     * @param expire           缓存时间
      * @param expireExpression 缓存时间表达式
-     * @param arguments 方法参数
-     * @param result 方法执行返回结果
+     * @param arguments        方法参数
+     * @param result           方法执行返回结果
      * @return real expire
      * @throws Exception 异常
      */

@@ -2,7 +2,7 @@ package com.jarvis.cache.type;
 
 /**
  * 缓存操作类型
- * 
+ *
  * @author jiayu.qiu
  */
 public enum CacheOpType {

@@ -1,14 +1,13 @@
 package com.jarvis.cache.lock;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author: jiayu.qiu

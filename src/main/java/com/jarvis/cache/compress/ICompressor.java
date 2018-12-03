@@ -9,7 +9,7 @@ public interface ICompressor {
 
     /**
      * 压缩
-     * 
+     *
      * @param bais ByteArrayInputStream
      * @return 压缩后数据
      * @throws Exception 异常
@@ -18,7 +18,7 @@ public interface ICompressor {
 
     /**
      * 解压
-     * 
+     *
      * @param bais ByteArrayInputStream
      * @return 解压后数据
      * @throws Exception 异常

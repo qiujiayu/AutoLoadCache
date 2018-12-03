@@ -1,10 +1,10 @@
 package com.jarvis.cache.type;
 
-import java.util.Comparator;
-
 import com.jarvis.cache.comparator.AutoLoadOldestComparator;
 import com.jarvis.cache.comparator.AutoLoadRequestTimesComparator;
 import com.jarvis.cache.to.AutoLoadTO;
+
+import java.util.Comparator;
 
 /**
  * @author: jiayu.qiu

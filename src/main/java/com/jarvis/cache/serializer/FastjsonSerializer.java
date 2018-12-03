@@ -1,5 +1,11 @@
 package com.jarvis.cache.serializer;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
+import com.jarvis.cache.to.CacheWrapper;
+import com.jarvis.lib.util.BeanUtil;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -13,12 +19,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
-import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.lib.util.BeanUtil;
-
 /**
  * @author jiayu.qiu
  */
@@ -26,9 +26,9 @@ public class FastjsonSerializer implements ISerializer<Object> {
 
     private final Charset charset;
 
-    private static final SerializerFeature[] FEATURES = { SerializerFeature.DisableCircularReferenceDetect };
+    private static final SerializerFeature[] FEATURES = {SerializerFeature.DisableCircularReferenceDetect};
 
-    private static final Map<Type, ParameterizedTypeImpl> TYPE_CACHE =new ConcurrentHashMap<>(1024);
+    private static final Map<Type, ParameterizedTypeImpl> TYPE_CACHE = new ConcurrentHashMap<>(1024);
 
     public FastjsonSerializer() {
         this(Charset.forName("UTF8"));
@@ -53,7 +53,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
             return null;
         }
         ParameterizedTypeImpl type = TYPE_CACHE.get(returnType);
-        if(null == type) {
+        if (null == type) {
             Type[] agsType = new Type[]{returnType};
             type = ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null);
             TYPE_CACHE.put(returnType, type);
@@ -63,7 +63,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
         return JSON.parseObject(json, type);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
         if (null == obj) {

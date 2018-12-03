@@ -1,13 +1,13 @@
 package com.jarvis.cache.clone;
 
+import com.jarvis.lib.util.BeanUtil;
+import com.rits.cloning.Cloner;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.Date;
-
-import com.jarvis.lib.util.BeanUtil;
-import com.rits.cloning.Cloner;
 
 /**
  * @author: jiayu.qiu

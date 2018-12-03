@@ -1,7 +1,11 @@
 package com.jarvis.cache.redis;
 
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.*;
+import redis.clients.jedis.BinaryJedisCluster;
+import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.JedisClusterConnectionHandler;
+import redis.clients.jedis.JedisClusterInfoCache;
+import redis.clients.jedis.JedisSlotBasedConnectionHandler;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
 
 import java.lang.reflect.Field;
@@ -53,7 +57,7 @@ public abstract class RetryableJedisClusterPipeline {
                 return;
             }
             throw jre;
-        } catch (Exception e){
+        } catch (Exception e) {
             throw e;
         }
     }
@@ -63,7 +67,7 @@ public abstract class RetryableJedisClusterPipeline {
      *
      * @return 按照命令的顺序返回所有的数据
      */
-    public List<Object> syncAndReturnAll() throws Exception{
+    public List<Object> syncAndReturnAll() throws Exception {
         try {
             JedisClusterPipeline pipeline = new JedisClusterPipeline(clusterInfoCache);
             execute(pipeline);
@@ -77,7 +81,7 @@ public abstract class RetryableJedisClusterPipeline {
                 return syncAndReturnAll();
             }
             throw jre;
-        } catch (Exception ex){
+        } catch (Exception ex) {
             throw ex;
         }
     }

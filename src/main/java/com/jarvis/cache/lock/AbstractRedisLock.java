@@ -1,13 +1,13 @@
 package com.jarvis.cache.lock;
 
+import com.jarvis.cache.to.RedisLockInfo;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import com.jarvis.cache.to.RedisLockInfo;
-
 /**
  * 基于Redis实现分布式锁
- * 
+ *
  * @author jiayu.qiu
  */
 public abstract class AbstractRedisLock implements ILock {
@@ -21,7 +21,7 @@ public abstract class AbstractRedisLock implements ILock {
 
     /**
      * SETNX
-     * 
+     *
      * @param key key
      * @param val vale
      * @return 是否设置成功
@@ -30,15 +30,15 @@ public abstract class AbstractRedisLock implements ILock {
 
     /**
      * EXPIRE
-     * 
-     * @param key key
+     *
+     * @param key    key
      * @param expire 过期时间
      */
     protected abstract void expire(String key, int expire);
 
     /**
      * GET
-     * 
+     *
      * @param key key
      * @return 缓存数据
      */
@@ -46,8 +46,8 @@ public abstract class AbstractRedisLock implements ILock {
 
     /**
      * GETSET
-     * 
-     * @param key key
+     *
+     * @param key    key
      * @param newVal new value
      * @return redis 中的老数据
      */
@@ -63,7 +63,7 @@ public abstract class AbstractRedisLock implements ILock {
 
     /**
      * DEL
-     * 
+     *
      * @param key key
      */
     protected abstract void del(String key);
@@ -95,7 +95,7 @@ public abstract class AbstractRedisLock implements ILock {
         String oldValue = get(key);
         if (oldValue != null && isTimeExpired(oldValue)) { // lock is expired
             String oldValue2 = getSet(key, lockExpireTimeStr); // getset is
-                                                               // atomic
+            // atomic
             // 但是走到这里时每个线程拿到的oldValue肯定不可能一样(因为getset是原子性的)
             // 假如拿到的oldValue依然是expired的，那么就说明拿到锁了
             if (oldValue2 != null && isTimeExpired(oldValue2)) {

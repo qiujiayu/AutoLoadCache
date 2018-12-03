@@ -1,19 +1,5 @@
 package com.jarvis.cache.serializer;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.springframework.util.StringUtils;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -25,6 +11,19 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
+import org.springframework.util.StringUtils;
+
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * @author jiayu.qiu
@@ -49,7 +48,7 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
 
         /**
          * @param classIdentifier can be {@literal null} and will be defaulted
-         *            to {@code @class}.
+         *                        to {@code @class}.
          */
         NullValueSerializer(String classIdentifier) {
 
@@ -86,13 +85,13 @@ public class JacksonJsonSerializer implements ISerializer<Object> {
         if (null == bytes || bytes.length == 0) {
             return null;
         }
-        Type[] agsType = new Type[] { returnType };
+        Type[] agsType = new Type[]{returnType};
         JavaType javaType = MAPPER.getTypeFactory()
                 .constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
         return MAPPER.readValue(bytes, javaType);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public Object deepClone(Object obj, final Type type) throws Exception {
         if (null == obj) {

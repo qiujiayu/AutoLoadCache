@@ -20,24 +20,20 @@ public class DefaultKryoContext implements KryoContext {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 100;
     private KryoPool pool;
 
-    public static KryoContext newKryoContextFactory(KryoClassRegistration registration)
-    {
+    public static KryoContext newKryoContextFactory(KryoClassRegistration registration) {
         return new DefaultKryoContext(registration);
     }
 
-    private DefaultKryoContext(KryoClassRegistration registration)
-    {
+    private DefaultKryoContext(KryoClassRegistration registration) {
         KryoFactory factory = new KryoFactoryImpl(registration);
 
         pool = new KryoPool.Builder(factory).softReferences().build();
     }
 
-    private static class KryoFactoryImpl implements KryoFactory
-    {
+    private static class KryoFactoryImpl implements KryoFactory {
         private KryoClassRegistration registration;
 
-        public KryoFactoryImpl(KryoClassRegistration registration)
-        {
+        public KryoFactoryImpl(KryoClassRegistration registration) {
             this.registration = registration;
         }
 
@@ -61,12 +57,10 @@ public class DefaultKryoContext implements KryoContext {
     @Override
     public byte[] serialize(Object obj, int bufferSize) {
         Kryo kryo = pool.borrow();
-        try(Output output = new Output(new ByteArrayOutputStream(), bufferSize))
-        {
+        try (Output output = new Output(new ByteArrayOutputStream(), bufferSize)) {
             kryo.writeClassAndObject(output, obj);
             return output.toBytes();
-        }
-        finally {
+        } finally {
             pool.release(kryo);
         }
     }
@@ -74,12 +68,10 @@ public class DefaultKryoContext implements KryoContext {
     @Override
     public Object deserialize(byte[] serialized) {
         Kryo kryo = pool.borrow();
-        try (Input input = new Input(new ByteArrayInputStream(serialized)))
-        {
+        try (Input input = new Input(new ByteArrayInputStream(serialized))) {
             Object o = kryo.readClassAndObject(input);
             return o;
-        }
-        finally {
+        } finally {
             pool.release(kryo);
         }
     }

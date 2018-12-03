@@ -9,7 +9,6 @@ import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 

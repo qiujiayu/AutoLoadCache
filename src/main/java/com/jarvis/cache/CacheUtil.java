@@ -1,10 +1,10 @@
 package com.jarvis.cache;
 
+import com.jarvis.lib.util.BeanUtil;
+
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
-
-import com.jarvis.lib.util.BeanUtil;
 
 /**
  * @author jiayu.qiu
@@ -39,7 +39,7 @@ public class CacheUtil {
 
     /**
      * 生成字符串的HashCode
-     * 
+     *
      * @param buf
      * @return int hashCode
      */
@@ -55,7 +55,7 @@ public class CacheUtil {
 
     /**
      * 将Object 对象转换为唯一的Hash字符串
-     * 
+     *
      * @param obj Object
      * @return Hash字符串
      */
@@ -65,7 +65,7 @@ public class CacheUtil {
 
     /**
      * 通过混合Hash算法，将长字符串转为短字符串（字符串长度小于等于20时，不做处理）
-     * 
+     *
      * @param str String
      * @return Hash字符串
      */
@@ -91,9 +91,9 @@ public class CacheUtil {
 
     /**
      * 生成缓存Key
-     * 
+     *
      * @param className 类名称
-     * @param method 方法名称
+     * @param method    方法名称
      * @param arguments 参数
      * @return CacheKey 缓存Key
      */
@@ -108,9 +108,9 @@ public class CacheUtil {
 
     /**
      * 生成缓存Key的前缀
-     * 
+     *
      * @param className 类名称
-     * @param method 方法名称
+     * @param method    方法名称
      * @param arguments 参数
      * @return CacheKey 缓存Key
      */

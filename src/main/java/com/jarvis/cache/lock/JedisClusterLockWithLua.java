@@ -1,10 +1,10 @@
 package com.jarvis.cache.lock;
 
+import redis.clients.jedis.JedisCluster;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-
-import redis.clients.jedis.JedisCluster;
 
 /**
  * @author: jiayu.qiu

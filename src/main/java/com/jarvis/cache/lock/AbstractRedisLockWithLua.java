@@ -1,16 +1,16 @@
 package com.jarvis.cache.lock;
 
+import com.jarvis.cache.to.RedisLockInfo;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.jarvis.cache.to.RedisLockInfo;
-
 /**
  * 基于Redis+Lua实现分布式锁; 实现方法更容易理解，但性能相对会差些
- * 
+ *
  * @author jiayu.qiu
  */
 public abstract class AbstractRedisLockWithLua implements ILock {
@@ -41,10 +41,10 @@ public abstract class AbstractRedisLockWithLua implements ILock {
 
     /**
      * eval
-     * 
+     *
      * @param lockScript lua 脚本
-     * @param key key
-     * @param args 参数
+     * @param key        key
+     * @param args       参数
      * @return 是否获取锁成功，1成功，否则失败
      * @throws UnsupportedEncodingException 编码异常
      */
@@ -52,7 +52,7 @@ public abstract class AbstractRedisLockWithLua implements ILock {
 
     /**
      * del
-     * 
+     *
      * @param key key
      */
     protected abstract void del(String key);

@@ -1,12 +1,12 @@
 package com.jarvis.cache.to;
 
-import java.io.Serializable;
-
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 缓存Key
- * 
+ *
  * @author jiayu.qiu
  */
 @Data

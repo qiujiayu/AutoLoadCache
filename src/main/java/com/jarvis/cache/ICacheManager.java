@@ -51,6 +51,7 @@ public interface ICacheManager {
 
     /**
      * 根据缓存Key获得缓存中的数据
+     *
      * @param method Method
      * @param keys   缓存keys
      * @return 缓存数据 返回值必须与keys 一一对应

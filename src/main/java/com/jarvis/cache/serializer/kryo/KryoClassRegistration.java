@@ -11,6 +11,7 @@ public interface KryoClassRegistration {
 
     /**
      * 注册类
+     *
      * @param kryo see {@link Kryo}
      */
     void register(Kryo kryo);

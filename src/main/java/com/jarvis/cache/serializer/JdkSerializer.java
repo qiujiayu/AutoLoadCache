@@ -1,5 +1,7 @@
 package com.jarvis.cache.serializer;
 
+import com.jarvis.lib.util.BeanUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -8,8 +10,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.Date;
-
-import com.jarvis.lib.util.BeanUtil;
 
 /**
  * @author: jiayu.qiu

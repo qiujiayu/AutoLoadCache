@@ -1,20 +1,19 @@
 package com.jarvis.cache.aop.aspectj;
 
-import java.lang.reflect.Method;
-
+import com.jarvis.cache.CacheHandler;
+import com.jarvis.cache.annotation.Cache;
+import com.jarvis.cache.annotation.CacheDelete;
+import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.reflect.MethodSignature;
 
-import com.jarvis.cache.CacheHandler;
-import com.jarvis.cache.annotation.Cache;
-import com.jarvis.cache.annotation.CacheDelete;
-import com.jarvis.cache.annotation.CacheDeleteTransactional;
+import java.lang.reflect.Method;
 
 /**
  * 使用Aspectj 实现AOP拦截 注意：拦截器不能有相同名字的Method
- * 
+ *
  * @author jiayu.qiu
  */
 public class AspectjAopInterceptor {
@@ -75,7 +74,7 @@ public class AspectjAopInterceptor {
     }
 
     public Object deleteCacheTransactional(ProceedingJoinPoint aopProxyChain,
-            CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
+                                           CacheDeleteTransactional cacheDeleteTransactional) throws Throwable {
         return cacheHandler.proceedDeleteCacheTransactional(
                 new AspectjDeleteCacheTransactionalAopProxyChain(aopProxyChain), cacheDeleteTransactional);
     }

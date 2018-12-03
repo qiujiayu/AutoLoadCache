@@ -1,13 +1,13 @@
 package com.jarvis.cache.to;
 
-import java.util.Map;
-
 import com.jarvis.cache.type.AutoLoadQueueSortType;
 import lombok.ToString;
 
+import java.util.Map;
+
 /**
  * 缓存处理的相关 配置
- * 
+ *
  * @author jiayu.qiu
  */
 @ToString
@@ -165,7 +165,7 @@ public class AutoLoadConfig {
 
     /**
      * 为表达式注册自定义函数
-     * 
+     *
      * @param funcs 函数
      */
     public void setFunctions(Map<String, String> funcs) {

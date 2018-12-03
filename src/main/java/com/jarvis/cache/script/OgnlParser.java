@@ -1,19 +1,18 @@
 package com.jarvis.cache.script;
 
+import com.jarvis.cache.CacheUtil;
+import ognl.Ognl;
+import ognl.OgnlContext;
+
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.jarvis.cache.CacheUtil;
-
-import ognl.Ognl;
-import ognl.OgnlContext;
-
 /**
  * 解析JavaScript表达式
- * 
+ *
  * @author jiayu.qiu
  */
 public class OgnlParser extends AbstractScriptParser {
@@ -33,7 +32,7 @@ public class OgnlParser extends AbstractScriptParser {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getElValue(String exp, Object target, Object[] arguments, Object retVal, boolean hasRetVal,
-            Class<T> valueType) throws Exception {
+                            Class<T> valueType) throws Exception {
         if (valueType.equals(String.class)) {
             if (exp.indexOf("#") == -1 && exp.indexOf("@") == -1 && exp.indexOf("'") == -1) {// 如果不是表达式，直接返回字符串
                 return (T) exp;

@@ -1,12 +1,12 @@
 package com.jarvis.cache.to;
 
-import java.io.Serializable;
-
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 对缓存数据进行封装
- * 
+ *
  * @author jiayu.qiu
  */
 @Data
@@ -40,7 +40,7 @@ public class CacheWrapper<T> implements Serializable, Cloneable {
 
     /**
      * 判断缓存是否已经过期
-     * 
+     *
      * @return boolean
      */
     public boolean isExpired() {

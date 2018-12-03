@@ -14,7 +14,7 @@ public class MSetParam {
 
     private final CacheWrapper<Object> result;
 
-    public MSetParam(CacheKeyTO cacheKey, CacheWrapper<Object> result){
+    public MSetParam(CacheKeyTO cacheKey, CacheWrapper<Object> result) {
         this.cacheKey = cacheKey;
         this.result = result;
     }

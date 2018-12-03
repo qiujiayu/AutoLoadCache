@@ -118,7 +118,7 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO,CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) {
         if (null == keys || keys.length == 0) {
             return null;
         }

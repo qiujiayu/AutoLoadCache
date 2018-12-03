@@ -1,13 +1,13 @@
 package com.jarvis.cache.to;
 
-import java.io.Serializable;
-
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 
+import java.io.Serializable;
+
 /**
  * 用于处理自动加载数据到缓存
- * 
+ *
  * @author jiayu.qiu
  */
 public class AutoLoadTO implements Serializable {
@@ -148,7 +148,7 @@ public class AutoLoadTO implements Serializable {
 
     /**
      * 记录用时
-     * 
+     *
      * @param useTime 用时
      * @return this
      */
@@ -162,7 +162,7 @@ public class AutoLoadTO implements Serializable {
 
     /**
      * 平均用时
-     * 
+     *
      * @return long 用时
      */
     public long getAverageUseTime() {

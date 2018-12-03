@@ -1,17 +1,16 @@
 package com.jarvis.cache.serializer;
 
+import com.jarvis.cache.compress.CommonsCompressor;
+import com.jarvis.cache.compress.ICompressor;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-
-import com.jarvis.cache.compress.CommonsCompressor;
-import com.jarvis.cache.compress.ICompressor;
-
 /**
  * memcache缓存管理
- * 
+ *
  * @author: jiayu.qiu
  */
 public class CompressorSerializer implements ISerializer<Object> {

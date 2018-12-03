@@ -24,7 +24,7 @@ public class KryoSerializer implements ISerializer<Object> {
     public KryoSerializer() {
         this.kryoContext = DefaultKryoContext.newKryoContextFactory(kryo -> {
             kryo.register(CacheWrapper.class, new CacheWrapperSerializer());
-            if(log.isDebugEnabled()) {
+            if (log.isDebugEnabled()) {
                 log.debug("kryo register classes successfully.");
             }
         });
