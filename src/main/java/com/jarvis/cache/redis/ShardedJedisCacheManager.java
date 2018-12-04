@@ -83,7 +83,7 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public void mset(MSetParam... params) {
+        public void mset(Collection<MSetParam> params) {
             ShardedJedisPipeline pipeline = new ShardedJedisPipeline();
             pipeline.setShardedJedis(shardedJedis);
             try {
@@ -107,7 +107,7 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, CacheKeyTO... keys) throws Exception {
+        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, Set<CacheKeyTO> keys) throws Exception {
             ShardedJedisPipeline pipeline = new ShardedJedisPipeline();
             pipeline.setShardedJedis(shardedJedis);
             JedisUtil.executeMGet(pipeline, keys);

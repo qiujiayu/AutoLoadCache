@@ -9,6 +9,7 @@ import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,7 +81,7 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public void mset(MSetParam... params) {
+        public void mset(Collection<MSetParam> params) {
             RetryableJedisClusterPipeline retryableJedisClusterPipeline = new RetryableJedisClusterPipeline(jedisCluster) {
                 @Override
                 public void execute(JedisClusterPipeline pipeline) throws Exception {
@@ -105,7 +106,7 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, CacheKeyTO... keys) throws Exception {
+        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, Set<CacheKeyTO> keys) throws Exception {
             RetryableJedisClusterPipeline retryableJedisClusterPipeline = new RetryableJedisClusterPipeline(jedisCluster) {
                 @Override
                 public void execute(JedisClusterPipeline pipeline) {

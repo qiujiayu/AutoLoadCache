@@ -7,6 +7,7 @@ import com.jarvis.cache.to.CacheWrapper;
 
 import java.io.Closeable;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +32,7 @@ public interface IRedis extends Closeable {
      * @param params 缓存Key 和 缓存数据
      * @throws CacheCenterConnectionException 缓存异常
      */
-    void mset(final MSetParam... params);
+    void mset(final Collection<MSetParam> params);
 
     byte[] get(byte[] key);
 
@@ -45,7 +46,7 @@ public interface IRedis extends Closeable {
      * @return 缓存数据
      * @throws CacheCenterConnectionException 缓存异常
      */
-    Map<CacheKeyTO, CacheWrapper<Object>> mget(final Type returnType, final CacheKeyTO... keys) throws Exception;
+    Map<CacheKeyTO, CacheWrapper<Object>> mget(final Type returnType, final Set<CacheKeyTO> keys) throws Exception;
 
     /**
      * 批量删除

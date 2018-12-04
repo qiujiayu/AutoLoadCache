@@ -10,9 +10,9 @@ import lombok.Data;
 @Data
 public class MSetParam {
 
-    private final CacheKeyTO cacheKey;
+    private CacheKeyTO cacheKey;
 
-    private final CacheWrapper<Object> result;
+    private CacheWrapper<Object> result;
 
     public MSetParam(CacheKeyTO cacheKey, CacheWrapper<Object> result) {
         this.cacheKey = cacheKey;

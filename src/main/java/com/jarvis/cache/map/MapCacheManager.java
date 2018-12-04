@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -149,11 +150,14 @@ public class MapCacheManager implements ICacheManager {
     }
 
     @Override
-    public void mset(final Method method, final MSetParam... params) throws CacheCenterConnectionException {
-        if (null == params || params.length == 0) {
+    public void mset(final Method method, final Collection<MSetParam> params) throws CacheCenterConnectionException {
+        if (null == params || params.isEmpty()) {
             return;
         }
         for (MSetParam param : params) {
+            if (null == param) {
+                continue;
+            }
             this.setCache(param.getCacheKey(), param.getResult(), method);
         }
     }
@@ -214,14 +218,17 @@ public class MapCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) throws CacheCenterConnectionException {
-        if (null == keys || keys.length == 0) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        if (null == keys || keys.isEmpty()) {
             return null;
         }
-        int len = keys.length;
+        int len = keys.size();
         Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(len);
-        for (int i = 0; i < len; i++) {
-            res.put(keys[i], get(keys[i], method));
+        for (CacheKeyTO key : keys) {
+            CacheWrapper<Object> value = get(key, method);
+            if (null != value) {
+                res.put(key, value);
+            }
         }
         return res;
     }

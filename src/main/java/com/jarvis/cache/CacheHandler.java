@@ -5,6 +5,7 @@ import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import com.jarvis.cache.annotation.ExCache;
+import com.jarvis.cache.annotation.Magic;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheTransactionalAopProxyChain;
@@ -21,8 +22,14 @@ import com.jarvis.cache.type.CacheOpType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,12 +104,15 @@ public class CacheHandler {
         Object[] arguments = pjp.getArgs();
         if (scriptParser.isCacheable(cache, pjp.getTarget(), arguments, result)) {
             CacheKeyTO cacheKey = getCacheKey(pjp, cache, result);
-            AutoLoadTO autoLoadTO = autoLoadHandler.getAutoLoadTO(cacheKey);// 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
+            // 注意：这里只能获取AutoloadTO，不能生成AutoloadTO
+            AutoLoadTO autoLoadTO = autoLoadHandler.getAutoLoadTO(cacheKey);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, cacheWrapper);
                 if (null != autoLoadTO) {
-                    autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
-                            .setExpire(cacheWrapper.getExpire());// 同步过期时间
+                    // 同步加载时间
+                    autoLoadTO.setLastLoadTime(cacheWrapper.getLastLoadTime())
+                            // 同步过期时间
+                            .setExpire(cacheWrapper.getExpire());
                 }
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
@@ -142,6 +152,190 @@ public class CacheHandler {
         return opType;
     }
 
+    private boolean isMagic(Cache cache, Method method, Object[] arguments) throws Exception {
+        boolean rv = null != arguments && arguments.length > 0 && cache.magic().key().length() > 0;
+        if (rv) {
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes.length == 1 && Collection.class.isAssignableFrom(parameterTypes[0])) {
+                return true;
+            }
+            Class<?> tmp = parameterTypes[0];
+            // 判断参数类型是否相同
+            for (int i = 1; i < parameterTypes.length; i++) {
+                rv = tmp.isAssignableFrom(parameterTypes[i]);
+                if (!rv) {
+                    break;
+                }
+                tmp = parameterTypes[i];
+            }
+            if (!rv) {
+                throw new Exception("因参数类型不相同，不支持magic模式");
+            }
+        }
+        return rv;
+    }
+
+    private Object magic(CacheAopProxyChain pjp, Cache cache) throws Throwable {
+        Map<CacheKeyTO, Object> keyArgMap = getCacheKeyForMagic(pjp, cache);
+        Method method = pjp.getMethod();
+        Map<CacheKeyTO, CacheWrapper<Object>> cacheValues = this.cacheManager.mget(method, keyArgMap.keySet());
+        Class<?> returnType = method.getReturnType();
+        // 如果所有key都已经命中
+        if (keyArgMap.size() == cacheValues.size()) {
+            return convertToReturnObject(cacheValues, returnType, null);
+        }
+        Iterator<Map.Entry<CacheKeyTO, Object>> keyArgMapIt = keyArgMap.entrySet().iterator();
+
+        Object[] args;
+        int argSize = keyArgMap.size() - cacheValues.size();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Map<CacheKeyTO, MSetParam> unmatchCache = new HashMap<>(argSize);
+        if (parameterTypes.length == 1 && Collection.class.isAssignableFrom(parameterTypes[0])) {
+            List<Object> argList = new ArrayList<>(argSize);
+            while (keyArgMapIt.hasNext()) {
+                Map.Entry<CacheKeyTO, Object> item = keyArgMapIt.next();
+                if (!cacheValues.containsKey(item.getKey())) {
+                    argList.add(item.getValue());
+                    unmatchCache.put(item.getKey(), new MSetParam(item.getKey(), null));
+                }
+            }
+            args = new Object[]{argList};
+        } else {
+            args = new Object[argSize];
+            int i = 0;
+            while (keyArgMapIt.hasNext()) {
+                Map.Entry<CacheKeyTO, Object> item = keyArgMapIt.next();
+                if (!cacheValues.containsKey(item.getKey())) {
+                    args[i] = item.getValue();
+                    unmatchCache.put(item.getKey(), new MSetParam(item.getKey(), null));
+                }
+            }
+        }
+        Object newValue = this.getData(pjp, args);
+        writeMagicCache(pjp, cache, newValue, unmatchCache);
+        return convertToReturnObject(cacheValues, returnType, newValue);
+    }
+
+    private void writeMagicCache(CacheAopProxyChain pjp, Cache cache, Object newValue, Map<CacheKeyTO, MSetParam> unmatchCache) throws Exception {
+        if (null != newValue) {
+            Magic magic = cache.magic();
+            Object target = pjp.getTarget();
+            String methodName = pjp.getMethod().getName();
+            String keyExpression = magic.key();
+            String hfieldExpression = magic.hfield();
+            if (newValue.getClass().isArray()) {
+                Object[] newValues = (Object[]) newValue;
+                for (Object value : newValues) {
+                    genCacheWrapper(target, methodName, keyExpression, hfieldExpression, value, unmatchCache);
+                }
+            } else if (newValue instanceof Collection) {
+                Collection<Object> newValues = (Collection<Object>) newValue;
+                for (Object value : newValues) {
+                    genCacheWrapper(target, methodName, keyExpression, hfieldExpression, value, unmatchCache);
+                }
+            } else {
+                throw new Exception("Magic模式返回值，只允许是数组或Collection类型的");
+            }
+        }
+        Iterator<Map.Entry<CacheKeyTO, MSetParam>> unmatchCacheIt = unmatchCache.entrySet().iterator();
+        while (unmatchCacheIt.hasNext()) {
+            Map.Entry<CacheKeyTO, MSetParam> entry = unmatchCacheIt.next();
+            MSetParam param = entry.getValue();
+            CacheWrapper<Object> cacheWrapper = param.getResult();
+            if (cacheWrapper == null) {
+                cacheWrapper = new CacheWrapper<>();
+                param.setResult(cacheWrapper);
+            }
+            int expire = getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), null, cacheWrapper.getCacheObject());
+            cacheWrapper.setExpire(expire);
+        }
+        this.cacheManager.mset(pjp.getMethod(), unmatchCache.values());
+    }
+
+    private void genCacheWrapper(Object target, String methodName, String keyExpression, String hfieldExpression, Object value, Map<CacheKeyTO, MSetParam> unmatchCache) throws Exception {
+        CacheKeyTO cacheKeyTO = getCacheKey(target, methodName, null, keyExpression, hfieldExpression, value, true);
+        MSetParam param = unmatchCache.get(cacheKeyTO);
+        if (param == null) {
+            // 通过 magic生成的CacheKeyTO 与通过参数生成的CacheKeyTO 匹配不上
+            throw new Exception("通过 magic生成的CacheKeyTO 与通过参数生成的CacheKeyTO 匹配不上");
+        }
+        CacheWrapper<Object> cacheWrapper = new CacheWrapper<>();
+        cacheWrapper.setCacheObject(value);
+        param.setResult(cacheWrapper);
+    }
+
+    private Object convertToReturnObject(Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Class<?> returnType, Object newValue) throws Throwable {
+        if (returnType.isArray()) {
+            int newValueSize = 0;
+            Object[] newValues = (Object[]) newValue;
+            if (null != newValues) {
+                newValueSize = newValues.length;
+            }
+            Object[] res = new Object[cacheValues.size() + newValueSize];
+            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
+            int i = 0;
+            while (cacheValuesIt.hasNext()) {
+                res[i] = cacheValuesIt.next().getValue().getCacheObject();
+                i++;
+            }
+            if (null != newValues) {
+                for (Object value : newValues) {
+                    res[i] = value;
+                    i++;
+                }
+            }
+            return res;
+        } else if (List.class.isAssignableFrom(returnType)) {
+            int newValueSize = 0;
+            List<Object> newValues = (List<Object>) newValue;
+            if (null != newValues) {
+                newValueSize = newValues.size();
+            }
+
+            List<Object> list;
+            if (LinkedList.class.isAssignableFrom(returnType)) {
+                list = new LinkedList<>();
+            } else {
+                list = new ArrayList<>(cacheValues.size() + newValueSize);
+            }
+            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
+            while (cacheValuesIt.hasNext()) {
+                list.add(cacheValuesIt.next().getValue().getCacheObject());
+            }
+            if (null != newValues) {
+                for (Object value : newValues) {
+                    list.add(value);
+                }
+            }
+            return list;
+        } else if (Set.class.isAssignableFrom(returnType)) {
+            int newValueSize = 0;
+            Set<Object> newValues = (Set<Object>) newValue;
+            if (null != newValues) {
+                newValueSize = newValues.size();
+            }
+
+            Set<Object> set;
+            if (LinkedHashSet.class.isAssignableFrom(returnType)) {
+                set = new LinkedHashSet<>(cacheValues.size() + newValueSize);
+            } else {
+                set = new HashSet<>(cacheValues.size() + newValueSize);
+            }
+            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
+            while (cacheValuesIt.hasNext()) {
+                set.add(cacheValuesIt.next().getValue().getCacheObject());
+            }
+            if (null != newValues) {
+                for (Object value : newValues) {
+                    set.add(value);
+                }
+            }
+            return set;
+        }
+        throw new Exception("Unsupported return type:" + returnType.getName());
+    }
+
+
     /**
      * 处理@Cache 拦截
      *
@@ -154,8 +348,7 @@ public class CacheHandler {
         Object[] arguments = pjp.getArgs();
         CacheOpType opType = getCacheOpType(cache, arguments);
         if (log.isTraceEnabled()) {
-            log.trace("CacheHandler.proceed-->{}.{}--{})", pjp.getTarget().getClass().getName(),
-                    pjp.getMethod().getName(), opType.name());
+            log.trace("CacheHandler.proceed-->{}.{}--{})", pjp.getTarget().getClass().getName(), pjp.getMethod().getName(), opType.name());
         }
         if (opType == CacheOpType.WRITE) {
             return writeOnly(pjp, cache);
@@ -163,18 +356,23 @@ public class CacheHandler {
             return getData(pjp);
         }
 
-        if (!scriptParser.isCacheable(cache, pjp.getTarget(), arguments)) {// 如果不进行缓存，则直接返回数据
+        // 如果不进行缓存，则直接返回数据
+        if (!scriptParser.isCacheable(cache, pjp.getTarget(), arguments)) {
             return getData(pjp);
+        }
+        Method method = pjp.getMethod();
+        if (isMagic(cache, method, arguments)) {
+            return magic(pjp, cache);
         }
 
         CacheKeyTO cacheKey = getCacheKey(pjp, cache);
         if (null == cacheKey) {
             return getData(pjp);
         }
-        Method method = pjp.getMethod();
         CacheWrapper<Object> cacheWrapper = null;
         try {
-            cacheWrapper = this.get(cacheKey, method);// 从缓存中获取数据
+            // 从缓存中获取数据
+            cacheWrapper = this.get(cacheKey, method);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
@@ -187,11 +385,15 @@ public class CacheHandler {
 
         if (null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
-            if (null != autoLoadTO) {// 同步最后加载时间
-                autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
-                        .setLastLoadTime(cacheWrapper.getLastLoadTime())// 同步加载时间
-                        .setExpire(cacheWrapper.getExpire());// 同步过期时间
-            } else {// 如果缓存快要失效，则自动刷新
+            if (null != autoLoadTO) {
+                // 同步最后加载时间
+                autoLoadTO.setLastRequestTime(System.currentTimeMillis())
+                        // 同步加载时间
+                        .setLastLoadTime(cacheWrapper.getLastLoadTime())
+                        // 同步过期时间
+                        .setExpire(cacheWrapper.getExpire());
+            } else {
+                // 如果缓存快要失效，则自动刷新
                 refreshHandler.doRefresh(pjp, cache, cacheKey, cacheWrapper);
             }
             return cacheWrapper.getCacheObject();
@@ -216,11 +418,15 @@ public class CacheHandler {
             autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
-                if (null != autoLoadTO) {// 同步最后加载时间
-                    autoLoadTO.setLastRequestTime(System.currentTimeMillis())//
-                            .setLastLoadTime(newCacheWrapper.getLastLoadTime())// 同步加载时间
-                            .setExpire(newCacheWrapper.getExpire())// 同步过期时间
-                            .addUseTotalTime(loadDataUseTime);// 统计用时
+                if (null != autoLoadTO) {
+                    // 同步最后加载时间
+                    autoLoadTO.setLastRequestTime(System.currentTimeMillis())
+                            // 同步加载时间
+                            .setLastLoadTime(newCacheWrapper.getLastLoadTime())
+                            // 同步过期时间
+                            .setExpire(newCacheWrapper.getExpire())
+                            // 统计用时
+                            .addUseTotalTime(loadDataUseTime);
                 }
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
@@ -344,9 +550,12 @@ public class CacheHandler {
      * @throws Throwable 异常
      */
     private Object getData(CacheAopProxyChain pjp) throws Throwable {
+        return getData(pjp, pjp.getArgs());
+    }
+
+    private Object getData(CacheAopProxyChain pjp, Object[] arguments) throws Throwable {
         try {
             long startTime = System.currentTimeMillis();
-            Object[] arguments = pjp.getArgs();
             Object result = pjp.doProxyChain(arguments);
             long useTime = System.currentTimeMillis() - startTime;
             if (config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
@@ -364,13 +573,11 @@ public class CacheHandler {
         if (null == cacheKey) {
             return;
         }
-        Method method = pjp.getMethod();
-        if (cacheWrapper.getExpire() >= 0) {
-            this.setCache(cacheKey, cacheWrapper, method);
-        }
         ExCache[] exCaches = cache.exCache();
-        if (null == exCaches || exCaches.length == 0) {
-            return;
+        Method method = pjp.getMethod();
+        List<MSetParam> params = new ArrayList<>(exCaches.length + 1);
+        if (cacheWrapper.getExpire() >= 0) {
+            params.add(new MSetParam(cacheKey, cacheWrapper));
         }
 
         Object result = cacheWrapper.getCacheObject();
@@ -385,7 +592,7 @@ public class CacheHandler {
                     continue;
                 }
                 Object exResult = null;
-                if (null == exCache.cacheObject() || exCache.cacheObject().length() == 0) {
+                if (null == exCache.cacheObject() || exCache.cacheObject().isEmpty()) {
                     exResult = result;
                 } else {
                     exResult = scriptParser.getElValue(exCache.cacheObject(), target, arguments, result, true,
@@ -397,18 +604,24 @@ public class CacheHandler {
                 CacheWrapper<Object> exCacheWrapper = new CacheWrapper<Object>(exResult, exCacheExpire);
                 AutoLoadTO tmpAutoLoadTO = this.autoLoadHandler.getAutoLoadTO(exCacheKey);
                 if (exCacheExpire >= 0) {
-                    this.setCache(exCacheKey, exCacheWrapper, method);
+                    params.add(new MSetParam(exCacheKey, exCacheWrapper));
                     if (null != tmpAutoLoadTO) {
-                        tmpAutoLoadTO.setExpire(exCacheExpire)//
-                                .setLastLoadTime(exCacheWrapper.getLastLoadTime());//
+                        tmpAutoLoadTO.setExpire(exCacheExpire)
+                                //
+                                .setLastLoadTime(exCacheWrapper.getLastLoadTime());
                     }
                 }
-
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
             }
         }
-
+        int size = params.size();
+        if (size == 1) {
+            MSetParam param = params.get(0);
+            this.setCache(param.getCacheKey(), param.getResult(), method);
+        } else if (size > 1) {
+            this.mset(method, params);
+        }
     }
 
     public void destroy() {
@@ -444,9 +657,8 @@ public class CacheHandler {
         } else {
             key = CacheUtil.getDefaultCacheKey(target.getClass().getName(), methodName, arguments);
         }
-        if (null == key || key.trim().length() == 0) {
-            log.error("{}.{}; cache key is empty", target.getClass().getName(), methodName);
-            return null;
+        if (null == key || key.trim().isEmpty()) {
+            throw new IllegalArgumentException("cache key for " + target.getClass().getName() + "." + methodName + " is empty");
         }
         return new CacheKeyTO(config.getNamespace(), key, hfield);
     }
@@ -465,6 +677,37 @@ public class CacheHandler {
         String keyExpression = cache.key();
         String hfieldExpression = cache.hfield();
         return getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, null, false);
+    }
+
+    private Map<CacheKeyTO, Object> getCacheKeyForMagic(CacheAopProxyChain pjp, Cache cache) {
+        Object target = pjp.getTarget();
+        String methodName = pjp.getMethod().getName();
+        Object[] arguments = pjp.getArgs();
+        String keyExpression = cache.key();
+        String hfieldExpression = cache.hfield();
+        Map<CacheKeyTO, Object> keyArgMap = null;
+        if (arguments.length == 1) {
+            if (arguments[0] instanceof Collection) {
+                Collection<Object> args = (Collection<Object>) arguments[0];
+                keyArgMap = new HashMap<>(args.size());
+                Object[] tmpArg;
+                for (Object arg : args) {
+                    tmpArg = new Object[]{arg};
+                    keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
+                }
+            }
+        } else {
+            keyArgMap = new HashMap<>(arguments.length);
+            Object[] tmpArg;
+            for (int i = 0; i < arguments.length; i++) {
+                tmpArg = new Object[]{arguments[i]};
+                keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arguments[i]);
+            }
+        }
+        if (null == keyArgMap || keyArgMap.isEmpty()) {
+            throw new IllegalArgumentException("the 'keys' array is empty");
+        }
+        return keyArgMap;
     }
 
     /**
@@ -546,6 +789,10 @@ public class CacheHandler {
         if (null != changeListener) {
             changeListener.update(cacheKey, result);
         }
+    }
+
+    public void mset(final Method method, final Collection<MSetParam> params) throws CacheCenterConnectionException {
+        cacheManager.mset(method, params);
     }
 
     public CacheWrapper<Object> get(CacheKeyTO key, Method method) throws CacheCenterConnectionException {

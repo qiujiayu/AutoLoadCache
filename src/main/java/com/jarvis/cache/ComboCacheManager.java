@@ -9,6 +9,7 @@ import com.jarvis.cache.to.LocalCacheWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,7 +49,8 @@ public class ComboCacheManager implements ICacheManager {
         if (method.isAnnotationPresent(LocalCache.class)) {
             LocalCache lCache = method.getAnnotation(LocalCache.class);
             setLocalCache(lCache, cacheKey, result, method);
-            if (lCache.localOnly()) {// 只本地缓存
+            // 只本地缓存
+            if (lCache.localOnly()) {
                 return;
             }
         }
@@ -56,13 +58,17 @@ public class ComboCacheManager implements ICacheManager {
     }
 
     @Override
-    public void mset(Method method, MSetParam... params) throws CacheCenterConnectionException {
+    public void mset(Method method, Collection<MSetParam> params) throws CacheCenterConnectionException {
         if (method.isAnnotationPresent(LocalCache.class)) {
             LocalCache lCache = method.getAnnotation(LocalCache.class);
             for (MSetParam param : params) {
+                if(param == null){
+                    continue;
+                }
                 setLocalCache(lCache, param.getCacheKey(), param.getResult(), method);
             }
-            if (lCache.localOnly()) {// 只本地缓存
+            // 只本地缓存
+            if (lCache.localOnly()) {
                 return;
             }
         }
@@ -89,7 +95,8 @@ public class ComboCacheManager implements ICacheManager {
     @Override
     public CacheWrapper<Object> get(CacheKeyTO key, Method method) throws CacheCenterConnectionException {
         String threadName = Thread.currentThread().getName();
-        if (threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {// 如果是自动加载线程，则只从远程缓存获取。
+        // 如果是自动加载线程，则只从远程缓存获取。
+        if (threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {
             return remoteCache.get(key, method);
         }
         LocalCache lCache = null;
@@ -110,14 +117,15 @@ public class ComboCacheManager implements ICacheManager {
             }
         }
         CacheWrapper<Object> result = remoteCache.get(key, method);
-        if (null != lCache && result != null) { // 如果取到了则先放到本地缓存里
+        // 如果取到了则先放到本地缓存里
+        if (null != lCache && result != null) {
             setLocalCache(lCache, key, result, method);
         }
         return result;
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) throws CacheCenterConnectionException {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
         return remoteCache.mget(method, keys);
     }
 

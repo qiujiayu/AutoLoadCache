@@ -21,6 +21,12 @@ import java.lang.annotation.Target;
 public @interface Cache {
 
     /**
+     *
+     * @return
+     */
+    Magic magic() default @Magic(key = "");
+
+    /**
      * 缓存的过期时间，单位：秒，如果为0则表示永久缓存
      *
      * @return 时间
@@ -58,6 +64,7 @@ public @interface Cache {
 
     /**
      * 是否启用自动加载缓存， 缓存时间必须大于120秒时才有效
+     * 如果magic为true时，会强制关闭自动加载功能
      *
      * @return boolean
      */

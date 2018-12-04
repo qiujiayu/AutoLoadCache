@@ -42,16 +42,18 @@ public class DataLoader {
     public DataLoader() {
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache,
-                           CacheHandler cacheHandler) {
+    public DataLoader init(CacheAopProxyChain pjp, AutoLoadTO autoLoadTO, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler) {
         this.cacheHandler = cacheHandler;
         this.pjp = pjp;
         this.cacheKey = cacheKey;
         this.cache = cache;
         this.autoLoadTO = autoLoadTO;
-        if (null == autoLoadTO) {// 用户请求
+
+        if (null == autoLoadTO) {
+            // 用户请求
             this.arguments = pjp.getArgs();
-        } else {// 来自AutoLoadHandler的请求
+        } else {
+            // 来自AutoLoadHandler的请求
             this.arguments = autoLoadTO.getArgs();
         }
         this.loadDataUseTime = 0;
@@ -59,8 +61,7 @@ public class DataLoader {
         return this;
     }
 
-    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler,
-                           Object[] arguments) {
+    public DataLoader init(CacheAopProxyChain pjp, CacheKeyTO cacheKey, Cache cache, CacheHandler cacheHandler, Object[] arguments) {
         this.cacheHandler = cacheHandler;
         this.pjp = pjp;
         this.cacheKey = cacheKey;
@@ -97,14 +98,16 @@ public class DataLoader {
         ProcessingTO processing = cacheHandler.processing.get(cacheKey);
         if (null == processing) {
             ProcessingTO newProcessing = new ProcessingTO();
-            ProcessingTO firstProcessing = cacheHandler.processing.putIfAbsent(cacheKey, newProcessing);// 为发减少数据层的并发，增加等待机制。
-            if (null == firstProcessing) { // 当前并发中的第一个请求
+            // 为发减少数据层的并发，增加等待机制。
+            ProcessingTO firstProcessing = cacheHandler.processing.putIfAbsent(cacheKey, newProcessing);
+            // 当前并发中的第一个请求
+            if (null == firstProcessing) {
                 isFirst = true;
                 processing = newProcessing;
             } else {
                 isFirst = false;
-                processing = firstProcessing;// 获取到第一个线程的ProcessingTO
-                // 的引用，保证所有请求都指向同一个引用
+                // 获取到第一个线程的ProcessingTO 的引用，保证所有请求都指向同一个引用
+                processing = firstProcessing;
             }
         } else {
             isFirst = false;
@@ -135,11 +138,13 @@ public class DataLoader {
 
     private void doFirstRequest(ProcessingTO processingTO) throws Throwable {
         ILock distributedLock = cacheHandler.getLock();
-        if (null != distributedLock && cache.lockExpire() > 0) {// 开启分布式锁
+        // 开启分布式锁
+        if (null != distributedLock && cache.lockExpire() > 0) {
             String lockKey = cacheKey.getLockKey();
             long startWait = processingTO.getStartTime();
             do {
-                if (distributedLock.tryLock(lockKey, cache.lockExpire())) {// 获得分布式锁
+                // 获得分布式锁
+                if (distributedLock.tryLock(lockKey, cache.lockExpire())) {
                     try {
                         getData();
                     } finally {
@@ -148,7 +153,8 @@ public class DataLoader {
                     break;
                 }
                 int tryCnt = 10;
-                for (int i = 0; i < tryCnt; i++) {// 没有获得锁时，定时缓存尝试获取数据
+                // 没有获得锁时，定时缓存尝试获取数据
+                for (int i = 0; i < tryCnt; i++) {
                     cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
                     if (null != cacheWrapper) {
                         break;
@@ -160,19 +166,20 @@ public class DataLoader {
                 }
             } while (System.currentTimeMillis() - startWait < cache.waitTimeOut());
             if (null == cacheWrapper) {
-                throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout("
-                        + cache.waitTimeOut() + " ms).");
+                throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " ms).");
             }
         } else {
             getData();
         }
-        processingTO.setCache(cacheWrapper);// 本地缓存
+        // 本地缓存
+        processingTO.setCache(cacheWrapper);
     }
 
     private void doWaitRequest(ProcessingTO processing, Object lock) throws Throwable {
         long startWait = processing.getStartTime();
         String tname = Thread.currentThread().getName();
-        do {// 等待
+        do {
+            // 等待
             if (processing.isFirstFinished()) {
                 // 从本地内存获取数据，防止频繁去缓存服务器取数据，造成缓存服务器压力过大
                 CacheWrapper<Object> tmpcacheWrapper = processing.getCache();
@@ -184,7 +191,8 @@ public class DataLoader {
                     return;
                 }
                 Throwable error = processing.getError();
-                if (null != error) {// 当DAO出错时，直接抛异常
+                // 当DAO出错时，直接抛异常
+                if (null != error) {
                     if (log.isTraceEnabled()) {
                         log.trace("{} do error", tname);
                     }
@@ -197,7 +205,8 @@ public class DataLoader {
                         log.trace("{} do wait", tname);
                     }
                     try {
-                        lock.wait(10);// 如果要测试lock对象是否有效，wait时间去掉就可以
+                        // 如果要测试lock对象是否有效，wait时间去掉就可以
+                        lock.wait(10);
                     } catch (InterruptedException ex) {
                         log.error(ex.getMessage(), ex);
                     }
@@ -213,8 +222,7 @@ public class DataLoader {
                 tryCnt++;
                 loadData();
             } else {
-                throw new LoadDataTimeOutException(
-                        "cache for key \"" + cacheKey.getCacheKey() + "\" loaded " + tryCnt + " times.");
+                throw new LoadDataTimeOutException("cache for key \"" + cacheKey.getCacheKey() + "\" loaded " + tryCnt + " times.");
             }
         }
     }
@@ -258,7 +266,7 @@ public class DataLoader {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
-        cacheWrapper = new CacheWrapper<Object>(result, expire);
+        cacheWrapper = new CacheWrapper<>(result, expire);
     }
 
     public CacheWrapper<Object> getCacheWrapper() {

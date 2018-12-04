@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,7 +75,7 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public void mset(MSetParam... params) {
+        public void mset(Collection<MSetParam> params) {
             // 为了提升性能，开启pipeline
             this.connection.setAutoFlushCommands(false);
             RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
@@ -108,7 +109,7 @@ public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
         }
 
         @Override
-        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, CacheKeyTO... keys) {
+        public Map<CacheKeyTO, CacheWrapper<Object>> mget(Type returnType, Set<CacheKeyTO> keys) {
             RedisAdvancedClusterAsyncCommands<byte[], byte[]> asyncCommands = connection.async();
             return LettuceRedisUtil.executeMGet(connection, (AbstractRedisAsyncCommands<byte[], byte[]>) asyncCommands, cacheManager, returnType, keys);
         }

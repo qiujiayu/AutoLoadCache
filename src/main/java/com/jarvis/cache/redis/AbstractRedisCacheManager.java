@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,8 +76,8 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
 
 
     @Override
-    public void mset(final Method method, final MSetParam... params) {
-        if (null == params || params.length == 0) {
+    public void mset(final Method method, final Collection<MSetParam> params) {
+        if (null == params || params.isEmpty()) {
             return;
         }
         try (IRedis redis = getRedis()) {
@@ -118,8 +119,8 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) {
-        if (null == keys || keys.length == 0) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) {
+        if (null == keys || keys.isEmpty()) {
             return null;
         }
         Type returnType = null;
@@ -134,44 +135,23 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
         return null;
     }
 
-    public Map<CacheKeyTO, CacheWrapper<Object>> deserialize(CacheKeyTO[] keys, Object[] values, Type returnType) throws Exception {
-        if (null == values || values.length == 0) {
-            return null;
-        }
-        CacheWrapper<Object> tmp;
-        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.length);
-        for (int i = 0; i < values.length; i++) {
-            Object value = values[i];
-            if (!(value instanceof byte[])) {
-                log.warn("the data from redis is not byte[] but " + value.getClass().getName());
-                continue;
-            }
-            tmp = (CacheWrapper<Object>) serializer.deserialize((byte[]) value, returnType);
-            if (null != tmp) {
-                res.put(keys[i], tmp);
-            }
-        }
-        return res;
-    }
-
-    public Map<CacheKeyTO, CacheWrapper<Object>> deserialize(CacheKeyTO[] keys, Collection<Object> values, Type returnType) throws Exception {
+    public Map<CacheKeyTO, CacheWrapper<Object>> deserialize(Set<CacheKeyTO> keys, Collection<Object> values, Type returnType) throws Exception {
         if (null == values || values.isEmpty()) {
             return null;
         }
         CacheWrapper<Object> tmp;
-        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.length);
-        int i = 0;
+        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.size());
+        Iterator<CacheKeyTO> keysIt = keys.iterator();
         for (Object value : values) {
+            CacheKeyTO cacheKeyTO = keysIt.next();
             if (!(value instanceof byte[])) {
-                i++;
                 log.warn("the data from redis is not byte[] but " + value.getClass().getName());
                 continue;
             }
             tmp = (CacheWrapper<Object>) serializer.deserialize((byte[]) value, returnType);
             if (null != tmp) {
-                res.put(keys[i], tmp);
+                res.put(cacheKeyTO, tmp);
             }
-            i++;
         }
         return res;
     }

@@ -9,8 +9,10 @@ import io.lettuce.core.api.StatefulConnection;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author jiayu.qiu
@@ -18,7 +20,7 @@ import java.util.Map;
 @Slf4j
 public class LettuceRedisUtil {
 
-    public static void executeMSet(AbstractRedisAsyncCommands<byte[], byte[]> pipeline, AbstractRedisCacheManager manager, MSetParam... params) throws Exception {
+    public static void executeMSet(AbstractRedisAsyncCommands<byte[], byte[]> pipeline, AbstractRedisCacheManager manager, Collection<MSetParam> params) throws Exception {
         CacheKeyTO cacheKeyTO;
         String cacheKey;
         String hfield;
@@ -26,6 +28,9 @@ public class LettuceRedisUtil {
         byte[] key;
         byte[] val;
         for (MSetParam param : params) {
+            if (null == param) {
+                continue;
+            }
             cacheKeyTO = param.getCacheKey();
             cacheKey = cacheKeyTO.getCacheKey();
             if (null == cacheKey || cacheKey.isEmpty()) {
@@ -52,16 +57,16 @@ public class LettuceRedisUtil {
         }
     }
 
-    public static Map<CacheKeyTO, CacheWrapper<Object>> executeMGet(StatefulConnection<byte[], byte[]> connection, AbstractRedisAsyncCommands<byte[], byte[]> asyncCommands, AbstractRedisCacheManager cacheManager, Type returnType, CacheKeyTO... keys) {
+    public static Map<CacheKeyTO, CacheWrapper<Object>> executeMGet(StatefulConnection<byte[], byte[]> connection, AbstractRedisAsyncCommands<byte[], byte[]> asyncCommands, AbstractRedisCacheManager cacheManager, Type returnType, Set<CacheKeyTO> keys) {
         String hfield;
         String cacheKey;
         byte[] key;
-        RedisFuture<byte[]>[] futures = new RedisFuture[keys.length];
+        RedisFuture<byte[]>[] futures = new RedisFuture[keys.size()];
         try {
             // 为了提升性能，开启pipeline
             connection.setAutoFlushCommands(false);
-            for (int i = 0; i < keys.length; i++) {
-                CacheKeyTO cacheKeyTO = keys[i];
+            int i = 0;
+            for (CacheKeyTO cacheKeyTO : keys) {
                 cacheKey = cacheKeyTO.getCacheKey();
                 if (null == cacheKey || cacheKey.isEmpty()) {
                     continue;
@@ -73,18 +78,24 @@ public class LettuceRedisUtil {
                 } else {
                     futures[i] = asyncCommands.hget(key, AbstractRedisCacheManager.KEY_SERIALIZER.serialize(hfield));
                 }
+                i++;
             }
         } finally {
             connection.flushCommands();
         }
-        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.length);
-        for (int i = 0; i < futures.length; i++) {
+        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.size());
+        int i = 0;
+        for (CacheKeyTO cacheKeyTO : keys) {
             RedisFuture<byte[]> future = futures[i];
             try {
-                res.put(keys[i], (CacheWrapper<Object>) cacheManager.getSerializer().deserialize(future.get(), returnType));
+                CacheWrapper<Object> value = (CacheWrapper<Object>) cacheManager.getSerializer().deserialize(future.get(), returnType);
+                if (null != value) {
+                    res.put(cacheKeyTO, value);
+                }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
+            i++;
         }
         return res;
     }

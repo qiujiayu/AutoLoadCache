@@ -9,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.spy.memcached.MemcachedClient;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,11 +47,14 @@ public class MemcachedCacheManager implements ICacheManager {
     }
 
     @Override
-    public void mset(final Method method, final MSetParam... params) throws CacheCenterConnectionException {
-        if (null == params || params.length == 0) {
+    public void mset(final Method method, final Collection<MSetParam> params) throws CacheCenterConnectionException {
+        if (null == params || params.isEmpty()) {
             return;
         }
         for (MSetParam param : params) {
+            if (null == param) {
+                continue;
+            }
             this.setCache(param.getCacheKey(), param.getResult(), method);
         }
     }
@@ -72,23 +77,27 @@ public class MemcachedCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final CacheKeyTO... keys) throws CacheCenterConnectionException {
-        if (null == keys || keys.length == 0) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        if (null == keys || keys.isEmpty()) {
             return null;
         }
-        String[] k = new String[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-            k[i] = keys[i].getCacheKey();
+        Map<String, CacheKeyTO> keyMap = new HashMap<>(keys.size());
+        for (CacheKeyTO key : keys) {
+            keyMap.put(key.getCacheKey(), key);
         }
-        Map<String, Object> values = memcachedClient.getBulk(k);
+        Map<String, Object> values = memcachedClient.getBulk(keyMap.keySet());
         if (null == values || values.isEmpty()) {
             return null;
         }
 
-        int len = keys.length;
-        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(len);
-        for (int i = 0; i < len; i++) {
-            res.put(keys[i], (CacheWrapper<Object>) values.get(keys[i].getCacheKey()));
+        Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(values.size());
+        Iterator<Map.Entry<String, CacheKeyTO>> keyMapIt = keyMap.entrySet().iterator();
+        while (keyMapIt.hasNext()) {
+            Map.Entry<String, CacheKeyTO> item = keyMapIt.next();
+            CacheWrapper<Object> value = (CacheWrapper<Object>) values.get(item.getKey());
+            if (null != value) {
+                res.put(item.getValue(), value);
+            }
         }
         return res;
     }
