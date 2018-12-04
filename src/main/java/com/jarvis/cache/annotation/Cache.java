@@ -21,8 +21,9 @@ import java.lang.annotation.Target;
 public @interface Cache {
 
     /**
+     * 魔术模式
      *
-     * @return
+     * @return Magic
      */
     Magic magic() default @Magic(key = "");
 

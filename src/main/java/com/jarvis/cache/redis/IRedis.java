@@ -32,7 +32,7 @@ public interface IRedis extends Closeable {
      * @param params 缓存Key 和 缓存数据
      * @throws CacheCenterConnectionException 缓存异常
      */
-    void mset(final Collection<MSetParam> params);
+    void mset(final Collection<MSetParam> params) throws Exception;
 
     byte[] get(byte[] key);
 
@@ -51,7 +51,7 @@ public interface IRedis extends Closeable {
     /**
      * 批量删除
      *
-     * @param keys
+     * @param keys   缓存keys
      */
     void delete(Set<CacheKeyTO> keys);
 }

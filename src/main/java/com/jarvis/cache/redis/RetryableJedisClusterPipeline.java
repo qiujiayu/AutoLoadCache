@@ -41,6 +41,7 @@ public abstract class RetryableJedisClusterPipeline {
 
     /**
      * 同步读取所有数据. 与syncAndReturnAll()相比，sync()只是没有对数据做反序列化
+     * @throws Exception redis 异常
      */
     public void sync() throws Exception {
         try {
@@ -66,6 +67,7 @@ public abstract class RetryableJedisClusterPipeline {
      * 同步读取所有数据 并按命令顺序返回一个列表
      *
      * @return 按照命令的顺序返回所有的数据
+     * @throws Exception redis 异常
      */
     public List<Object> syncAndReturnAll() throws Exception {
         try {
