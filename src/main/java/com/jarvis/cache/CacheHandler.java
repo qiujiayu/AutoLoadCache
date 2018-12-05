@@ -152,24 +152,35 @@ public class CacheHandler {
         return opType;
     }
 
-    private boolean isMagic(Cache cache, Method method, Object[] arguments) throws Exception {
-        boolean rv = null != arguments && arguments.length > 0 && cache.magic().key().length() > 0;
+    private boolean isMagic(Cache cache, Method method) throws Exception {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        boolean rv = null != parameterTypes && parameterTypes.length > 0 && cache.magic().key().length() > 0;
         if (rv) {
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            if (parameterTypes.length == 1 && Collection.class.isAssignableFrom(parameterTypes[0])) {
-                return true;
-            }
             Class<?> tmp = parameterTypes[0];
-            // 判断参数类型是否相同
-            for (int i = 1; i < parameterTypes.length; i++) {
-                rv = tmp.isAssignableFrom(parameterTypes[i]);
-                if (!rv) {
-                    break;
+            if (parameterTypes.length == 1) {
+                if (tmp.isArray() || Collection.class.isAssignableFrom(tmp)) {
+                    rv = true;
+                } else {
+                    throw new Exception("magic模式下，参数必须是数组或Collection的类型");
                 }
-                tmp = parameterTypes[i];
+            } else {
+                // 判断参数类型是否相同
+                for (int i = 1; i < parameterTypes.length; i++) {
+                    rv = tmp.isAssignableFrom(parameterTypes[i]);
+                    if (!rv) {
+                        break;
+                    }
+                    tmp = parameterTypes[i];
+                }
+                if (!rv) {
+                    throw new Exception("因参数类型不相同，不支持magic模式");
+                }
             }
-            if (!rv) {
-                throw new Exception("因参数类型不相同，不支持magic模式");
+            Class<?> returnType = method.getReturnType();
+            if (returnType.isArray() || Collection.class.isAssignableFrom(returnType)) {
+                rv = true;
+            } else {
+                throw new Exception("magic模式下，返回值必须是数组或Collection的类型");
             }
         }
         return rv;
@@ -352,16 +363,11 @@ public class CacheHandler {
         }
         if (opType == CacheOpType.WRITE) {
             return writeOnly(pjp, cache);
-        } else if (opType == CacheOpType.LOAD) {
-            return getData(pjp);
-        }
-
-        // 如果不进行缓存，则直接返回数据
-        if (!scriptParser.isCacheable(cache, pjp.getTarget(), arguments)) {
+        } else if (opType == CacheOpType.LOAD || !scriptParser.isCacheable(cache, pjp.getTarget(), arguments)) {
             return getData(pjp);
         }
         Method method = pjp.getMethod();
-        if (isMagic(cache, method, arguments)) {
+        if (isMagic(cache, method)) {
             return magic(pjp, cache);
         }
 
@@ -377,7 +383,7 @@ public class CacheHandler {
             log.error(ex.getMessage(), ex);
         }
         if (log.isTraceEnabled()) {
-            log.trace("cache key:{}, cache data is null {} ", cacheKey.getCacheKey(), null == cacheWrapper);
+            log.trace("cache key:{}, cache data is {} ", cacheKey.getCacheKey(), cacheWrapper);
         }
         if (opType == CacheOpType.READ_ONLY) {
             return null == cacheWrapper ? null : cacheWrapper.getCacheObject();
@@ -386,12 +392,7 @@ public class CacheHandler {
         if (null != cacheWrapper && !cacheWrapper.isExpired()) {
             AutoLoadTO autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, cacheWrapper);
             if (null != autoLoadTO) {
-                // 同步最后加载时间
-                autoLoadTO.setLastRequestTime(System.currentTimeMillis())
-                        // 同步加载时间
-                        .setLastLoadTime(cacheWrapper.getLastLoadTime())
-                        // 同步过期时间
-                        .setExpire(cacheWrapper.getExpire());
+                autoLoadTO.flushRequestTime(cacheWrapper);
             } else {
                 // 如果缓存快要失效，则自动刷新
                 refreshHandler.doRefresh(pjp, cache, cacheKey, cacheWrapper);
@@ -412,21 +413,13 @@ public class CacheHandler {
         } finally {
             factory.returnObject(dataLoader);
         }
-        AutoLoadTO autoLoadTO = null;
-
         if (isFirst) {
-            autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
+            AutoLoadTO autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
                 if (null != autoLoadTO) {
-                    // 同步最后加载时间
-                    autoLoadTO.setLastRequestTime(System.currentTimeMillis())
-                            // 同步加载时间
-                            .setLastLoadTime(newCacheWrapper.getLastLoadTime())
-                            // 同步过期时间
-                            .setExpire(newCacheWrapper.getExpire())
-                            // 统计用时
-                            .addUseTotalTime(loadDataUseTime);
+                    autoLoadTO.flushRequestTime(cacheWrapper);
+                    autoLoadTO.addUseTotalTime(loadDataUseTime);
                 }
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
@@ -690,6 +683,14 @@ public class CacheHandler {
             if (arguments[0] instanceof Collection) {
                 Collection<Object> args = (Collection<Object>) arguments[0];
                 keyArgMap = new HashMap<>(args.size());
+                Object[] tmpArg;
+                for (Object arg : args) {
+                    tmpArg = new Object[]{arg};
+                    keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
+                }
+            } else if (arguments[0].getClass().isArray()) {
+                Object[] args = (Object[]) arguments[0];
+                keyArgMap = new HashMap<>(args.length);
                 Object[] tmpArg;
                 for (Object arg : args) {
                     tmpArg = new Object[]{arg};

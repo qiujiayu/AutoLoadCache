@@ -185,4 +185,13 @@ public class AutoLoadTO implements Serializable {
         return this;
     }
 
+    public void flushRequestTime(CacheWrapper<Object> cacheWrapper) {
+        // 同步最后加载时间
+        this.setLastRequestTime(System.currentTimeMillis())
+                // 同步加载时间
+                .setLastLoadTime(cacheWrapper.getLastLoadTime())
+                // 同步过期时间
+                .setExpire(cacheWrapper.getExpire());
+    }
+
 }

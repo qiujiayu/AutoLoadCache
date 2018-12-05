@@ -66,7 +66,6 @@ public class JedisUtil {
                 pipeline.hget(key, AbstractRedisCacheManager.KEY_SERIALIZER.serialize(hfield));
             }
         }
-
     }
 
     public static void executeDelete(PipelineBase pipeline, Set<CacheKeyTO> keys) {
