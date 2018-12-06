@@ -290,76 +290,64 @@ public class CacheHandler {
                 if (log.isDebugEnabled()) {
                     log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
                 }
-                res[i] = item.getValue().getCacheObject();
-                i++;
-            }
-            if (null != newValues) {
-                for (Object value : newValues) {
-                    res[i] = value;
+                Object data = item.getValue().getCacheObject();
+                if (null != data) {
+                    res[i] = data;
                     i++;
                 }
             }
+            if (null != newValues) {
+                for (Object value : newValues) {
+                    if (null != value) {
+                        res[i] = value;
+                        i++;
+                    }
+                }
+            }
             return res;
-        } else if (List.class.isAssignableFrom(returnType)) {
+        } else {
+            Collection<Object> res;
             int newValueSize = 0;
-            List<Object> newValues = (List<Object>) newValue;
+            Collection<Object> newValues = (Collection<Object>) newValue;
             if (null != newValues) {
                 newValueSize = newValues.size();
             }
 
-            List<Object> list;
             if (LinkedList.class.isAssignableFrom(returnType)) {
-                list = new LinkedList<>();
+                res = new LinkedList<>();
+            } else if (List.class.isAssignableFrom(returnType)) {
+                res = new ArrayList<>(cacheValues.size() + newValueSize);
+            } else if (LinkedHashSet.class.isAssignableFrom(returnType)) {
+                res = new LinkedHashSet<>(cacheValues.size() + newValueSize);
+            } else if (Set.class.isAssignableFrom(returnType)) {
+                res = new HashSet<>(cacheValues.size() + newValueSize);
             } else {
-                list = new ArrayList<>(cacheValues.size() + newValueSize);
+                throw new Exception("Unsupported return type:" + returnType.getName());
             }
-            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
-            while (cacheValuesIt.hasNext()) {
-                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
-                if (log.isDebugEnabled()) {
-                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
-                }
-                list.add(item.getValue().getCacheObject());
-            }
+            cacheToCollection(cacheValues, res);
             if (null != newValues) {
                 for (Object value : newValues) {
                     if (null != value) {
-                        list.add(value);
+                        res.add(value);
                     }
                 }
             }
-            return list;
-        } else if (Set.class.isAssignableFrom(returnType)) {
-            int newValueSize = 0;
-            Set<Object> newValues = (Set<Object>) newValue;
-            if (null != newValues) {
-                newValueSize = newValues.size();
-            }
-
-            Set<Object> set;
-            if (LinkedHashSet.class.isAssignableFrom(returnType)) {
-                set = new LinkedHashSet<>(cacheValues.size() + newValueSize);
-            } else {
-                set = new HashSet<>(cacheValues.size() + newValueSize);
-            }
-            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
-            while (cacheValuesIt.hasNext()) {
-                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
-                if (log.isDebugEnabled()) {
-                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
-                }
-                set.add(item.getValue().getCacheObject());
-            }
-            if (null != newValues) {
-                for (Object value : newValues) {
-                    if (null != value) {
-                        set.add(value);
-                    }
-                }
-            }
-            return set;
+            return res;
         }
-        throw new Exception("Unsupported return type:" + returnType.getName());
+    }
+
+    private void cacheToCollection(Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Collection<Object> out) {
+        Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
+        while (cacheValuesIt.hasNext()) {
+            Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
+            if (log.isDebugEnabled()) {
+                log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
+            }
+            Object data = item.getValue().getCacheObject();
+            if (null != data) {
+                out.add(data);
+            }
+        }
     }
 
 
