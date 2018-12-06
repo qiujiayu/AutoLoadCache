@@ -88,7 +88,11 @@ public class LettuceRedisUtil {
         for (CacheKeyTO cacheKeyTO : keys) {
             RedisFuture<byte[]> future = futures[i];
             try {
-                CacheWrapper<Object> value = (CacheWrapper<Object>) cacheManager.getSerializer().deserialize(future.get(), returnType);
+                byte[] data = future.get();
+                if (null == data || data.length == 0) {
+                    continue;
+                }
+                CacheWrapper<Object> value = (CacheWrapper<Object>) cacheManager.getSerializer().deserialize(data, returnType);
                 if (null != value) {
                     res.put(cacheKeyTO, value);
                 }

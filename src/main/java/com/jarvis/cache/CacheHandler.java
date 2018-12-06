@@ -21,6 +21,7 @@ import com.jarvis.cache.to.ProcessingTO;
 import com.jarvis.cache.type.CacheOpType;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -154,31 +155,18 @@ public class CacheHandler {
 
     private boolean isMagic(Cache cache, Method method) throws Exception {
         Class<?>[] parameterTypes = method.getParameterTypes();
-        boolean rv = null != parameterTypes && parameterTypes.length > 0 && cache.magic().key().length() > 0;
+        // 参数支持一个 List\Set\数组\可变长参数
+        boolean rv = null != parameterTypes && parameterTypes.length == 1 && cache.magic().key().length() > 0;
         if (rv) {
             Class<?> tmp = parameterTypes[0];
-            if (parameterTypes.length == 1) {
-                if (tmp.isArray() || Collection.class.isAssignableFrom(tmp)) {
-                    rv = true;
-                } else {
-                    throw new Exception("magic模式下，参数必须是数组或Collection的类型");
-                }
+            if (tmp.isArray() || Collection.class.isAssignableFrom(tmp)) {
+                //rv = true;
             } else {
-                // 判断参数类型是否相同
-                for (int i = 1; i < parameterTypes.length; i++) {
-                    rv = tmp.isAssignableFrom(parameterTypes[i]);
-                    if (!rv) {
-                        break;
-                    }
-                    tmp = parameterTypes[i];
-                }
-                if (!rv) {
-                    throw new Exception("因参数类型不相同，不支持magic模式");
-                }
+                throw new Exception("magic模式下，参数必须是数组或Collection的类型");
             }
             Class<?> returnType = method.getReturnType();
             if (returnType.isArray() || Collection.class.isAssignableFrom(returnType)) {
-                rv = true;
+                // rv = true;
             } else {
                 throw new Exception("magic模式下，返回值必须是数组或Collection的类型");
             }
@@ -212,15 +200,20 @@ public class CacheHandler {
             }
             args = new Object[]{argList};
         } else {
-            args = new Object[argSize];
+            Object[] arguments = pjp.getArgs();
+            Object arg = ((Object[]) arguments[0])[0];
+            // 可变及数组参数
+            Object[] args2 = (Object[]) Array.newInstance(arg.getClass(), argSize);
             int i = 0;
             while (keyArgMapIt.hasNext()) {
                 Map.Entry<CacheKeyTO, Object> item = keyArgMapIt.next();
                 if (!cacheValues.containsKey(item.getKey())) {
-                    args[i] = item.getValue();
+                    args2[i] = item.getValue();
                     unmatchCache.put(item.getKey(), new MSetParam(item.getKey(), null));
+                    i++;
                 }
             }
+            args = new Object[]{args2};
         }
         Object newValue = this.getData(pjp, args);
         writeMagicCache(pjp, cache, newValue, unmatchCache);
@@ -259,6 +252,13 @@ public class CacheHandler {
             }
             int expire = getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), null, cacheWrapper.getCacheObject());
             cacheWrapper.setExpire(expire);
+            if (expire < 0) {
+                unmatchCacheIt.remove();
+            }
+            if (log.isDebugEnabled()) {
+                String isNull = null == cacheWrapper.getCacheObject() ? "is null" : "is not null";
+                log.debug("the data for key :" + entry.getKey() + " is from datasource " + isNull + ", expire :" + expire);
+            }
         }
         this.cacheManager.mset(pjp.getMethod(), unmatchCache.values());
     }
@@ -286,7 +286,11 @@ public class CacheHandler {
             Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
             int i = 0;
             while (cacheValuesIt.hasNext()) {
-                res[i] = cacheValuesIt.next().getValue().getCacheObject();
+                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
+                if (log.isDebugEnabled()) {
+                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
+                }
+                res[i] = item.getValue().getCacheObject();
                 i++;
             }
             if (null != newValues) {
@@ -311,11 +315,17 @@ public class CacheHandler {
             }
             Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
             while (cacheValuesIt.hasNext()) {
-                list.add(cacheValuesIt.next().getValue().getCacheObject());
+                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
+                if (log.isDebugEnabled()) {
+                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
+                }
+                list.add(item.getValue().getCacheObject());
             }
             if (null != newValues) {
                 for (Object value : newValues) {
-                    list.add(value);
+                    if (null != value) {
+                        list.add(value);
+                    }
                 }
             }
             return list;
@@ -334,11 +344,17 @@ public class CacheHandler {
             }
             Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
             while (cacheValuesIt.hasNext()) {
-                set.add(cacheValuesIt.next().getValue().getCacheObject());
+                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
+                if (log.isDebugEnabled()) {
+                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
+                }
+                set.add(item.getValue().getCacheObject());
             }
             if (null != newValues) {
                 for (Object value : newValues) {
-                    set.add(value);
+                    if (null != value) {
+                        set.add(value);
+                    }
                 }
             }
             return set;
@@ -679,30 +695,21 @@ public class CacheHandler {
         String keyExpression = cache.key();
         String hfieldExpression = cache.hfield();
         Map<CacheKeyTO, Object> keyArgMap = null;
-        if (arguments.length == 1) {
-            if (arguments[0] instanceof Collection) {
-                Collection<Object> args = (Collection<Object>) arguments[0];
-                keyArgMap = new HashMap<>(args.size());
-                Object[] tmpArg;
-                for (Object arg : args) {
-                    tmpArg = new Object[]{arg};
-                    keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
-                }
-            } else if (arguments[0].getClass().isArray()) {
-                Object[] args = (Object[]) arguments[0];
-                keyArgMap = new HashMap<>(args.length);
-                Object[] tmpArg;
-                for (Object arg : args) {
-                    tmpArg = new Object[]{arg};
-                    keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
-                }
-            }
-        } else {
-            keyArgMap = new HashMap<>(arguments.length);
+        if (arguments[0] instanceof Collection) {
+            Collection<Object> args = (Collection<Object>) arguments[0];
+            keyArgMap = new HashMap<>(args.size());
             Object[] tmpArg;
-            for (int i = 0; i < arguments.length; i++) {
-                tmpArg = new Object[]{arguments[i]};
-                keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arguments[i]);
+            for (Object arg : args) {
+                tmpArg = new Object[]{arg};
+                keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
+            }
+        } else if (arguments[0].getClass().isArray()) {
+            Object[] args = (Object[]) arguments[0];
+            keyArgMap = new HashMap<>(args.length);
+            Object[] tmpArg;
+            for (Object arg : args) {
+                tmpArg = new Object[]{arg};
+                keyArgMap.put(getCacheKey(target, methodName, tmpArg, keyExpression, hfieldExpression, null, false), arg);
             }
         }
         if (null == keyArgMap || keyArgMap.isEmpty()) {
