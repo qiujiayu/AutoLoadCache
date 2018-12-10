@@ -1,7 +1,9 @@
 package com.test.kryo;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.jarvis.cache.serializer.kryo.CacheWrapperSerializer;
 import com.jarvis.cache.serializer.kryo.DefaultKryoContext;
+import com.jarvis.cache.serializer.kryo.KryoClassRegistration;
 import com.jarvis.cache.serializer.kryo.KryoContext;
 import com.jarvis.cache.to.CacheWrapper;
 import org.junit.Test;
@@ -28,11 +30,19 @@ public class KryoTest {
     public void checkKryoThreadSafetyWithKryoPool() {
         // kryo pool factory context.
         KryoContext kryoContext = DefaultKryoContext.newKryoContextFactory(kryo -> {
-            kryo.register(CacheWrapper.class, new CacheWrapperSerializer());
+            new CustomKKryoClassRegistration().register(kryo);
         });
 
         // run multiple threads.
         runExecutor(new KryoWorkerThread(kryoContext));
+    }
+
+    // 自定义类注册器
+    private static class CustomKKryoClassRegistration implements KryoClassRegistration {
+        @Override
+        public void register(Kryo kryo) {
+            kryo.register(CacheWrapper.class, new CacheWrapperSerializer());
+        }
     }
 
     private static class KryoWorkerThread implements Runnable {
