@@ -3,12 +3,13 @@ package com.jarvis.cache.serializer.kryo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.utils.Lists;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 /**
  * kryo接口默认实现
@@ -19,34 +20,23 @@ import java.io.ByteArrayOutputStream;
 public class DefaultKryoContext implements KryoContext {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 100;
     private KryoPool pool;
+    private List<KryoClassRegistration> registrations;
 
     public static KryoContext newKryoContextFactory(KryoClassRegistration registration) {
-        return new DefaultKryoContext(registration);
+        KryoContext kryoContext = new DefaultKryoContext();
+        kryoContext.addKryoClassRegistration(registration);
+        return kryoContext;
     }
 
-    private DefaultKryoContext(KryoClassRegistration registration) {
-        KryoFactory factory = new KryoFactoryImpl(registration);
+    private DefaultKryoContext() {
+        registrations = Lists.newArrayList();
 
-        pool = new KryoPool.Builder(factory).softReferences().build();
-    }
-
-    private static class KryoFactoryImpl implements KryoFactory {
-        private KryoClassRegistration registration;
-
-        public KryoFactoryImpl(KryoClassRegistration registration) {
-            this.registration = registration;
-        }
-
-        @Override
-        public Kryo create() {
+        //KryoFactory的create方法会延后调用
+        pool = new KryoPool.Builder(() -> {
             Kryo kryo = new Kryo();
-
-            if (registration != null) {
-                registration.register(kryo);
-            }
-
+            registrations.forEach(reg -> reg.register(kryo));
             return kryo;
-        }
+        }).softReferences().build();
     }
 
     @Override
@@ -73,6 +63,13 @@ public class DefaultKryoContext implements KryoContext {
             return o;
         } finally {
             pool.release(kryo);
+        }
+    }
+
+    @Override
+    public void addKryoClassRegistration(KryoClassRegistration registration) {
+        if (null != registration) {
+            registrations.add(registration);
         }
     }
 }

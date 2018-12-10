@@ -30,4 +30,10 @@ public interface KryoContext {
      * @return 对象
      */
     Object deserialize(byte[] serialized);
+
+    /**
+     * 添加Kryo类注册器
+     * @param registration see {@link KryoClassRegistration}
+     */
+    void addKryoClassRegistration(KryoClassRegistration registration);
 }

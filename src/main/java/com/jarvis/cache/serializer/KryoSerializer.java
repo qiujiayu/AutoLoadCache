@@ -2,6 +2,7 @@ package com.jarvis.cache.serializer;
 
 import com.jarvis.cache.serializer.kryo.CacheWrapperSerializer;
 import com.jarvis.cache.serializer.kryo.DefaultKryoContext;
+import com.jarvis.cache.serializer.kryo.KryoClassRegistration;
 import com.jarvis.cache.serializer.kryo.KryoContext;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
@@ -30,6 +31,13 @@ public class KryoSerializer implements ISerializer<Object> {
         });
     }
 
+    /**
+     * 添加Kryo类注册器
+     * @param registration see {@link KryoClassRegistration}
+     */
+    public void addKryoClassRegistration(KryoClassRegistration registration) {
+        kryoContext.addKryoClassRegistration(registration);
+    }
 
     @Override
     public byte[] serialize(Object obj) throws Exception {
