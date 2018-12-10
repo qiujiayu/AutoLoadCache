@@ -25,6 +25,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -312,15 +313,15 @@ public class CacheHandler {
             if (null != newValues) {
                 newValueSize = newValues.size();
             }
-
+            int resSize = cacheValues.size() + newValueSize;
             if (LinkedList.class.isAssignableFrom(returnType)) {
                 res = new LinkedList<>();
             } else if (List.class.isAssignableFrom(returnType)) {
-                res = new ArrayList<>(cacheValues.size() + newValueSize);
+                res = new ArrayList<>(resSize);
             } else if (LinkedHashSet.class.isAssignableFrom(returnType)) {
-                res = new LinkedHashSet<>(cacheValues.size() + newValueSize);
+                res = new LinkedHashSet<>(resSize);
             } else if (Set.class.isAssignableFrom(returnType)) {
-                res = new HashSet<>(cacheValues.size() + newValueSize);
+                res = new HashSet<>(resSize);
             } else {
                 throw new Exception("Unsupported return type:" + returnType.getName());
             }

@@ -14,23 +14,8 @@ public class JedisClusterLock extends AbstractRedisLock {
     }
 
     @Override
-    protected Boolean setnx(String key, String val) {
-        return this.jedisCluster.setnx(key, val).intValue() == 1;
-    }
-
-    @Override
-    protected void expire(String key, int expire) {
-        this.jedisCluster.expire(key, expire);
-    }
-
-    @Override
-    protected String get(String key) {
-        return this.jedisCluster.get(key);
-    }
-
-    @Override
-    protected String getSet(String key, String newVal) {
-        return this.jedisCluster.getSet(key, newVal);
+    protected boolean setnx(String key, String val, int expire) {
+        return OK.equalsIgnoreCase(jedisCluster.set(key, val, NX, EX, expire));
     }
 
     @Override
