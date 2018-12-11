@@ -1,6 +1,7 @@
 package com.jarvis.cache.lock;
 
 import com.jarvis.cache.to.RedisLockInfo;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.Map;
  *
  * @author jiayu.qiu
  */
+@Slf4j
 public abstract class AbstractRedisLock implements ILock {
 
     private static final ThreadLocal<Map<String, RedisLockInfo>> LOCK_START_TIME = new ThreadLocal<Map<String, RedisLockInfo>>() {
@@ -62,8 +64,10 @@ public abstract class AbstractRedisLock implements ILock {
         if (null != startTimeMap) {
             info = startTimeMap.remove(key);
         }
-        // 如果超过租约时间则不需要主到释放锁
-        if (null != info && (System.currentTimeMillis() - info.getStartTime()) >= info.getLeaseTime()) {
+        // 如果实际执行时长超过租约时间则不需要主到释放锁
+        long useTime = System.currentTimeMillis() - info.getStartTime();
+        if (null != info && useTime >= info.getLeaseTime()) {
+            log.warn("lock(" + key + ") run timeout, use time:" + useTime);
             return;
         }
         try {
