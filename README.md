@@ -24,6 +24,8 @@
 
 ### [缓存删除](./doc/deleteCache.md)
 
+### [Magic模式](./doc/magic.md)
+
 ### [注意事项](./doc/warning.md)
 
 ### [与Spring Cache的区别](./doc/SpringCache.md)
