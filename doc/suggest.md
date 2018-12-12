@@ -16,7 +16,8 @@
 
     在AutoLoadCache 已经支持这种处理机制，只要在@Cache中，使用expireExpression，可以动态设置缓存时长，如：
 
-        @Cache(key = "...", expireExpression = "#empty(#retVal) ? 60: 120")
-
+	```java
+   @Cache(key = "...", expireExpression = "#empty(#retVal) ? 60: 120")
+	```
 
     而且数据为“空”，它是有它实际意义的，就是告诉我们现在没有数据, 不要忽略这点。

@@ -7,52 +7,58 @@
 ### 2. 参数中只设置必要的属性值，在DAO中用不到的属性值尽量不要设置，这样能避免生成不同的缓存Key，降低缓存的使用率。
 例如：
 
-        public CollectionTO<AccountTO> getAccountByCriteria(AccountCriteriaTO criteria)  {
-            List<AccountTO> list=null;
-            PaginationTO paging=criteria.getPaging();
-            if(null != paging && paging.getPageNo() > 0 && paging.getPageSize() > 0) {// 如果需要分页查询，先查询总数
-                criteria.setPaging(null);// 减少缓存KEY的变化，在查询记录总数据时，不用设置分页相关的属性值
-                Integer recordCnt=accountDAO.getAccountCntByCriteria(criteria);
-                if(recordCnt > 0) {
-                    criteria.setPaging(paging);
-                    paging.setRecordCnt(recordCnt);
-                    list=accountDAO.getAccountByCriteria(criteria);
-                }
-                return new CollectionTO<AccountTO>(list, recordCnt, criteria.getPaging().getPageSize());
-            } else {
-                list=accountDAO.getAccountByCriteria(criteria);
-                return new CollectionTO<AccountTO>(list, null != list ? list.size() : 0, 0);
-            }
+```java
+public CollectionTO<AccountTO> getAccountByCriteria(AccountCriteriaTO criteria)  {
+    List<AccountTO> list=null;
+    PaginationTO paging=criteria.getPaging();
+    if(null != paging && paging.getPageNo() > 0 && paging.getPageSize() > 0) {// 如果需要分页查询，先查询总数
+        criteria.setPaging(null);// 减少缓存KEY的变化，在查询记录总数据时，不用设置分页相关的属性值
+        Integer recordCnt=accountDAO.getAccountCntByCriteria(criteria);
+        if(recordCnt > 0) {
+            criteria.setPaging(paging);
+            paging.setRecordCnt(recordCnt);
+            list=accountDAO.getAccountByCriteria(criteria);
         }
+        return new CollectionTO<AccountTO>(list, recordCnt, criteria.getPaging().getPageSize());
+    } else {
+        list=accountDAO.getAccountByCriteria(criteria);
+        return new CollectionTO<AccountTO>(list, null != list ? list.size() : 0, 0);
+    }
+}
+```
 
 ### 3. 注意AOP失效的情况;
 例如：
 
-        TempDAO {
+```java
+TempDAO {
 
-            public Object a() {
-                return b().get(0);
-            }
+    public Object a() {
+        return b().get(0);
+    }
 
-            @Cache(expire=600)
-            public List<Object> b(){
-                return ... ...;
-            }
-        }
+    @Cache(expire=600)
+    public List<Object> b(){
+        return ... ...;
+    }
+}
+```        
 
 通过 new TempDAO().a() 调用b方法时，AOP失效，也无法进行缓存相关操作。
 
 ### 4. 自动加载缓存时，不能在缓存方法内叠加查询参数值;
 例如：
 
-        @Cache(expire=600, autoload=true, key="'myKey'+#hash(#args[0])")
-        public List<AccountTO> getDistinctAccountByPlayerGet(AccountCriteriaTO criteria) {
-            List<AccountTO> list;
-            int count=criteria.getPaging().getThreshold() ;
-            // 查预设查询数量的10倍
-            criteria.getPaging().setThreshold(count * 10);
-            … …
-        }
+```java
+@Cache(expire=600, autoload=true, key="'myKey'+#hash(#args[0])")
+public List<AccountTO> getDistinctAccountByPlayerGet(AccountCriteriaTO criteria) {
+    List<AccountTO> list;
+    int count=criteria.getPaging().getThreshold() ;
+    // 查预设查询数量的10倍
+    criteria.getPaging().setThreshold(count * 10);
+    … …
+}
+```
 
 因为自动加载时，AutoLoadHandler 缓存了查询参数，执行自动加载时，每次执行时 threshold 都会乘以10，这样threshold的值就会越来越大。
 
@@ -67,14 +73,16 @@
 ### 8. 使用 @Cache(opType=CacheOpType.WRITE)的坑
 因为AutoloadCache是不支持事务回滚的，所以在如下情况时，会出现缓存中的数据不正确的情况：
 
-    public class UserDAO {
-        // 更新数据后，同时把数据缓存
-        @Cache(expire=600, key="'user'+#retVal.id", opType=CacheOpType.WRITE)
-        public UserTO updateUser(UserTO user) {
-            getSqlMapClient().update("USER.updateUser", user);
-            return user;
-        }
+```java
+public class UserDAO {
+    // 更新数据后，同时把数据缓存
+    @Cache(expire=600, key="'user'+#retVal.id", opType=CacheOpType.WRITE)
+    public UserTO updateUser(UserTO user) {
+        getSqlMapClient().update("USER.updateUser", user);
+        return user;
     }
+}
+```
 
 如果事务提交失败时，此时缓存中的数据无法回滚，所以使用时要注意。
 

@@ -143,20 +143,24 @@
 
     * 优化ConcurrentHashMap 使用，将以下代码：
 
-            Boolean isProcessing=null;
-            try {
-                lock.lock();
-                if(null == (isProcessing=processing.get(cacheKey))) {// 为发减少数据层的并发，增加等待机制。
-                    processing.put(cacheKey, Boolean.TRUE);
-                }
-            } finally {
-                lock.unlock();
-            }
+    ```java
+    Boolean isProcessing=null;
+    try {
+        lock.lock();
+        if(null == (isProcessing=processing.get(cacheKey))) {// 为发减少数据层的并发，增加等待机制。
+            processing.put(cacheKey, Boolean.TRUE);
+        }
+    } finally {
+        lock.unlock();
+    }
+    ```
 
-          改为：
-
-            Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
-
+    改为：
+    
+    ```java
+    Boolean isProcessing=processing.putIfAbsent(cacheKey, Boolean.TRUE);// 为发减少数据层的并发，增加等待机制。
+    ```
+    
     * 放弃使用 @CacheDeleteKey中keyType， 直接使用它的value值来判断是自定义缓存Key，还是默认生成的缓存Key。所以keyType 变得多余了。
 
 * #### 2.9 修复以下几个问题 
@@ -164,11 +168,13 @@
     * @Cache(expire=0, waitTimeOut=500),当expire=0时，将设置为永久缓存；waitTimeOut 用于设置并发等待时间(毫秒)。
 
     * 增加自动加载，单个线程内的等待时间间隔：
-
-            <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
-              ... ...
-              <property name="autoLoadPeriod" value="50" /><!--默认值50ms-->
-            </bean>
+    
+		```xml
+       <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
+          ... ...
+          <property name="autoLoadPeriod" value="50" /><!--默认值50ms-->
+       </bean>
+       ```
 
     * 优化AbstractCacheManager类的loadData方法中线程同步锁。
 
@@ -187,15 +193,17 @@
 * #### 2.1 对Kryo进行测试，发现问题问题比较多，所以删除Kryo 支持，用户可以根据自己的情况实现ISerializer接口。优化HessianSerializer，提升性能，并将HessianSerializer作为默认的序列化和反序列化工具。
 
 * #### 2.0 增加了Hessian 和 Kryo 序列化支持，还是使用JDK自带的处理方法。修改方法如下：
-    
-        <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
-        <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
-        <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
-          <constructor-arg ref="autoLoadConfig" />
-          <property name="serializer" ref="hessianSerializer" />
-          <property name="shardedJedisPool" ref="shardedJedisPool" />
-          <property name="namespace" value="test" />
-        </bean>
+	
+	```xml
+    <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
+    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
+    <bean id="cachePointCut" class="com.jarvis.cache.redis.ShardedCachePointCut" destroy-method="destroy">
+      <constructor-arg ref="autoLoadConfig" />
+      <property name="serializer" ref="hessianSerializer" />
+      <property name="shardedJedisPool" ref="shardedJedisPool" />
+      <property name="namespace" value="test" />
+    </bean>
+   ```
 
     虽然Kryo效率比较高，但使用Kryo会出现的问题比较多，所以还是慎重使用，系统经常维护的就不太适合使用，经过测试，改变属性名称，或删除中间的属性等情况都可能反序列出错误的值，所以如果遇到有减少或修改的情况要及时清里缓存。如果是增加属性则会反序列化失败，这正符合我们的要求。
 

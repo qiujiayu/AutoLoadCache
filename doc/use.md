@@ -3,11 +3,13 @@
 
 ### 1. Maven dependency:
 
-    <dependency>
-      <groupId>com.github.qiujiayu</groupId>
-      <artifactId>autoload-cache</artifactId>
-      <version>${version}</version>
-    </dependency>
+```xml
+<dependency>
+  <groupId>com.github.qiujiayu</groupId>
+  <artifactId>autoload-cache</artifactId>
+  <version>${version}</version>
+</dependency>
+```    
 
 ### 2. [AutoLoadConfig 配置说明](AutoLoadConfig.md)
 
@@ -23,19 +25,22 @@
 
 如果需要使用其它序列化工具，可以通过实现com.jarvis.cache.serializer.ISerializer<Object>来扩展（比如：Kryo和FST等）。
 
-    <bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
-    <bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
-    <bean id="fastjsonSerializer" class="com.jarvis.cache.serializer.FastjsonSerializer" />
+```xml
+<bean id="hessianSerializer" class="com.jarvis.cache.serializer.HessianSerializer" />
+<bean id="jdkSerializer" class="com.jarvis.cache.serializer.JdkSerializer" />
+<bean id="fastjsonSerializer" class="com.jarvis.cache.serializer.FastjsonSerializer" />
 
-    <bean id="hessianCompressorSerializer" class="com.jarvis.cache.serializer.CompressorSerializer">
-      <constructor-arg ref="hessianSerializer" />
-    </bean>
-
+<bean id="hessianCompressorSerializer" class="com.jarvis.cache.serializer.CompressorSerializer">
+  <constructor-arg ref="hessianSerializer" />
+</bean>
+```
 ### 4. 表达式解析器
 
 缓存Key及一些条件表达式，都是通过表达式与Java对象进行交互的，框架中已经内置了使用Spring El和Javascript两种表达的解析器，分别的：com.jarvis.cache.script.SpringELParser 和 com.jarvis.cache.script.JavaScriptParser，如果需要扩展，需要继承com.jarvis.cache.script.AbstractScriptParser 这个抽象类。
 
-    <bean id="scriptParser" class="com.jarvis.cache.script.SpringELParser" />
+```xml
+<bean id="scriptParser" class="com.jarvis.cache.script.SpringELParser" />
+```
 
 ### 5.缓存配置
 
@@ -48,39 +53,41 @@
 
 ### 6.缓存处理器
 
-    <bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
-      <constructor-arg ref="cacheManager" />
-      <constructor-arg ref="scriptParser" />
-      <constructor-arg ref="autoLoadConfig" />
-      <constructor-arg ref="hessianSerializer" />
-    </bean>
+```xml
+<bean id="cacheHandler" class="com.jarvis.cache.CacheHandler" destroy-method="destroy">
+  <constructor-arg ref="cacheManager" />
+  <constructor-arg ref="scriptParser" />
+  <constructor-arg ref="autoLoadConfig" />
+  <constructor-arg ref="hessianSerializer" />
+</bean>
+```
 
 ### 7.AOP 配置：
 
-    <bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
-      <constructor-arg ref="cacheHandler" />
-    </bean>
-    <aop:config proxy-target-class="true">
-      <!-- 处理 @Cache AOP-->
-      <aop:aspect ref="cacheInterceptor">
-        <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
-        <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
-      </aop:aspect>
+```xml
+<bean id="cacheInterceptor" class="com.jarvis.cache.aop.aspectj.AspectjAopInterceptor">
+  <constructor-arg ref="cacheHandler" />
+</bean>
+<aop:config proxy-target-class="true">
+  <!-- 处理 @Cache AOP-->
+  <aop:aspect ref="cacheInterceptor">
+    <aop:pointcut id="daoCachePointcut" expression="execution(public !void com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cache)" />
+    <aop:around pointcut-ref="daoCachePointcut" method="proceed" />
+  </aop:aspect>
 
-      <!-- 处理 @CacheDelete AOP-->
-      <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
-        <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
-        <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
-      </aop:aspect>
+  <!-- 处理 @CacheDelete AOP-->
+  <aop:aspect ref="cacheInterceptor" order="1000"><!-- order 参数控制 aop通知的优先级，值越小，优先级越高 ，在事务提交后删除缓存 -->
+    <aop:pointcut id="deleteCachePointcut" expression="execution(* com.jarvis.cache_example.common.dao..*.*(..)) &amp;&amp; @annotation(cacheDelete)" />
+    <aop:after-returning pointcut-ref="deleteCachePointcut" method="deleteCache" returning="retVal"/>
+  </aop:aspect>
 
-      <!-- 处理 @CacheDeleteTransactional AOP-->
-      <aop:aspect ref="cacheInterceptor">
-        <aop:pointcut id="cacheDeleteTransactional" expression="execution(* com.jarvis.cache_example.common.service..*.*(..)) &amp;&amp; @annotation(cacheDeleteTransactional)" />
-        <aop:around pointcut-ref="cacheDeleteTransactional" method="deleteCacheTransactional" />
-      </aop:aspect>
-
-    </aop:config>
-
+  <!-- 处理 @CacheDeleteTransactional AOP-->
+  <aop:aspect ref="cacheInterceptor">
+    <aop:pointcut id="cacheDeleteTransactional" expression="execution(* com.jarvis.cache_example.common.service..*.*(..)) &amp;&amp; @annotation(cacheDeleteTransactional)" />
+    <aop:around pointcut-ref="cacheDeleteTransactional" method="deleteCacheTransactional" />
+  </aop:aspect>
+</aop:config>
+```
 
 如果不同的数据，要使用不同的缓存的话，可以通过配置多个AOP来进行共区分。
 
