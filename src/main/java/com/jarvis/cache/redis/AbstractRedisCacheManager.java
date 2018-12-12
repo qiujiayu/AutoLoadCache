@@ -23,7 +23,7 @@ import java.util.Set;
  */
 @Getter
 @Slf4j
-public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
+public abstract class AbstractRedisCacheManager implements ICacheManager {
 
     public static final StringSerializer KEY_SERIALIZER = new StringSerializer();
 
@@ -32,9 +32,9 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
      */
     protected int hashExpire = -1;
 
-    protected final ISerializer<Object> serializer;
+    protected final ISerializer<CacheWrapper<Object>> serializer;
 
-    public AbstractRedisCacheManager(ISerializer<Object> serializer) {
+    public AbstractRedisCacheManager(ISerializer<CacheWrapper<Object>> serializer) {
         this.serializer = serializer;
     }
 
@@ -111,7 +111,7 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
             if (null != method) {
                 returnType = method.getGenericReturnType();
             }
-            res = (CacheWrapper<Object>) serializer.deserialize(val, returnType);
+            res = serializer.deserialize(val, returnType);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
@@ -151,7 +151,7 @@ public abstract class AbstractRedisCacheManager<J> implements ICacheManager {
                 log.warn("the data from redis is not byte[] but " + value.getClass().getName());
                 continue;
             }
-            tmp = (CacheWrapper<Object>) serializer.deserialize((byte[]) value, returnType);
+            tmp = serializer.deserialize((byte[]) value, returnType);
             if (null != tmp) {
                 res.put(cacheKeyTO, tmp);
             }
