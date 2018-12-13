@@ -4,11 +4,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.Lists;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,7 +15,6 @@ import java.util.List;
  *
  * @author stevie.wong
  */
-@Slf4j
 public class DefaultKryoContext implements KryoContext {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 100;
     private KryoPool pool;
@@ -29,7 +27,7 @@ public class DefaultKryoContext implements KryoContext {
     }
 
     private DefaultKryoContext() {
-        registrations = Lists.newArrayList();
+        registrations = new ArrayList<>();
 
         //KryoFactory的create方法会延后调用
         pool = new KryoPool.Builder(() -> {
