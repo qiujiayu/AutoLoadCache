@@ -22,7 +22,7 @@ public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClient redisClient;
 
-    public LettuceRedisCacheManager(RedisClient redisClient, ISerializer<CacheWrapper<Object>> serializer) {
+    public LettuceRedisCacheManager(RedisClient redisClient, ISerializer<Object> serializer) {
         super(serializer);
         this.redisClient = redisClient;
     }

@@ -23,7 +23,7 @@ public class JedisClusterCacheManager extends AbstractRedisCacheManager {
 
     private final JedisClusterClient redis;
 
-    public JedisClusterCacheManager(JedisCluster jedisCluster, ISerializer<CacheWrapper<Object>> serializer) {
+    public JedisClusterCacheManager(JedisCluster jedisCluster, ISerializer<Object> serializer) {
         super(serializer);
         this.redis = new JedisClusterClient(jedisCluster, this);
     }

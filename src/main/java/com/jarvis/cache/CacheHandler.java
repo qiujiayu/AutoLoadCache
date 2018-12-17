@@ -219,7 +219,7 @@ public class CacheHandler {
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
                 if (null != autoLoadTO) {
-                    autoLoadTO.flushRequestTime(cacheWrapper);
+                    autoLoadTO.flushRequestTime(newCacheWrapper);
                     autoLoadTO.addUseTotalTime(loadDataUseTime);
                 }
             } catch (Exception ex) {

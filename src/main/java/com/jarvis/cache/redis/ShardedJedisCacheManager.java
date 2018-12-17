@@ -27,7 +27,7 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
 
     private final ShardedJedisPool shardedJedisPool;
 
-    public ShardedJedisCacheManager(ShardedJedisPool shardedJedisPool, ISerializer<CacheWrapper<Object>> serializer) {
+    public ShardedJedisCacheManager(ShardedJedisPool shardedJedisPool, ISerializer<Object> serializer) {
         super(serializer);
         this.shardedJedisPool = shardedJedisPool;
     }

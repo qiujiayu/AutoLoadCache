@@ -92,7 +92,7 @@ public class LettuceRedisUtil {
                 if (null == data || data.length == 0) {
                     continue;
                 }
-                CacheWrapper<Object> value = cacheManager.getSerializer().deserialize(data, returnType);
+                CacheWrapper<Object> value = (CacheWrapper<Object>)cacheManager.getSerializer().deserialize(data, returnType);
                 if (null != value) {
                     res.put(cacheKeyTO, value);
                 }
