@@ -43,7 +43,7 @@ public class MagicHandler {
 
     private final Class<?> returnType;
 
-    private final Class<?>[] parameterTypes;
+    // private final Class<?>[] parameterTypes;
 
     public MagicHandler(CacheHandler cacheHandler, CacheAopProxyChain pjp, Cache cache) {
         this.cacheHandler = cacheHandler;
@@ -66,7 +66,7 @@ public class MagicHandler {
         }
         this.method = pjp.getMethod();
         this.returnType = method.getReturnType();
-        this.parameterTypes = method.getParameterTypes();
+        // this.parameterTypes = method.getParameterTypes();
     }
 
     public static boolean isMagic(Cache cache, Method method) throws Exception {

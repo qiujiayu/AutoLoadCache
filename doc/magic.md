@@ -77,7 +77,7 @@ public interface UserMapper {
     
     @Cache(expire = 60, expireExpression = "null == #retVal ? 30: 60",
             key = "'user-byid-' + #args[0]",
-            magic = @Magic(key = "'user-byid-' + #retVal.id"))
+            magic = @Magic(key = "'user-byid-' + #retVal.id", iterableArgIndex = 0))
     List<UserDO> listByIds(@Param("ids") List<Long> ids);
 
 }
@@ -98,3 +98,13 @@ public interface UserMapper {
 ```
 
 使用Magic模式后，如果上面ids有10条记录，最差情况需要访问1次缓存、1数据源以及1次写缓存操作；最好的情况只需要访问1次缓存。但使用Magic模式后，就不允许使用自动加载(autoload设置为true也不会生效)、不支持“拿来主义”、异步刷新等功能。
+
+有时我们也需要动态精确批量删除缓存，比如更新一批商品信息后，也要批量删除缓存，在7.0.1版本之前需要在业务代码中使用循环操作来实现。
+
+7.0.3版本在@CacheDeleteKey 增加 iterableArgIndex 属性，当它大于等于0时开启Magic模式。
+
+```java
+    @CacheDelete(@CacheDeleteKey(value = "'user-byid-' + #args[0]", iterableArgIndex = 0))
+    void deleteByIds(@Param("ids") List<Long> ids);
+```
+

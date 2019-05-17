@@ -152,14 +152,14 @@ public class DataLoader {
                     }
                     break;
                 }
-                int tryCnt = 10;
+                int tryCnt = 20;
                 // 没有获得锁时，定时缓存尝试获取数据
                 for (int i = 0; i < tryCnt; i++) {
                     cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
                     if (null != cacheWrapper) {
                         break;
                     }
-                    Thread.sleep(20);
+                    Thread.sleep(10);
                 }
                 if (null != cacheWrapper) {
                     break;
@@ -206,7 +206,7 @@ public class DataLoader {
                     }
                     try {
                         // 如果要测试lock对象是否有效，wait时间去掉就可以
-                        lock.wait(10);
+                        lock.wait(2);
                     } catch (InterruptedException ex) {
                         log.error(ex.getMessage(), ex);
                     }

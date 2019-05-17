@@ -335,8 +335,13 @@ public class AutoLoadHandler {
             }
             CacheAopProxyChain pjp = autoLoadTO.getJoinPoint();
             CacheKeyTO cacheKey = autoLoadTO.getCacheKey();
-            DataLoaderFactory factory = DataLoaderFactory.getInstance();
-            DataLoader dataLoader = factory.getDataLoader();
+            DataLoader dataLoader;
+            if (config.isDataLoaderPooled()) {
+                DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                dataLoader = factory.getDataLoader();
+            } else {
+                dataLoader = new DataLoader();
+            }
             CacheWrapper<Object> newCacheWrapper = null;
             boolean isFirst = false;
             long loadDataUseTime = 0L;
@@ -348,7 +353,10 @@ public class AutoLoadHandler {
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
             } finally {
-                factory.returnObject(dataLoader);
+                if (config.isDataLoaderPooled()) {
+                    DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                    factory.returnObject(dataLoader);
+                }
             }
             if (isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租
