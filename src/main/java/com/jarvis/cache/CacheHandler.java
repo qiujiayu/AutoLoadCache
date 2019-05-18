@@ -270,9 +270,6 @@ public class CacheHandler {
             }
             for (int i = 0; i < keys.length; i++) {
                 CacheDeleteKey keyConfig = keys[i];
-                if (!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
-                    continue;
-                }
                 if(DeleteCacheMagicHandler.isMagic(keyConfig, jp.getMethod())){
                     DeleteCacheMagicHandler magicHandler = new DeleteCacheMagicHandler( this,  jp,  keyConfig, retVal);
                     List<CacheKeyTO> list = magicHandler.getCacheKeyForMagic();
@@ -290,6 +287,9 @@ public class CacheHandler {
                         }
                     }
                 } else {
+                    if (!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
+                        continue;
+                    }
                     String[] tempKeys = keyConfig.value();
                     String tempHfield = keyConfig.hfield();
 

@@ -2,6 +2,7 @@ package com.jarvis.cache;
 
 import com.jarvis.cache.annotation.CacheDeleteKey;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
+import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.to.CacheKeyTO;
 
 import java.lang.reflect.Method;
@@ -83,7 +84,7 @@ public class DeleteCacheMagicHandler {
         return rv;
     }
 
-    public List<CacheKeyTO> getCacheKeyForMagic() {
+    public List<CacheKeyTO> getCacheKeyForMagic() throws Exception {
         Object target = jp.getTarget();
         String methodName = jp.getMethod().getName();
         String[] keyExpressions = cacheDeleteKey.value();
@@ -102,6 +103,9 @@ public class DeleteCacheMagicHandler {
                     }
                 }
                 for (String keyExpression : keyExpressions) {
+                    if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, tmpArgs, retVal)) {
+                        continue;
+                    }
                     list.add(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, retVal, true));
                 }
             }
@@ -118,12 +122,12 @@ public class DeleteCacheMagicHandler {
                     }
                 }
                 for (String keyExpression : keyExpressions) {
+                    if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, tmpArgs, retVal)) {
+                        continue;
+                    }
                     list.add(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, retVal, true));
                 }
             }
-        }
-        if (null == list || list.isEmpty()) {
-            throw new IllegalArgumentException("the 'list' is empty");
         }
         return list;
     }

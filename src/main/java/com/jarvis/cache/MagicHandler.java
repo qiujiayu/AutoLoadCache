@@ -140,6 +140,8 @@ public class MagicHandler {
                     Collection collection = (Collection) cacheObject;
                     Iterator tmp = collection.iterator();
                     cacheWrapper.setCacheObject(tmp.next());
+                } else {
+                    break;
                 }
             }
         }
