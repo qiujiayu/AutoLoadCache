@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * MagicHandler
+ *
+ * @author jiayu.qiu
+ */
 @Slf4j
 public class MagicHandler {
 
@@ -118,6 +123,26 @@ public class MagicHandler {
     public Object magic() throws Throwable {
         Map<CacheKeyTO, Object> keyArgMap = getCacheKeyForMagic();
         Map<CacheKeyTO, CacheWrapper<Object>> cacheValues = this.cacheHandler.mget(method, keyArgMap.keySet());
+        // 为了解决使用JSON反序列化时，缓存数据类型不正确问题
+        if (null != cacheValues && !cacheValues.isEmpty()) {
+            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> iterable = cacheValues.entrySet().iterator();
+            while (iterable.hasNext()) {
+                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = iterable.next();
+                CacheWrapper<Object> cacheWrapper = item.getValue();
+                Object cacheObject = cacheWrapper.getCacheObject();
+                if (null == cacheObject) {
+                    continue;
+                }
+                if (returnType.isArray() && cacheObject.getClass().isArray()) {
+                    Object[] objects = (Object[]) cacheObject;
+                    cacheWrapper.setCacheObject(objects[0]);
+                } else if (Collection.class.isAssignableFrom(returnType) && this.returnType.isAssignableFrom(cacheObject.getClass())) {
+                    Collection collection = (Collection) cacheObject;
+                    Iterator tmp = collection.iterator();
+                    cacheWrapper.setCacheObject(tmp.next());
+                }
+            }
+        }
         // 如果所有key都已经命中
         int argSize = keyArgMap.size() - cacheValues.size();
         if (argSize == 0) {

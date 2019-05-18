@@ -38,7 +38,7 @@ public @interface Magic {
 
     /**
      * 需要分隔处理的参数索引
-     * @return
+     * @return int
      */
     int iterableArgIndex() default 0;
 }

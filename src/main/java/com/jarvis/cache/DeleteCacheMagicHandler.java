@@ -1,7 +1,6 @@
 package com.jarvis.cache;
 
 import com.jarvis.cache.annotation.CacheDeleteKey;
-import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 import com.jarvis.cache.to.CacheKeyTO;
 
@@ -56,9 +55,13 @@ public class DeleteCacheMagicHandler {
 
 
     public static boolean isMagic(CacheDeleteKey cacheDeleteKey, Method method) throws Exception {
-        Class<?>[] parameterTypes = method.getParameterTypes();
         // 参数支持一个 List\Set\数组\可变长参数
         int iterableArgIndex = cacheDeleteKey.iterableArgIndex();
+        if (iterableArgIndex < 0) {
+            return false;
+        }
+        Class<?>[] parameterTypes = method.getParameterTypes();
+
         String[] keys = cacheDeleteKey.value();
         boolean rv = null != parameterTypes && null != keys && keys.length > 0;
         for (String key : keys) {
@@ -67,9 +70,6 @@ public class DeleteCacheMagicHandler {
             }
         }
         if (rv) {
-            if (iterableArgIndex < 0) {
-                throw new Exception("iterableArgIndex必须大于或等于0");
-            }
             if (iterableArgIndex >= parameterTypes.length) {
                 throw new Exception("iterableArgIndex必须小于参数长度：" + parameterTypes.length);
             }

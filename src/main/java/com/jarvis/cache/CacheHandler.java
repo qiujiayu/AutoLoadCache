@@ -389,7 +389,9 @@ public class CacheHandler {
             long useTime = System.currentTimeMillis() - startTime;
             if (config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                 String className = pjp.getTarget().getClass().getName();
-                log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
+                if(log.isWarnEnabled()) {
+                    log.warn("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
+                }
             }
             return result;
         } catch (Throwable e) {
@@ -468,6 +470,7 @@ public class CacheHandler {
      * @param keyExpression    key表达式
      * @param hfieldExpression hfield表达式
      * @param result           执行实际方法的返回值
+     * @param hasRetVal        是否有返回值
      * @return CacheKeyTO
      */
     public CacheKeyTO getCacheKey(Object target, String methodName, Object[] arguments, String keyExpression,
