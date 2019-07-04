@@ -119,13 +119,9 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) {
         if (null == keys || keys.isEmpty()) {
             return null;
-        }
-        Type returnType = null;
-        if (null != method) {
-            returnType = method.getGenericReturnType();
         }
         try (IRedis redis = getRedis()) {
             return redis.mget(returnType, keys);

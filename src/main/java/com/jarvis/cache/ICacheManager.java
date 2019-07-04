@@ -5,6 +5,7 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -54,11 +55,12 @@ public interface ICacheManager {
      * 根据缓存Key获得缓存中的数据
      *
      * @param method Method
+     * @param returnType Type
      * @param keys   缓存keys
      * @return 返回已命中的缓存数据(要过滤未命中数据)
      * @throws CacheCenterConnectionException 缓存异常
      */
-    Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException;
+    Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException;
 
     /**
      * 删除缓存

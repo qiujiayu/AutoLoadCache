@@ -2,6 +2,7 @@ package com.jarvis.cache.serializer.protobuf;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.Message;
+import com.jarvis.cache.MagicHandler;
 import com.jarvis.cache.reflect.lambda.Lambda;
 import com.jarvis.cache.reflect.lambda.LambdaFactory;
 import com.jarvis.cache.serializer.ISerializer;
@@ -34,9 +35,6 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final byte MESSAGE_TYPE = 0;
-    private static final byte JSON_TYPE = 1;
-
     private ConcurrentHashMap<Class, Lambda> lambdaMap = new ConcurrentHashMap<>(64);
 
     private ObjectPool<WriteByteBuf> writePool;
@@ -58,13 +56,10 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
         byteBuf.writeInt(obj.getExpire());
         byteBuf.writeLong(obj.getLastLoadTime());
         Object cacheObj = obj.getCacheObject();
-
         if (cacheObj instanceof Message) {
             Message message = (Message) cacheObj;
-            byteBuf.writeByte(MESSAGE_TYPE);
             message.writeTo(new ByteBufOutputStream(byteBuf));
         } else if (cacheObj != null) {
-            byteBuf.writeByte(JSON_TYPE);
             byteBuf.writeBytes(MAPPER.writeValueAsBytes(cacheObj));
         }
         val bytes = byteBuf.readableBytes();
@@ -83,36 +78,31 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
         byteBuf.setBytes(bytes);
         cacheWrapper.setExpire(byteBuf.readInt());
         cacheWrapper.setLastLoadTime(byteBuf.readLong());
-        byte type = byteBuf.readByte();
         bytes = byteBuf.readableBytes();
         readPool.returnObject(byteBuf);
         if (bytes == null || bytes.length == 0) {
             return cacheWrapper;
         }
-        switch (type) {
-            case MESSAGE_TYPE:
-                String typeName;
-                //处理泛型 Magic模式下 returnType 肯定是泛型的，需要做特殊处理
-                if (returnType instanceof ParameterizedType) {
-                    typeName = ((ParameterizedType) returnType).getActualTypeArguments()[0].getTypeName();
-                } else {
-                    typeName = returnType.getTypeName();
-                }
-
-                Class clazz = Class.forName(typeName);
-                if (Message.class.isAssignableFrom(clazz)) {
-                    Lambda lambda = getLambda(clazz);
-                    Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(bytes));
-                    cacheWrapper.setCacheObject(obj);
-                }
-                break;
-            case JSON_TYPE:
-                cacheWrapper.setCacheObject(MAPPER.readValue(bytes, MAPPER.constructType(returnType)));
-                break;
+        String typeName = null;
+        if (!(returnType instanceof ParameterizedType)) {
+            typeName = returnType.getTypeName();
         }
-
+        Class clazz = getMessageClass(typeName);
+        if (null != clazz && Message.class.isAssignableFrom(clazz)) {
+            Lambda lambda = getLambda(clazz);
+            Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(bytes));
+            cacheWrapper.setCacheObject(obj);
+        } else {
+            cacheWrapper.setCacheObject(MAPPER.readValue(bytes, MAPPER.constructType(returnType)));
+        }
         return cacheWrapper;
+    }
 
+    private Class getMessageClass(String typeName) throws ClassNotFoundException {
+        if (null == typeName) {
+            return null;
+        }
+        return Class.forName(typeName);
     }
 
 
