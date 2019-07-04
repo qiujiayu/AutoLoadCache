@@ -7,6 +7,7 @@ import com.jarvis.cache.reflect.lambda.LambdaFactory;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.pool2.ObjectPool;
@@ -16,18 +17,27 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author zhengenshen@gmail.com
  */
+@Slf4j
 public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private ConcurrentHashMap<String, Lambda> lambdaMap = new ConcurrentHashMap<>(64);
+    private static final byte MESSAGE_TYPE = 0;
+    private static final byte JSON_TYPE = 1;
+
+    private ConcurrentHashMap<Class, Lambda> lambdaMap = new ConcurrentHashMap<>(64);
 
     private ObjectPool<WriteByteBuf> writePool;
     private ObjectPool<ReadByteBuf> readPool;
@@ -43,7 +53,6 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
     @Override
     public byte[] serialize(CacheWrapper<Object> obj) throws Exception {
-
         val byteBuf = writePool.borrowObject();
         byteBuf.resetIndex();
         byteBuf.writeInt(obj.getExpire());
@@ -52,8 +61,10 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
         if (cacheObj instanceof Message) {
             Message message = (Message) cacheObj;
+            byteBuf.writeByte(MESSAGE_TYPE);
             message.writeTo(new ByteBufOutputStream(byteBuf));
         } else if (cacheObj != null) {
+            byteBuf.writeByte(JSON_TYPE);
             byteBuf.writeBytes(MAPPER.writeValueAsBytes(cacheObj));
         }
         val bytes = byteBuf.readableBytes();
@@ -64,30 +75,42 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
     @Override
     public CacheWrapper<Object> deserialize(byte[] bytes, Type returnType) throws Exception {
-
         if (bytes == null || bytes.length == 0) {
             return null;
         }
-
         CacheWrapper<Object> cacheWrapper = new CacheWrapper<>();
         val byteBuf = readPool.borrowObject();
         byteBuf.setBytes(bytes);
         cacheWrapper.setExpire(byteBuf.readInt());
         cacheWrapper.setLastLoadTime(byteBuf.readLong());
+        byte type = byteBuf.readByte();
         bytes = byteBuf.readableBytes();
         readPool.returnObject(byteBuf);
         if (bytes == null || bytes.length == 0) {
             return cacheWrapper;
         }
-        //处理泛型
-        Class clazz = Class.forName(returnType.getTypeName().replaceAll("</?[^>]+>", ""));
-        if (Message.class.isAssignableFrom(clazz)) {
-            Lambda lambda = getLambda(clazz);
-            Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(bytes));
-            cacheWrapper.setCacheObject(obj);
-        } else {
-            cacheWrapper.setCacheObject(MAPPER.readValue(bytes, MAPPER.constructType(returnType)));
+        switch (type) {
+            case MESSAGE_TYPE:
+                String typeName;
+                //处理泛型 Magic模式下 returnType 肯定是泛型的，需要做特殊处理
+                if (returnType instanceof ParameterizedType) {
+                    typeName = ((ParameterizedType) returnType).getActualTypeArguments()[0].getTypeName();
+                } else {
+                    typeName = returnType.getTypeName();
+                }
+
+                Class clazz = Class.forName(typeName);
+                if (Message.class.isAssignableFrom(clazz)) {
+                    Lambda lambda = getLambda(clazz);
+                    Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(bytes));
+                    cacheWrapper.setCacheObject(obj);
+                }
+                break;
+            case JSON_TYPE:
+                cacheWrapper.setCacheObject(MAPPER.readValue(bytes, MAPPER.constructType(returnType)));
+                break;
         }
+
         return cacheWrapper;
 
     }
@@ -178,12 +201,12 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
     @SuppressWarnings("unchecked")
     private Lambda getLambda(Class clazz) throws NoSuchMethodException {
-        Lambda lambda = lambdaMap.get(clazz.getSimpleName());
+        Lambda lambda = lambdaMap.get(clazz);
         if (lambda == null) {
             Method method = clazz.getDeclaredMethod("parseFrom", InputStream.class);
             try {
                 lambda = LambdaFactory.create(method);
-                lambdaMap.put(clazz.getSimpleName(), lambda);
+                lambdaMap.put(clazz, lambda);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

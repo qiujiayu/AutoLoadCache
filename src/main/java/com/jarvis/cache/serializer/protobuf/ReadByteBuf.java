@@ -15,6 +15,11 @@ public class ReadByteBuf {
         return this;
     }
 
+    public byte readByte() {
+        byte value = HeapByteBufUtil.getByte(array, readerIndex);
+        readerIndex += 1;
+        return value;
+    }
 
     public int readInt() {
         int value = HeapByteBufUtil.getInt(array, readerIndex);

@@ -152,12 +152,12 @@
       <version>3.9</version>
       <optional>true</optional>
     </dependency>
-      <dependency>
-          <groupId>com.google.protobuf</groupId>
-          <artifactId>protobuf-java</artifactId>
-          <version>2.6.1</version>
-          <optional>true</optional>
-      </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>2.6.1</version>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>com.googlecode.combinatoricslib</groupId>
       <artifactId>combinatoricslib</artifactId>
@@ -165,7 +165,7 @@
       <optional>true</optional>
     </dependency>
 
-      <dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>

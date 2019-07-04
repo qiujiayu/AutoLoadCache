@@ -44,7 +44,7 @@ public class WriteByteBuf {
     }
 
 
-    public void writeByte(int value) {
+    public void writeByte(byte value) {
         int length = 1;
         hasLength(length);
         HeapByteBufUtil.setByte(array, writerIndex, value);
