@@ -18,7 +18,7 @@ public class ByteBufOutputStream extends OutputStream {
 
     @Override
     public void write(int b) {
-        buffer.writeByte(b);
+        buffer.writeByte((byte)b);
     }
 
 }

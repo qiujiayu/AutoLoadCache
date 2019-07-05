@@ -44,7 +44,7 @@ public class WriteByteBuf {
     }
 
 
-    public void writeByte(int value) {
+    public void writeByte(byte value) {
         int length = 1;
         hasLength(length);
         HeapByteBufUtil.setByte(array, writerIndex, value);
@@ -60,7 +60,10 @@ public class WriteByteBuf {
         limit = writerIndex;
     }
 
-
+    /**
+     *
+     * @param value
+     */
     public void writeLong(long value) {
         int length = 8;
         hasLength(length);
@@ -72,6 +75,7 @@ public class WriteByteBuf {
 
     /**
      * 可读字节
+     * @return
      */
     public byte[] readableBytes() {
         byte[] newArray = new byte[limit - readerIndex];

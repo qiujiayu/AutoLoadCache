@@ -21,6 +21,7 @@ import com.jarvis.cache.type.CacheOpType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -593,8 +594,8 @@ public class CacheHandler {
         }
     }
 
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(Method method, Set<CacheKeyTO> keySet) throws CacheCenterConnectionException {
-        return cacheManager.mget(method, keySet);
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(Method method, final Type returnType, Set<CacheKeyTO> keySet) throws CacheCenterConnectionException {
+        return cacheManager.mget(method, returnType, keySet);
     }
 
     public void mset(final Method method, final Collection<MSetParam> params) throws CacheCenterConnectionException {
