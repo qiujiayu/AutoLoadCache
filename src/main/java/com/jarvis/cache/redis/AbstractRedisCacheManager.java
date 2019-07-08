@@ -139,10 +139,10 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
         Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.size());
         Iterator<CacheKeyTO> keysIt = keys.iterator();
         for (Object value : values) {
+            CacheKeyTO cacheKeyTO = keysIt.next();
             if (null == value) {
                 continue;
             }
-            CacheKeyTO cacheKeyTO = keysIt.next();
             if (!(value instanceof byte[])) {
                 log.warn("the data from redis is not byte[] but " + value.getClass().getName());
                 continue;
