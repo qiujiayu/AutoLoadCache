@@ -282,12 +282,18 @@ public class MagicHandler {
                     isCache = true;
                 }
                 Object val = getValueFromCacheWrapper(cacheWrapper);
+                if (log.isDebugEnabled()) {
+                    String from = isCache ? "cache" : "datasource";
+                    String message = "the data for key:" + cacheKeyTO + " is from " + from;
+                    if (null != val) {
+                        message += ", value is not null, expire :" + cacheWrapper.getExpire();
+                    } else {
+                        message += ", value is null";
+                    }
+                    log.debug(message);
+                }
                 if (!magic.returnNullValue() && null == val) {
                     continue;
-                }
-                if (null != val && log.isDebugEnabled()) {
-                    String from = isCache ? "cache" : "datasource";
-                    log.debug("the data for key:" + cacheKeyTO + " is from " + from + ", expire :" + cacheWrapper.getExpire());
                 }
                 res[ind] = val;
                 ind++;
@@ -316,12 +322,18 @@ public class MagicHandler {
                     isCache = true;
                 }
                 Object val = getValueFromCacheWrapper(cacheWrapper);
+                if (log.isDebugEnabled()) {
+                    String from = isCache ? "cache" : "datasource";
+                    String message = "the data for key:" + cacheKeyTO + " is from " + from;
+                    if (null != val) {
+                        message += ", value is not null, expire :" + cacheWrapper.getExpire();
+                    } else {
+                        message += ", value is null";
+                    }
+                    log.debug(message);
+                }
                 if (!magic.returnNullValue() && null == val) {
                     continue;
-                }
-                if (null != val && log.isDebugEnabled()) {
-                    String from = isCache ? "cache" : "datasource";
-                    log.debug("the data for key:" + cacheKeyTO + " is from " + from + ", expire :" + cacheWrapper.getExpire());
                 }
                 res.add(val);
             }
