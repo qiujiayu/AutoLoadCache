@@ -11,7 +11,17 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * MagicHandler
@@ -40,6 +50,8 @@ public class MagicHandler {
     private final Method method;
 
     private final Class<?> returnType;
+
+    private CacheKeyTO[] cacheKeys;
 
     // private final Class<?>[] parameterTypes;
 
@@ -147,7 +159,7 @@ public class MagicHandler {
         // 如果所有key都已经命中
         int argSize = keyArgMap.size() - cacheValues.size();
         if (argSize == 0) {
-            return convertToReturnObject(cacheValues, null);
+            return convertToReturnObject(cacheValues, null, Collections.emptyMap());
         }
         Iterator<Map.Entry<CacheKeyTO, Object>> keyArgMapIt = keyArgMap.entrySet().iterator();
         Map<CacheKeyTO, MSetParam> unmatchCache = new HashMap<>(argSize);
@@ -188,7 +200,7 @@ public class MagicHandler {
         Object newValue = this.cacheHandler.getData(pjp, args);
         args[iterableArgIndex] = null;
         writeMagicCache(newValue, unmatchCache, args);
-        return convertToReturnObject(cacheValues, newValue);
+        return convertToReturnObject(cacheValues, newValue, unmatchCache);
     }
 
     private void writeMagicCache(Object newValue, Map<CacheKeyTO, MSetParam> unmatchCache, Object[] args) throws Exception {
@@ -245,64 +257,83 @@ public class MagicHandler {
         param.setResult(cacheWrapper);
     }
 
-    private Object convertToReturnObject(Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Object newValue) throws Throwable {
+    private Object convertToReturnObject(Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Object newValue, Map<CacheKeyTO, MSetParam> unmatchCache) throws Throwable {
         if (returnType.isArray()) {
-            int newValueSize = 0;
-            Object[] newValues = (Object[]) newValue;
-            if (null != newValues) {
-                newValueSize = newValues.length;
-            }
-            Object[] res = new Object[cacheValues.size() + newValueSize];
-            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
-            int i = 0;
-            while (cacheValuesIt.hasNext()) {
-                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
-                if (log.isDebugEnabled()) {
-                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
-                }
-                Object data = item.getValue().getCacheObject();
-                if (null != data) {
-                    res[i] = data;
-                    i++;
+            int resSize = 0;
+            if (magic.returnNullValue()) {
+                resSize = cacheKeys.length;
+            } else {
+                Object[] newValues = (Object[]) newValue;
+                if (null != newValues) {
+                    resSize = cacheValues.size() + newValues.length;
                 }
             }
-            if (null != newValues) {
-                for (Object value : newValues) {
-                    if (null != value) {
-                        res[i] = value;
-                        i++;
+            Object[] res = new Object[resSize];
+            int ind = 0;
+            for (CacheKeyTO cacheKeyTO : cacheKeys) {
+                boolean isCache = false;
+                CacheWrapper<Object> cacheWrapper = cacheValues.get(cacheKeyTO);
+                if (null == cacheWrapper) {
+                    MSetParam mSetParam = unmatchCache.get(cacheKeyTO);
+                    if (null != mSetParam) {
+                        cacheWrapper = mSetParam.getResult();
                     }
+                } else {
+                    isCache = true;
                 }
+                Object val = getValueFromCacheWrapper(cacheWrapper);
+                if (!magic.returnNullValue() && null == val) {
+                    continue;
+                }
+                if (null != val && log.isDebugEnabled()) {
+                    String from = isCache ? "cache" : "datasource";
+                    log.debug("the data for key:" + cacheKeyTO + " is from " + from + ", expire :" + cacheWrapper.getExpire());
+                }
+                res[ind] = val;
+                ind++;
             }
             return res;
         } else {
-            int newValueSize = 0;
-            Collection<Object> newValues = (Collection<Object>) newValue;
-            if (null != newValues) {
-                newValueSize = newValues.size();
+            int resSize = 0;
+            if (magic.returnNullValue()) {
+                resSize = cacheKeys.length;
+            } else {
+                Collection<Object> newValues = (Collection<Object>) newValue;
+                if (null != newValues) {
+                    resSize = cacheValues.size() + newValues.size();
+                }
             }
-            int resSize = cacheValues.size() + newValueSize;
             Collection<Object> res = newCollection(returnType, resSize);
-            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> cacheValuesIt = cacheValues.entrySet().iterator();
-            while (cacheValuesIt.hasNext()) {
-                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = cacheValuesIt.next();
-                if (log.isDebugEnabled()) {
-                    log.debug("the data for key:" + item.getKey() + " is from cache, expire :" + item.getValue().getExpire());
-                }
-                Object data = item.getValue().getCacheObject();
-                if (null != data) {
-                    res.add(data);
-                }
-            }
-            if (null != newValues) {
-                for (Object value : newValues) {
-                    if (null != value) {
-                        res.add(value);
+            for (CacheKeyTO cacheKeyTO : cacheKeys) {
+                boolean isCache = false;
+                CacheWrapper<Object> cacheWrapper = cacheValues.get(cacheKeyTO);
+                if (null == cacheWrapper) {
+                    MSetParam mSetParam = unmatchCache.get(cacheKeyTO);
+                    if (null != mSetParam) {
+                        cacheWrapper = mSetParam.getResult();
                     }
+                } else {
+                    isCache = true;
                 }
+                Object val = getValueFromCacheWrapper(cacheWrapper);
+                if (!magic.returnNullValue() && null == val) {
+                    continue;
+                }
+                if (null != val && log.isDebugEnabled()) {
+                    String from = isCache ? "cache" : "datasource";
+                    log.debug("the data for key:" + cacheKeyTO + " is from " + from + ", expire :" + cacheWrapper.getExpire());
+                }
+                res.add(val);
             }
             return res;
         }
+    }
+
+    private Object getValueFromCacheWrapper(CacheWrapper<Object> cacheWrapper) {
+        if (null == cacheWrapper) {
+            return null;
+        }
+        return cacheWrapper.getCacheObject();
     }
 
     private Map<CacheKeyTO, Object> getCacheKeyForMagic() {
@@ -311,9 +342,12 @@ public class MagicHandler {
         String keyExpression = cache.key();
         String hfieldExpression = cache.hfield();
         Map<CacheKeyTO, Object> keyArgMap = null;
+
         if (null != iterableCollectionArg) {
-            keyArgMap = new LinkedHashMap<>(iterableCollectionArg.size());
+            cacheKeys = new CacheKeyTO[iterableCollectionArg.size()];
+            keyArgMap = new HashMap<>(iterableCollectionArg.size());
             Object[] tmpArgs;
+            int ind = 0;
             for (Object arg : iterableCollectionArg) {
                 tmpArgs = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
@@ -323,12 +357,17 @@ public class MagicHandler {
                         tmpArgs[i] = arguments[i];
                     }
                 }
-                keyArgMap.put(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false), arg);
+                CacheKeyTO cacheKeyTO = this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false);
+                keyArgMap.put(cacheKeyTO, arg);
+                cacheKeys[ind] = cacheKeyTO;
+                ind++;
             }
         } else if (null != iterableArrayArg) {
-            keyArgMap = new LinkedHashMap<>(iterableArrayArg.length);
+            cacheKeys = new CacheKeyTO[iterableArrayArg.length];
+            keyArgMap = new HashMap<>(iterableArrayArg.length);
             Object[] tmpArgs;
-            for (Object arg : iterableArrayArg) {
+            for (int ind = 0; ind < iterableArrayArg.length; ind++) {
+                Object arg = iterableArrayArg[ind];
                 tmpArgs = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     if (i == iterableArgIndex) {
@@ -337,7 +376,9 @@ public class MagicHandler {
                         tmpArgs[i] = arguments[i];
                     }
                 }
-                keyArgMap.put(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false), arg);
+                CacheKeyTO cacheKeyTO = this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false);
+                keyArgMap.put(cacheKeyTO, arg);
+                cacheKeys[ind] = cacheKeyTO;
             }
         }
         if (null == keyArgMap || keyArgMap.isEmpty()) {
