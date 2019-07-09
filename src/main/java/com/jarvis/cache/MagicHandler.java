@@ -11,16 +11,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * MagicHandler
@@ -124,8 +115,8 @@ public class MagicHandler {
 
     public Object magic() throws Throwable {
         Map<CacheKeyTO, Object> keyArgMap = getCacheKeyForMagic();
-        Type returnItemType ;
-        if(returnType.isArray()) {
+        Type returnItemType;
+        if (returnType.isArray()) {
             returnItemType = returnType.getComponentType();
         } else {
             returnItemType = ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
@@ -321,7 +312,7 @@ public class MagicHandler {
         String hfieldExpression = cache.hfield();
         Map<CacheKeyTO, Object> keyArgMap = null;
         if (null != iterableCollectionArg) {
-            keyArgMap = new HashMap<>(iterableCollectionArg.size());
+            keyArgMap = new LinkedHashMap<>(iterableCollectionArg.size());
             Object[] tmpArgs;
             for (Object arg : iterableCollectionArg) {
                 tmpArgs = new Object[arguments.length];
@@ -335,7 +326,7 @@ public class MagicHandler {
                 keyArgMap.put(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false), arg);
             }
         } else if (null != iterableArrayArg) {
-            keyArgMap = new HashMap<>(iterableArrayArg.length);
+            keyArgMap = new LinkedHashMap<>(iterableArrayArg.length);
             Object[] tmpArgs;
             for (Object arg : iterableArrayArg) {
                 tmpArgs = new Object[arguments.length];
