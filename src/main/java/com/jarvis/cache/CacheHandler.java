@@ -3,6 +3,7 @@ package com.jarvis.cache;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.CacheDeleteMagicKey;
 import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -88,7 +89,7 @@ public class CacheHandler {
      */
     private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
         DataLoader dataLoader;
-        if(config.isDataLoaderPooled()) {
+        if (config.isDataLoaderPooled()) {
             DataLoaderFactory factory = DataLoaderFactory.getInstance();
             dataLoader = factory.getDataLoader();
         } else {
@@ -100,7 +101,7 @@ public class CacheHandler {
         } catch (Throwable e) {
             throw e;
         } finally {
-            if(config.isDataLoaderPooled()) {
+            if (config.isDataLoaderPooled()) {
                 DataLoaderFactory factory = DataLoaderFactory.getInstance();
                 factory.returnObject(dataLoader);
             }
@@ -210,7 +211,7 @@ public class CacheHandler {
             return cacheWrapper.getCacheObject();
         }
         DataLoader dataLoader;
-        if(config.isDataLoaderPooled()) {
+        if (config.isDataLoaderPooled()) {
             DataLoaderFactory factory = DataLoaderFactory.getInstance();
             dataLoader = factory.getDataLoader();
         } else {
@@ -226,7 +227,7 @@ public class CacheHandler {
         } catch (Throwable e) {
             throw e;
         } finally {
-            if(config.isDataLoaderPooled()) {
+            if (config.isDataLoaderPooled()) {
                 DataLoaderFactory factory = DataLoaderFactory.getInstance();
                 factory.returnObject(dataLoader);
             }
@@ -258,9 +259,8 @@ public class CacheHandler {
     public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) throws Throwable {
         Object[] arguments = jp.getArgs();
         CacheDeleteKey[] keys = cacheDelete.value();
-        if (null == keys || keys.length == 0) {
-            return;
-        }
+        CacheDeleteMagicKey[] magicKeys = cacheDelete.magic();
+
         Object target = jp.getTarget();
         String methodName = jp.getMethod().getName();
         try {
@@ -269,12 +269,11 @@ public class CacheHandler {
             if (!isOnTransactional) {
                 keySet = new HashSet<>(keys.length);
             }
-            for (int i = 0; i < keys.length; i++) {
-                CacheDeleteKey keyConfig = keys[i];
-                if(DeleteCacheMagicHandler.isMagic(keyConfig, jp.getMethod())){
-                    DeleteCacheMagicHandler magicHandler = new DeleteCacheMagicHandler( this,  jp,  keyConfig, retVal);
-                    List<CacheKeyTO> list = magicHandler.getCacheKeyForMagic();
-                    if(null != list && !list.isEmpty()) {
+            if (null != magicKeys && magicKeys.length > 0) {
+                DeleteCacheMagicHandler magicHandler = new DeleteCacheMagicHandler(this, jp, magicKeys, retVal);
+                List<List<CacheKeyTO>> lists = magicHandler.getCacheKeyForMagic();
+                if (null != lists && !lists.isEmpty()) {
+                    for (List<CacheKeyTO> list : lists) {
                         for (CacheKeyTO key : list) {
                             if (null == key) {
                                 continue;
@@ -287,7 +286,11 @@ public class CacheHandler {
                             this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
                         }
                     }
-                } else {
+                }
+            }
+            if (null != keys && keys.length > 0) {
+                for (int i = 0; i < keys.length; i++) {
+                    CacheDeleteKey keyConfig = keys[i];
                     if (!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
                         continue;
                     }
@@ -306,6 +309,7 @@ public class CacheHandler {
                         }
                         this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
                     }
+
                 }
             }
             this.delete(keySet);
@@ -390,7 +394,7 @@ public class CacheHandler {
             long useTime = System.currentTimeMillis() - startTime;
             if (config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                 String className = pjp.getTarget().getClass().getName();
-                if(log.isWarnEnabled()) {
+                if (log.isWarnEnabled()) {
                     log.warn("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
                 }
             }
@@ -607,6 +611,9 @@ public class CacheHandler {
     }
 
     public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        if (keys.isEmpty()) {
+            return;
+        }
         cacheManager.delete(keys);
         if (null != changeListener) {
             changeListener.delete(keys);

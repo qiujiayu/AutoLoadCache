@@ -38,10 +38,4 @@ public @interface CacheDeleteKey {
      * @return String
      */
     String hfield() default "";
-
-    /**
-     * 需要分隔处理的参数索引
-     * @return int
-     */
-    int iterableArgIndex() default -1;
 }
