@@ -93,6 +93,14 @@ public class AutoLoadHandler {
         if (null != autoLoadMap) {
             return autoLoadMap.size();
         }
+        if (null != sortThread) {
+            sortThread.interrupt();
+        }
+        if (null != threads || threads.length > 0) {
+            for (Thread thread : threads) {
+                thread.interrupt();
+            }
+        }
         return -1;
     }
 
