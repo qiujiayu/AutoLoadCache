@@ -170,8 +170,7 @@ public abstract class AbstractScriptParser {
     public boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
         boolean rv = true;
         String condition = cacheDeleteKey.condition();
-        if (null != arguments && arguments.length > 0 && null != condition
-                && condition.length() > 0) {
+        if (null != condition && condition.length() > 0) {
             rv = this.getElValue(condition, null, arguments, retVal, true, Boolean.class);
         }
         return rv;
@@ -189,8 +188,7 @@ public abstract class AbstractScriptParser {
     public boolean isCanDelete(CacheDeleteMagicKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
         boolean rv = true;
         String condition = cacheDeleteKey.condition();
-        if (null != arguments && arguments.length > 0 && null != condition
-                && condition.length() > 0) {
+        if (null != condition && condition.length() > 0) {
             rv = this.getElValue(condition, null, arguments, retVal, true, Boolean.class);
         }
         return rv;

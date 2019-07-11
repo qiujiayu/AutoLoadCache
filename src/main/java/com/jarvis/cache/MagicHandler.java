@@ -57,8 +57,6 @@ public class MagicHandler {
 
     private final Object target;
     private final String methodName;
-    private final String keyExpression;
-    private final String hfieldExpression;
 
     public MagicHandler(CacheHandler cacheHandler, CacheAopProxyChain pjp, Cache cache) {
         this.cacheHandler = cacheHandler;
@@ -84,8 +82,6 @@ public class MagicHandler {
         this.parameterTypes = method.getParameterTypes();
         this.target = pjp.getTarget();
         this.methodName = pjp.getMethod().getName();
-        this.keyExpression = cache.key();
-        this.hfieldExpression = cache.hfield();
     }
 
     public static boolean isMagic(Cache cache, Method method) throws Exception {
@@ -250,6 +246,8 @@ public class MagicHandler {
     }
 
     private MSetParam genCacheWrapper(Object value, Object[] args) throws Exception {
+        String keyExpression = magic.key();
+        String hfieldExpression = magic.hfield();
         CacheKeyTO cacheKeyTO = this.cacheHandler.getCacheKey(target, methodName, args, keyExpression, hfieldExpression, value, true);
         int expire = this.cacheHandler.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), args, value);
         return new MSetParam(cacheKeyTO, new CacheWrapper<>(value, expire));
@@ -374,6 +372,8 @@ public class MagicHandler {
                 tmpArgs[i] = arguments[i];
             }
         }
+        String keyExpression = cache.key();
+        String hfieldExpression = cache.hfield();
         return this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, null, false);
     }
 }

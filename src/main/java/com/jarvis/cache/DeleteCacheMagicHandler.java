@@ -118,7 +118,7 @@ public class DeleteCacheMagicHandler {
             Object[] newValues = (Object[]) retVal;
             list = new ArrayList<>(newValues.length);
             for (Object value : newValues) {
-                if (cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, retVal)) {
+                if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, value)) {
                     continue;
                 }
                 list.add(this.cacheHandler.getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, value, true));
@@ -127,7 +127,7 @@ public class DeleteCacheMagicHandler {
             Collection<Object> newValues = (Collection<Object>) retVal;
             list = new ArrayList<>(newValues.size());
             for (Object value : newValues) {
-                if (cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, retVal)) {
+                if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, value)) {
                     continue;
                 }
                 list.add(this.cacheHandler.getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, value, true));
