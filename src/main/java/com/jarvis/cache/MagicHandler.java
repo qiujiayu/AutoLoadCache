@@ -66,13 +66,18 @@ public class MagicHandler {
         this.magic = cache.magic();
         this.arguments = pjp.getArgs();
         this.iterableArgIndex = magic.iterableArgIndex();
-        Object tmpArg = arguments[iterableArgIndex];
-        if (tmpArg instanceof Collection) {
-            this.iterableCollectionArg = (Collection<Object>) tmpArg;
-            this.iterableArrayArg = null;
-        } else if (tmpArg.getClass().isArray()) {
-            this.iterableArrayArg = (Object[]) tmpArg;
-            this.iterableCollectionArg = null;
+        if (iterableArgIndex >= 0 && iterableArgIndex < arguments.length) {
+            Object tmpArg = arguments[iterableArgIndex];
+            if (tmpArg instanceof Collection) {
+                this.iterableCollectionArg = (Collection<Object>) tmpArg;
+                this.iterableArrayArg = null;
+            } else if (tmpArg.getClass().isArray()) {
+                this.iterableArrayArg = (Object[]) tmpArg;
+                this.iterableCollectionArg = null;
+            } else {
+                this.iterableArrayArg = null;
+                this.iterableCollectionArg = null;
+            }
         } else {
             this.iterableArrayArg = null;
             this.iterableCollectionArg = null;
@@ -332,6 +337,7 @@ public class MagicHandler {
 
     /**
      * 生成缓存Key
+     *
      * @return
      */
     private Map<CacheKeyTO, Object> getCacheKeyForMagic() {
