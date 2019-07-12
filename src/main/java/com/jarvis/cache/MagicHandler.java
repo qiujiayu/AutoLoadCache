@@ -125,12 +125,24 @@ public class MagicHandler {
     private Collection<Object> newCollection(Class<?> collectionType, int resSize) throws Exception {
         Collection<Object> res;
         if (LinkedList.class.isAssignableFrom(collectionType)) {
+            if (resSize == 0) {
+                return Collections.emptyList();
+            }
             res = new LinkedList<>();
         } else if (List.class.isAssignableFrom(collectionType)) {
+            if (resSize == 0) {
+                return Collections.emptyList();
+            }
             res = new ArrayList<>(resSize);
         } else if (LinkedHashSet.class.isAssignableFrom(collectionType)) {
+            if (resSize == 0) {
+                return Collections.emptySet();
+            }
             res = new LinkedHashSet<>(resSize);
         } else if (Set.class.isAssignableFrom(collectionType)) {
+            if (resSize == 0) {
+                return Collections.emptySet();
+            }
             res = new HashSet<>(resSize);
         } else {
             throw new Exception("Unsupported type:" + collectionType.getName());
@@ -154,6 +166,12 @@ public class MagicHandler {
             return newValue;
         }
         Map<CacheKeyTO, Object> keyArgMap = getCacheKeyForMagic();
+        if (null == keyArgMap || keyArgMap.isEmpty()) {
+            if (returnType.isArray()) {
+                return Array.newInstance(returnType.getComponentType(), 0);
+            }
+            return newCollection(returnType, 0);
+        }
         Type returnItemType = getRealReturnType();
         Map<CacheKeyTO, CacheWrapper<Object>> cacheValues = this.cacheHandler.mget(method, returnItemType, keyArgMap.keySet());
         // 如果所有key都已经命中
@@ -276,14 +294,14 @@ public class MagicHandler {
                 Object[] newValues = (Object[]) newValue;
                 resSize = cacheValues.size() + (null == newValues ? 0 : newValues.length);
             }
-            Object[] res = new Object[resSize];
+            Object res = Array.newInstance(returnType.getComponentType(), resSize);
             int ind = 0;
             for (CacheKeyTO cacheKeyTO : cacheKeys) {
                 Object val = getValueFormCacheOrDatasource(cacheKeyTO, cacheValues, unmatchCache);
                 if (!magic.returnNullValue() && null == val) {
                     continue;
                 }
-                res[ind] = val;
+                Array.set(res, ind, val);
                 ind++;
             }
             return res;
@@ -362,9 +380,6 @@ public class MagicHandler {
                 keyArgMap.put(cacheKeyTO, arg);
                 cacheKeys[ind] = cacheKeyTO;
             }
-        }
-        if (null == keyArgMap || keyArgMap.isEmpty()) {
-            throw new IllegalArgumentException("the 'keyArgMap' is empty");
         }
         return keyArgMap;
     }
