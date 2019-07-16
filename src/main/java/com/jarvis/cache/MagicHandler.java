@@ -377,7 +377,6 @@ public class MagicHandler {
                 Object arg = iterableArrayArg[ind];
                 CacheKeyTO cacheKeyTO = buildCacheKey(arg);
                 keyArgMap.put(cacheKeyTO, arg);
-                keyArgMap.put(cacheKeyTO, arg);
                 cacheKeys[ind] = cacheKeyTO;
             }
         }
