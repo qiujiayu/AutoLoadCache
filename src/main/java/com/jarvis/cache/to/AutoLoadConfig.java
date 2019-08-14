@@ -57,6 +57,16 @@ public class AutoLoadConfig {
     private int autoLoadPeriod = 50;
 
     /**
+     *
+     */
+    private int loadUseTimeForAutoLoad1 = 10;
+
+    /**
+     *
+     */
+    private int loadUseTimeForAutoLoad2 = 200;
+
+    /**
      * 异步刷新缓存线程池的 corePoolSize
      */
     private int refreshThreadPoolSize = 2;
