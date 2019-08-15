@@ -161,9 +161,9 @@ public class AutoLoadTO implements Serializable {
     }
 
     /**
-     * 平均用时
+     * 平均耗时
      *
-     * @return long 用时
+     * @return long 平均耗时
      */
     public long getAverageUseTime() {
         if (loadCnt == 0) {

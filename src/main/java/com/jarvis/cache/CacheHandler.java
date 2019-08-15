@@ -611,7 +611,7 @@ public class CacheHandler {
     }
 
     public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
-        if (keys.isEmpty()) {
+        if (null == keys || keys.isEmpty()) {
             return;
         }
         cacheManager.delete(keys);
