@@ -164,7 +164,6 @@
       <version>2.1</version>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

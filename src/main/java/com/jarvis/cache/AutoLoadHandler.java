@@ -7,12 +7,13 @@ import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.*;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
@@ -60,6 +61,13 @@ public class AutoLoadHandler {
      */
     private final AutoLoadConfig config;
 
+
+    private static ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+
+    public static ScheduledThreadPoolExecutor getScheduledThreadPoolExecutor() {
+        return scheduledThreadPoolExecutor;
+    }
+
     /**
      * @param cacheHandler 缓存的set,get方法实现类
      * @param config       配置
@@ -75,6 +83,8 @@ public class AutoLoadHandler {
             this.sortThread = new Thread(new SortRunnable());
             this.sortThread.setDaemon(true);
             this.sortThread.start();
+            // init fixed rate refresh process thread pool
+            initScheduledThreadPoolExecutor();
             for (int i = 0; i < this.config.getThreadCnt(); i++) {
                 this.threads[i] = new Thread(new AutoLoadRunnable());
                 this.threads[i].setName(THREAD_NAME_PREFIX + i);
@@ -87,6 +97,10 @@ public class AutoLoadHandler {
             this.autoLoadQueue = null;
             this.sortThread = null;
         }
+    }
+
+    private void initScheduledThreadPoolExecutor() {
+        scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(10);
     }
 
     public int getSize() {
@@ -146,6 +160,29 @@ public class AutoLoadHandler {
         if (null == autoLoadMap) {
             return null;
         }
+
+        // 如果fixRateUpdateCache注解字段不为空,则走固定刷新逻辑
+        if(StringUtils.isNotEmpty(cache.fixRateUpdateCache())) {
+            AutoLoadTO autoLoadTO = autoLoadMap.get(cacheKey);
+            if (null != autoLoadTO) {
+                autoLoadMap.remove(cacheKey);
+            }
+
+            DeepClone deepClone = new DeepClone(joinPoint, cache).invoke();
+            if (deepClone.is()) return null;
+
+            Object[] arguments = deepClone.getArguments();
+            autoLoadTO = new AutoLoadTO(cacheKey, joinPoint, arguments, cache, Integer.MAX_VALUE);
+            // 设置过期时间为永不过期
+            autoLoadTO.setExpire(Integer.MAX_VALUE);
+
+            boolean openFixRateUpdateCache = fixRateUpdateCacheIfNeeded(joinPoint.getMethod().getName(), autoLoadTO);
+            if (openFixRateUpdateCache) {
+                return null;
+            }
+        }
+
+        // 走老逻辑-》交由AutoLoad处理
         AutoLoadTO autoLoadTO = autoLoadMap.get(cacheKey);
         if (null != autoLoadTO) {
             return autoLoadTO;
@@ -183,6 +220,120 @@ public class AutoLoadHandler {
             }
         }
         return null;
+    }
+
+    private boolean fixRateUpdateCacheIfNeeded(String methodName, AutoLoadTO autoLoadTO) {
+        if (null == autoLoadTO || autoLoadTO.getCache() == null ||
+                StringUtils.isEmpty(autoLoadTO.getCache().fixRateUpdateCache())) {
+            return false;
+        }
+
+        // 如果配置固定频率刷新 则缓存有效期为永久
+        doExecute(methodName, autoLoadTO);
+        return true;
+    }
+
+    private void doExecute(String methodName, AutoLoadTO autoLoadTO) {
+        // 解析fixRateUpdateCache Timer表达式
+        String updateCacheCronExpression = autoLoadTO.getCache().fixRateUpdateCache();
+        if (!updateCacheCronExpression.contains(",")) {
+            log.error("不符合规则的频率表达式{}", updateCacheCronExpression);
+            return;
+        }
+        long delay;
+        long period;
+        try {
+            String[] split = updateCacheCronExpression.split(",");
+            delay = Long.parseLong(split[0]);
+            period = Long.parseLong(split[1]);
+        } catch (Exception e) {
+            log.error("not matched cron expression-{}", updateCacheCronExpression);
+            return;
+        }
+        scheduledThreadPoolExecutor.scheduleWithFixedDelay(new FixRateUpdateCacheTask(autoLoadTO), delay,
+                period, TimeUnit.SECONDS);
+        log.info("register fix rate refresh task——method-{}, rate-{}", methodName, updateCacheCronExpression);
+    }
+
+    class FixRateUpdateCacheTask implements Runnable{
+        private AutoLoadTO autoLoadTO;
+
+        public FixRateUpdateCacheTask(AutoLoadTO autoLoadTO) {
+            this.autoLoadTO = autoLoadTO;
+        }
+
+        @Override
+        public void run() {
+            // 执行更新 依然复用"拿来主义"
+            Cache cache = autoLoadTO.getCache();
+            log.debug("执行定时刷新缓存任务, {}", cache.fixRateUpdateCache());
+            CacheWrapper<Object> result = null;
+            if (config.isCheckFromCacheBeforeLoad()) {
+                try {
+                    Method method = autoLoadTO.getJoinPoint().getMethod();
+                    result = cacheHandler.get(autoLoadTO.getCacheKey(), method);
+                } catch (Exception ex) {
+                    log.error(ex.getMessage(), ex);
+                }
+
+                if (null != result) {
+                    autoLoadTO.setExpire(result.getExpire());
+                    if (result.getLastLoadTime() > autoLoadTO.getLastLoadTime()) {
+                        autoLoadTO.setLastLoadTime(result.getLastLoadTime());
+                        return;
+                    }
+                }
+            }
+            CacheAopProxyChain pjp = autoLoadTO.getJoinPoint();
+            CacheKeyTO cacheKey = autoLoadTO.getCacheKey();
+            DataLoader dataLoader;
+            if (config.isDataLoaderPooled()) {
+                DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                dataLoader = factory.getDataLoader();
+            } else {
+                dataLoader = new DataLoader();
+            }
+            CacheWrapper<Object> newCacheWrapper = null;
+            long loadDataUseTime = 0L;
+            try {
+                newCacheWrapper = dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData()
+                        .getCacheWrapper();
+                loadDataUseTime = dataLoader.getLoadDataUseTime();
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                if (config.isDataLoaderPooled()) {
+                    DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                    factory.returnObject(dataLoader);
+                }
+            }
+            // 如果数据加载失败，则把旧数据进行续租
+            if (null == newCacheWrapper && null != result) {
+                newCacheWrapper = new CacheWrapper<Object>(result.getCacheObject(), Integer.MAX_VALUE);
+            }
+            writeCacheAndSetLoadTime(cache, pjp, cacheKey, newCacheWrapper, loadDataUseTime, autoLoadTO);
+        }
+    }
+
+    /**
+     * 写入缓存并且设置上一次加载时间
+     * @param cache
+     * @param pjp
+     * @param cacheKey
+     * @param newCacheWrapper
+     * @param loadDataUseTime
+     * @param autoLoadTO
+     */
+    private void writeCacheAndSetLoadTime(Cache cache, CacheAopProxyChain pjp, CacheKeyTO cacheKey, CacheWrapper<Object> newCacheWrapper, long loadDataUseTime, AutoLoadTO autoLoadTO) {
+        try {
+            if (null != newCacheWrapper) {
+                cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
+                autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())
+                        .setExpire(newCacheWrapper.getExpire()).addUseTotalTime(loadDataUseTime);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     /**
@@ -252,7 +403,6 @@ public class AutoLoadHandler {
     }
 
     class AutoLoadRunnable implements Runnable {
-
         @Override
         public void run() {
             while (running) {
@@ -372,17 +522,46 @@ public class AutoLoadHandler {
                     int newExpire = AUTO_LOAD_MIN_EXPIRE + 60;
                     newCacheWrapper = new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
-                try {
-                    if (null != newCacheWrapper) {
-                        cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
-                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())
-                                .setExpire(newCacheWrapper.getExpire()).addUseTotalTime(loadDataUseTime);
-                    }
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+                writeCacheAndSetLoadTime(cache, pjp, cacheKey, newCacheWrapper, loadDataUseTime, autoLoadTO);
             }
         }
     }
 
+    private class DeepClone {
+        private boolean myResult;
+        private CacheAopProxyChain joinPoint;
+        private Cache cache;
+        private Object[] arguments;
+
+        public DeepClone(CacheAopProxyChain joinPoint, Cache cache) {
+            this.joinPoint = joinPoint;
+            this.cache = cache;
+        }
+
+        boolean is() {
+            return myResult;
+        }
+
+        public Object[] getArguments() {
+            return arguments;
+        }
+
+        public DeepClone invoke() {
+            if (cache.argumentsDeepcloneEnable()) {
+                try {
+                    // 进行深度复制
+                    arguments = (Object[]) cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(),
+                            joinPoint.getArgs());
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    myResult = true;
+                    return this;
+                }
+            } else {
+                arguments = joinPoint.getArgs();
+            }
+            myResult = false;
+            return this;
+        }
+    }
 }
