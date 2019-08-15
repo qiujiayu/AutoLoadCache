@@ -240,9 +240,16 @@ public class AutoLoadHandler {
             log.error("不符合规则的频率表达式{}", updateCacheCronExpression);
             return;
         }
-        String[] split = updateCacheCronExpression.split(",");
-        long delay = Long.parseLong(split[0]);
-        long period = Long.parseLong(split[1]);
+        long delay;
+        long period;
+        try {
+            String[] split = updateCacheCronExpression.split(",");
+            delay = Long.parseLong(split[0]);
+            period = Long.parseLong(split[1]);
+        } catch (Exception e) {
+            log.error("not matched cron expression-{}", updateCacheCronExpression);
+            return;
+        }
         scheduledThreadPoolExecutor.scheduleWithFixedDelay(new FixRateUpdateCacheTask(autoLoadTO), delay,
                 period, TimeUnit.SECONDS);
         log.info("register fix rate refresh task——method-{}, rate-{}", methodName, updateCacheCronExpression);
