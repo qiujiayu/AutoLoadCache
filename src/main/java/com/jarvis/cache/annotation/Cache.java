@@ -1,6 +1,7 @@
 package com.jarvis.cache.annotation;
 
 import com.jarvis.cache.type.CacheOpType;
+import lombok.Setter;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -72,6 +73,16 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
+     * 以固定频率的方式刷新缓存 (补充expire无限大时无法依靠alarmTime频繁刷新缓存的不足)
+     * 格式 “initDelay,period” 默认单位s 【初始延迟时长,执行周期】
+     *              如【5，10】意为5s后开始以10s为周期执行刷新任务
+     *      为了向后兼容, 当alarmTime存在时优先解析alarmTime
+     *      暂不支持自定义+扩展
+     * @return 固定表达式 “initDelay,period”
+     */
+    String fixRateUpdateCache() default "";
+
+    /**
      * 自动缓存的条件，可以为空，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null !=
      * #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
      *
@@ -121,6 +132,13 @@ public @interface Cache {
      * @return 分布式锁的缓存时间
      */
     int lockExpire() default 10;
+
+    /**
+     * 是否开启锁降级
+     *      默认不开启;
+     *      如果开启，当分布式锁抛异常时不使用分布式锁
+     */
+    boolean openLockDown() default false;
 
     /**
      * 是否打开对参数进行深度复制,默认是true,是为了避免外部改变参数值。如果确保不被修改，最好是设置为false,这样性能会更高。

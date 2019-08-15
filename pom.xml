@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>7.0.4</version>
+  <version>7.0.4-Alen2</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>Use AOP and Annotation manage cache.</description>
@@ -164,7 +164,6 @@
       <version>2.1</version>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
