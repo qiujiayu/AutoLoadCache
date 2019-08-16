@@ -37,6 +37,11 @@ public class AutoLoadHandler {
      */
     private final ConcurrentHashMap<CacheKeyTO, AutoLoadTO> autoLoadMap;
 
+    /**
+     * 固定频率刷新队列
+     */
+    static CopyOnWriteArrayList<CacheKeyTO> fixRateRefreshArrayList;
+
     private final CacheHandler cacheHandler;
 
     /**
@@ -62,7 +67,7 @@ public class AutoLoadHandler {
     private final AutoLoadConfig config;
 
 
-    private static ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    static ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     public static ScheduledThreadPoolExecutor getScheduledThreadPoolExecutor() {
         return scheduledThreadPoolExecutor;
@@ -79,6 +84,7 @@ public class AutoLoadHandler {
             this.running = true;
             this.threads = new Thread[this.config.getThreadCnt()];
             this.autoLoadMap = new ConcurrentHashMap<CacheKeyTO, AutoLoadTO>(this.config.getMaxElement());
+            fixRateRefreshArrayList = new CopyOnWriteArrayList<CacheKeyTO>();
             this.autoLoadQueue = new LinkedBlockingQueue<AutoLoadTO>(this.config.getMaxElement());
             this.sortThread = new Thread(new SortRunnable());
             this.sortThread.setDaemon(true);
@@ -162,12 +168,18 @@ public class AutoLoadHandler {
         }
 
         // 如果fixRateUpdateCache注解字段不为空,则走固定刷新逻辑
-        if(StringUtils.isNotEmpty(cache.fixRateUpdateCache())) {
+        if(cache.fixRateUpdateCache() > 0) {
             AutoLoadTO autoLoadTO = autoLoadMap.get(cacheKey);
-            if (null != autoLoadTO) {
+            if (autoLoadTO != null) {
                 autoLoadMap.remove(cacheKey);
             }
 
+            // 如果已经存在 则忽略
+            if(fixRateRefreshArrayList.contains(cacheKey)) {
+                return null;
+            }
+
+            // 否则执行固定频率刷新
             DeepClone deepClone = new DeepClone(joinPoint, cache).invoke();
             if (deepClone.is()) return null;
 
@@ -224,7 +236,7 @@ public class AutoLoadHandler {
 
     private boolean fixRateUpdateCacheIfNeeded(String methodName, AutoLoadTO autoLoadTO) {
         if (null == autoLoadTO || autoLoadTO.getCache() == null ||
-                StringUtils.isEmpty(autoLoadTO.getCache().fixRateUpdateCache())) {
+                autoLoadTO.getCache().fixRateUpdateCache() <= 0) {
             return false;
         }
 
@@ -234,25 +246,10 @@ public class AutoLoadHandler {
     }
 
     private void doExecute(String methodName, AutoLoadTO autoLoadTO) {
-        // 解析fixRateUpdateCache Timer表达式
-        String updateCacheCronExpression = autoLoadTO.getCache().fixRateUpdateCache();
-        if (!updateCacheCronExpression.contains(",")) {
-            log.error("不符合规则的频率表达式{}", updateCacheCronExpression);
-            return;
-        }
-        long delay;
-        long period;
-        try {
-            String[] split = updateCacheCronExpression.split(",");
-            delay = Long.parseLong(split[0]);
-            period = Long.parseLong(split[1]);
-        } catch (Exception e) {
-            log.error("not matched cron expression-{}", updateCacheCronExpression);
-            return;
-        }
-        scheduledThreadPoolExecutor.scheduleWithFixedDelay(new FixRateUpdateCacheTask(autoLoadTO), delay,
+        int period = autoLoadTO.getCache().fixRateUpdateCache();
+        scheduledThreadPoolExecutor.scheduleWithFixedDelay(new FixRateUpdateCacheTask(autoLoadTO), 0,
                 period, TimeUnit.SECONDS);
-        log.info("register fix rate refresh task——method-{}, rate-{}", methodName, updateCacheCronExpression);
+        log.info("register fix rate refresh task——method-{}, period-{}", methodName, period);
     }
 
     class FixRateUpdateCacheTask implements Runnable{
