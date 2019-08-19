@@ -463,7 +463,6 @@ public class CacheHandler {
     public void destroy() {
         autoLoadHandler.shutdown();
         refreshHandler.shutdown();
-        AutoLoadHandler.scheduledThreadPoolExecutor.shutdown();
         log.trace("cache destroy ... ... ...");
     }
 

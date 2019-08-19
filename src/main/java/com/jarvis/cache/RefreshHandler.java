@@ -69,10 +69,6 @@ public class RefreshHandler {
     }
 
     public void doRefresh(CacheAopProxyChain pjp, Cache cache, CacheKeyTO cacheKey, CacheWrapper<Object> cacheWrapper) {
-        // 如果已经交由固定频率刷新，则不做过期判断
-        if (AutoLoadHandler.fixRateRefreshArrayList.contains(cacheKey)) {
-            return;
-        }
         int expire = cacheWrapper.getExpire();
         if (expire < REFRESH_MIN_EXPIRE) {// 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
             return;
