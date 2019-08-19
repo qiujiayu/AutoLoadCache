@@ -11,6 +11,8 @@ import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 /**
  * 数据加载器
  *
@@ -139,36 +141,51 @@ public class DataLoader {
     private void doFirstRequest(ProcessingTO processingTO) throws Throwable {
         ILock distributedLock = cacheHandler.getLock();
         // 开启分布式锁
-        if (null != distributedLock && cache.lockExpire() > 0) {
-            String lockKey = cacheKey.getLockKey();
-            long startWait = processingTO.getStartTime();
-            do {
-                // 获得分布式锁
-                if (distributedLock.tryLock(lockKey, cache.lockExpire())) {
-                    try {
-                        getData();
-                    } finally {
-                        distributedLock.unlock(lockKey);
+        Throwable throwable = null;
+        try {
+            if (null != distributedLock && cache.lockExpire() > 0) {
+                String lockKey = cacheKey.getLockKey();
+                long startWait = processingTO.getStartTime();
+                do {
+                    // 获得分布式锁
+                    if (distributedLock.tryLock(lockKey, cache.lockExpire())) {
+                        try {
+                            getData();
+                        } finally {
+                            distributedLock.unlock(lockKey);
+                        }
+                        break;
                     }
-                    break;
-                }
-                int tryCnt = 20;
-                // 没有获得锁时，定时缓存尝试获取数据
-                for (int i = 0; i < tryCnt; i++) {
-                    cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
+                    int tryCnt = 20;
+                    // 没有获得锁时，定时缓存尝试获取数据
+                    for (int i = 0; i < tryCnt; i++) {
+                        cacheWrapper = cacheHandler.get(cacheKey, pjp.getMethod());
+                        if (null != cacheWrapper) {
+                            break;
+                        }
+                        Thread.sleep(10);
+                    }
                     if (null != cacheWrapper) {
                         break;
                     }
-                    Thread.sleep(10);
+                } while (System.currentTimeMillis() - startWait < cache.waitTimeOut());
+                if (null == cacheWrapper) {
+                    throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " ms).");
                 }
-                if (null != cacheWrapper) {
-                    break;
-                }
-            } while (System.currentTimeMillis() - startWait < cache.waitTimeOut());
-            if (null == cacheWrapper) {
-                throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " ms).");
             }
-        } else {
+        } catch (Throwable e) {
+            if (cache.openLockDown()) {
+                throwable = e;
+                // 关闭分布式锁
+                cacheHandler.setLock(null);
+                log.error("分布式锁异常，强制停止使用分布式锁!", throwable);
+            } else {
+                // 否则抛异常
+                log.error("分布式锁异常!", e);
+                throw e;
+            }
+        }
+        if (throwable != null) {
             getData();
         }
         // 本地缓存

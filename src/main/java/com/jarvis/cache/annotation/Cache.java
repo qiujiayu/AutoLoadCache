@@ -131,6 +131,13 @@ public @interface Cache {
     int lockExpire() default 10;
 
     /**
+     * 是否开启锁降级
+     *      默认不开启;
+     *      如果开启，当分布式锁抛异常时不使用分布式锁
+     */
+    boolean openLockDown() default false;
+
+    /**
      * 是否打开对参数进行深度复制,默认是true,是为了避免外部改变参数值。如果确保不被修改，最好是设置为false,这样性能会更高。
      *
      * @return 是否打开对参数进行深度复制
