@@ -72,6 +72,14 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
+     * 是否总是缓存（常驻内存）
+     *       默认不开启;
+     *       如果开启则缓存的有效期为永久,高频/低频/后台刷新异常则均不影响缓存的生命周期
+     * @return boolean
+     */
+    boolean alwaysCache() default false;
+
+    /**
      * 自动缓存的条件，可以为空，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null !=
      * #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
      *

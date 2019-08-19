@@ -278,13 +278,14 @@ public class AutoLoadHandler {
             }
             Cache cache = autoLoadTO.getCache();
             long requestTimeout = cache.requestTimeout();
+            boolean alwaysCache = cache.alwaysCache();
             // 如果超过一定时间没有请求数据，则从队列中删除
-            if (requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * ONE_THOUSAND_MS) {
+            if (!alwaysCache && requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * ONE_THOUSAND_MS) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             // 如果效率比较高的请求，就没必要使用自动加载了。
-            if (autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad1()) {
+            if (!alwaysCache && autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad1()) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
@@ -292,7 +293,7 @@ public class AutoLoadHandler {
             long difFirstRequestTime = now - autoLoadTO.getFirstRequestTime();
             long oneHourSecs = 3600000L;
             // 如果是耗时不大，且使用率比较低的数据，没有必要使用自动加载。
-            if (difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad2()
+            if (!alwaysCache && difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad2()
                     && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
@@ -302,7 +303,7 @@ public class AutoLoadHandler {
             }
             int expire = autoLoadTO.getExpire();
             // 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
-            if (expire < AUTO_LOAD_MIN_EXPIRE) {
+            if (!alwaysCache && expire < AUTO_LOAD_MIN_EXPIRE) {
                 return;
             }
             // 计算超时时间
@@ -369,7 +370,7 @@ public class AutoLoadHandler {
             if (isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租
                 if (null == newCacheWrapper && null != result) {
-                    int newExpire = AUTO_LOAD_MIN_EXPIRE + 60;
+                    int newExpire = !alwaysCache ? AUTO_LOAD_MIN_EXPIRE + 60 : cache.expire();
                     newCacheWrapper = new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
                 try {
