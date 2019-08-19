@@ -1,7 +1,6 @@
 package com.jarvis.cache.annotation;
 
 import com.jarvis.cache.type.CacheOpType;
-import lombok.Setter;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -73,14 +72,12 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
-     * 以固定频率的方式刷新缓存 (补充expire无限大时无法依靠alarmTime频繁刷新缓存的不足)
-     * 格式 “initDelay,period” 默认单位s 【初始延迟时长,执行周期】
-     *              如【5，10】意为5s后开始以10s为周期执行刷新任务
-     *      为了向后兼容, 当alarmTime存在时优先解析alarmTime
-     *      暂不支持自定义+扩展
-     * @return 固定表达式 “initDelay,period”
+     * 是否总是缓存（常驻内存）
+     *       默认不开启;
+     *       如果开启则缓存的有效期为永久,高频/低频/后台刷新异常则均不影响缓存的生命周期
+     * @return boolean
      */
-    String fixRateUpdateCache() default "";
+    boolean alwaysCache() default false;
 
     /**
      * 自动缓存的条件，可以为空，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null !=
