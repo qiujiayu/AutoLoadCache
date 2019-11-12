@@ -233,6 +233,12 @@ public class CacheHandler {
             }
         }
         if (isFirst) {
+            //判断数据库中查询的结果是否为null，为null不加入缓存
+            Object newCacheObject = newCacheWrapper.getCacheObject();
+            if(newCacheObject == null){
+                //直接返回
+                return newCacheObject;
+            }
             AutoLoadTO autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
             try {
                 writeCache(pjp, pjp.getArgs(), cache, cacheKey, newCacheWrapper);
