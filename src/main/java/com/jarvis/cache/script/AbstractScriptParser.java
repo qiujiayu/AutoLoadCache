@@ -2,6 +2,7 @@ package com.jarvis.cache.script;
 
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.CacheDeleteMagicKey;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.type.CacheOpType;
 
@@ -169,8 +170,25 @@ public abstract class AbstractScriptParser {
     public boolean isCanDelete(CacheDeleteKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
         boolean rv = true;
         String condition = cacheDeleteKey.condition();
-        if (null != arguments && arguments.length > 0 && null != condition
-                && condition.length() > 0) {
+        if (null != condition && condition.length() > 0) {
+            rv = this.getElValue(condition, null, arguments, retVal, true, Boolean.class);
+        }
+        return rv;
+    }
+
+    /**
+     * 是否可以删除缓存
+     *
+     * @param cacheDeleteKey CacheDeleteKey注解
+     * @param arguments      参数
+     * @param retVal         结果值
+     * @return Can Delete
+     * @throws Exception 异常
+     */
+    public boolean isCanDelete(CacheDeleteMagicKey cacheDeleteKey, Object[] arguments, Object retVal) throws Exception {
+        boolean rv = true;
+        String condition = cacheDeleteKey.condition();
+        if (null != condition && condition.length() > 0) {
             rv = this.getElValue(condition, null, arguments, retVal, true, Boolean.class);
         }
         return rv;

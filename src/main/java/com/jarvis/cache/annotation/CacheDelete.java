@@ -18,5 +18,7 @@ import java.lang.annotation.Target;
 @Documented
 public @interface CacheDelete {
 
-    CacheDeleteKey[] value();
+    CacheDeleteKey[] value() default {};
+
+    CacheDeleteMagicKey[] magic() default {};
 }

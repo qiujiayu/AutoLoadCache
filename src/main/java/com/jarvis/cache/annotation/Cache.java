@@ -72,6 +72,14 @@ public @interface Cache {
     boolean autoload() default false;
 
     /**
+     * 是否总是缓存（常驻内存）
+     *       默认不开启;
+     *       如果开启则缓存的有效期为永久,高频/低频/后台刷新异常则均不影响缓存的生命周期
+     * @return boolean
+     */
+    boolean alwaysCache() default false;
+
+    /**
      * 自动缓存的条件，可以为空，返回 true 或者 false，如果设置了此值，autoload() 就失效，例如：null !=
      * #args[0].keyword，当第一个参数的keyword属性为null时设置为自动加载。
      *
@@ -121,6 +129,13 @@ public @interface Cache {
      * @return 分布式锁的缓存时间
      */
     int lockExpire() default 10;
+
+    /**
+     * 是否开启锁降级
+     *      默认不开启;
+     *      如果开启，当分布式锁抛异常时不使用分布式锁
+     */
+    boolean openLockDown() default false;
 
     /**
      * 是否打开对参数进行深度复制,默认是true,是为了避免外部改变参数值。如果确保不被修改，最好是设置为false,这样性能会更高。

@@ -1,78 +1,69 @@
 package com.jarvis.cache;
 
-import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.CacheDeleteMagicKey;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
-import com.jarvis.cache.script.AbstractScriptParser;
 import com.jarvis.cache.to.CacheKeyTO;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Magic模式
+ *
+ * @author jiayu.qiu
+ */
 public class DeleteCacheMagicHandler {
     private final CacheHandler cacheHandler;
 
     private final DeleteCacheAopProxyChain jp;
 
-    private final CacheDeleteKey cacheDeleteKey;
+    private final CacheDeleteMagicKey[] cacheDeleteKeys;
 
     private final Object[] arguments;
 
-    private final int iterableArgIndex;
-
-    private final Object[] iterableArrayArg;
-
-    private final Collection<Object> iterableCollectionArg;
-
     private final Method method;
-
-    // private final Class<?> returnType;
 
     private final Object retVal;
 
-    public DeleteCacheMagicHandler(CacheHandler cacheHandler, DeleteCacheAopProxyChain jp, CacheDeleteKey cacheDeleteKey, Object retVal) {
+    private final Object target;
+
+    private final String methodName;
+
+    private final Class<?>[] parameterTypes;
+
+    public DeleteCacheMagicHandler(CacheHandler cacheHandler, DeleteCacheAopProxyChain jp, CacheDeleteMagicKey[] cacheDeleteKeys, Object retVal) {
         this.cacheHandler = cacheHandler;
         this.jp = jp;
-        this.cacheDeleteKey = cacheDeleteKey;
-
+        this.cacheDeleteKeys = cacheDeleteKeys;
         this.arguments = jp.getArgs();
-        this.iterableArgIndex = cacheDeleteKey.iterableArgIndex();
-        Object tmpArg = arguments[iterableArgIndex];
-        if (tmpArg instanceof Collection) {
-            this.iterableCollectionArg = (Collection<Object>) tmpArg;
-            this.iterableArrayArg = null;
-        } else if (tmpArg.getClass().isArray()) {
-            this.iterableArrayArg = (Object[]) tmpArg;
-            this.iterableCollectionArg = null;
-        } else {
-            this.iterableArrayArg = null;
-            this.iterableCollectionArg = null;
-        }
         this.method = jp.getMethod();
-        // this.returnType = method.getReturnType();
         this.retVal = retVal;
+        this.target = jp.getTarget();
+        this.methodName = jp.getMethod().getName();
+        this.parameterTypes = method.getParameterTypes();
     }
 
-
-    public static boolean isMagic(CacheDeleteKey cacheDeleteKey, Method method) throws Exception {
-        // 参数支持一个 List\Set\数组\可变长参数
+    /**
+     * @param cacheDeleteKey
+     * @return
+     * @throws Exception
+     */
+    private void isMagic(CacheDeleteMagicKey cacheDeleteKey) throws Exception {
+        String key = cacheDeleteKey.value();
+        if (null == key || key.length() == 0) {
+            throw new Exception("value不允许为空");
+        }
         int iterableArgIndex = cacheDeleteKey.iterableArgIndex();
-        if (iterableArgIndex < 0) {
-            return false;
-        }
-        Class<?>[] parameterTypes = method.getParameterTypes();
-
-        String[] keys = cacheDeleteKey.value();
-        boolean rv = null != parameterTypes && null != keys && keys.length > 0;
-        for (String key : keys) {
-            if (null == key || key.length() == 0) {
-                throw new Exception("缓存key中不能有空字符串");
-            }
-        }
-        if (rv) {
+        if (parameterTypes.length > 0 && iterableArgIndex >= 0) {
             if (iterableArgIndex >= parameterTypes.length) {
                 throw new Exception("iterableArgIndex必须小于参数长度：" + parameterTypes.length);
+            }
+            if (iterableArgIndex >= 0 && cacheDeleteKey.iterableReturnValue()) {
+                throw new Exception("不支持iterableArgIndex大于0且iterableReturnValue=true的情况");
             }
             Class<?> tmp = parameterTypes[iterableArgIndex];
             if (tmp.isArray() || Collection.class.isAssignableFrom(tmp)) {
@@ -81,54 +72,112 @@ public class DeleteCacheMagicHandler {
                 throw new Exception("magic模式下，参数" + iterableArgIndex + "必须是数组或Collection的类型");
             }
         }
-        return rv;
-    }
-
-    public List<CacheKeyTO> getCacheKeyForMagic() throws Exception {
-        Object target = jp.getTarget();
-        String methodName = jp.getMethod().getName();
-        String[] keyExpressions = cacheDeleteKey.value();
-        String hfieldExpression = cacheDeleteKey.hfield();
-        List<CacheKeyTO> list = null;
-        if (null != iterableCollectionArg) {
-            list = new ArrayList<>(iterableCollectionArg.size());
-            Object[] tmpArgs;
-            for (Object arg : iterableCollectionArg) {
-                tmpArgs = new Object[arguments.length];
-                for (int i = 0; i < arguments.length; i++) {
-                    if (i == iterableArgIndex) {
-                        tmpArgs[i] = arg;
-                    } else {
-                        tmpArgs[i] = arguments[i];
-                    }
-                }
-                for (String keyExpression : keyExpressions) {
-                    if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, tmpArgs, retVal)) {
-                        continue;
-                    }
-                    list.add(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, retVal, true));
-                }
-            }
-        } else if (null != iterableArrayArg) {
-            list = new ArrayList<>(iterableArrayArg.length);
-            Object[] tmpArgs;
-            for (Object arg : iterableArrayArg) {
-                tmpArgs = new Object[arguments.length];
-                for (int i = 0; i < arguments.length; i++) {
-                    if (i == iterableArgIndex) {
-                        tmpArgs[i] = arg;
-                    } else {
-                        tmpArgs[i] = arguments[i];
-                    }
-                }
-                for (String keyExpression : keyExpressions) {
-                    if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, tmpArgs, retVal)) {
-                        continue;
-                    }
-                    list.add(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, retVal, true));
-                }
+        if (cacheDeleteKey.iterableReturnValue()) {
+            Class<?> returnType = method.getReturnType();
+            if (returnType.isArray() || Collection.class.isAssignableFrom(returnType)) {
+                // rv = true;
+            } else {
+                throw new Exception("当iterableReturnValue=true时，返回值必须是数组或Collection的类型");
             }
         }
+    }
+
+    public List<List<CacheKeyTO>> getCacheKeyForMagic() throws Exception {
+        List<List<CacheKeyTO>> lists = new ArrayList<>(cacheDeleteKeys.length);
+        for (CacheDeleteMagicKey cacheDeleteKey : cacheDeleteKeys) {
+            isMagic(cacheDeleteKey);
+            String keyExpression = cacheDeleteKey.value();
+            String hfieldExpression = cacheDeleteKey.hfield();
+            // 只对返回值进行分割处理
+            if (parameterTypes.length == 0 || cacheDeleteKey.iterableArgIndex() < 0) {
+                if (cacheDeleteKey.iterableReturnValue()) {
+                    lists.add(splitReturnValueOnly(cacheDeleteKey, retVal, keyExpression, hfieldExpression));
+                }
+                continue;
+            }
+            int iterableArgIndex = cacheDeleteKey.iterableArgIndex();
+            // 只对参数进行分割处理
+            if (iterableArgIndex >= 0 && !cacheDeleteKey.iterableReturnValue()) {
+                lists.add(splitArgOnly(cacheDeleteKey, retVal, keyExpression, hfieldExpression));
+                continue;
+            }
+            if (iterableArgIndex >= 0 && cacheDeleteKey.iterableReturnValue()) {
+
+            }
+
+        }
+        return lists;
+    }
+
+    private List<CacheKeyTO> splitReturnValueOnly(CacheDeleteMagicKey cacheDeleteKey, Object retVal, String keyExpression, String hfieldExpression) throws Exception {
+        if (null == retVal) {
+            return Collections.emptyList();
+        }
+        List<CacheKeyTO> list;
+        if (retVal.getClass().isArray()) {
+            Object[] newValues = (Object[]) retVal;
+            list = new ArrayList<>(newValues.length);
+            for (Object value : newValues) {
+                if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, value)) {
+                    continue;
+                }
+                list.add(this.cacheHandler.getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, value, true));
+            }
+        } else if (retVal instanceof Collection) {
+            Collection<Object> newValues = (Collection<Object>) retVal;
+            list = new ArrayList<>(newValues.size());
+            for (Object value : newValues) {
+                if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, arguments, value)) {
+                    continue;
+                }
+                list.add(this.cacheHandler.getCacheKey(target, methodName, arguments, keyExpression, hfieldExpression, value, true));
+            }
+        } else {
+            return Collections.emptyList();
+        }
         return list;
+    }
+
+    private List<CacheKeyTO> splitArgOnly(CacheDeleteMagicKey cacheDeleteKey, Object retVal, String keyExpression, String hfieldExpression) throws Exception {
+        int iterableArgIndex = cacheDeleteKey.iterableArgIndex();
+        Object tmpArg = arguments[iterableArgIndex];
+        List<CacheKeyTO> list = null;
+        if (tmpArg instanceof Collection) {
+            Collection<Object> iterableCollectionArg = (Collection<Object>) tmpArg;
+            list = new ArrayList<>(iterableCollectionArg.size());
+            for (Object arg : iterableCollectionArg) {
+                Optional<CacheKeyTO> tmp = getKey(arg, cacheDeleteKey, retVal, keyExpression, hfieldExpression);
+                if (tmp.isPresent()) {
+                    list.add(tmp.get());
+                }
+            }
+        } else if (tmpArg.getClass().isArray()) {
+            Object[] iterableArrayArg = (Object[]) tmpArg;
+            list = new ArrayList<>(iterableArrayArg.length);
+            for (Object arg : iterableArrayArg) {
+                Optional<CacheKeyTO> tmp = getKey(arg, cacheDeleteKey, retVal, keyExpression, hfieldExpression);
+                if (tmp.isPresent()) {
+                    list.add(tmp.get());
+                }
+            }
+        } else {
+            return Collections.emptyList();
+        }
+        return list;
+    }
+
+    private Optional<CacheKeyTO> getKey(Object arg, CacheDeleteMagicKey cacheDeleteKey, Object retVal, String keyExpression, String hfieldExpression) throws Exception {
+        Object[] tmpArgs = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            if (i == cacheDeleteKey.iterableArgIndex()) {
+                tmpArgs[i] = arg;
+            } else {
+                tmpArgs[i] = arguments[i];
+            }
+        }
+        if (!cacheHandler.getScriptParser().isCanDelete(cacheDeleteKey, tmpArgs, retVal)) {
+            return Optional.empty();
+        }
+        return Optional.of(this.cacheHandler.getCacheKey(target, methodName, tmpArgs, keyExpression, hfieldExpression, retVal, true));
     }
 }

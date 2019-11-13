@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
@@ -146,6 +144,7 @@ public class AutoLoadHandler {
         if (null == autoLoadMap) {
             return null;
         }
+
         AutoLoadTO autoLoadTO = autoLoadMap.get(cacheKey);
         if (null != autoLoadTO) {
             return autoLoadTO;
@@ -183,6 +182,27 @@ public class AutoLoadHandler {
             }
         }
         return null;
+    }
+
+    /**
+     * 写入缓存并且设置上一次加载时间
+     * @param cache
+     * @param pjp
+     * @param cacheKey
+     * @param newCacheWrapper
+     * @param loadDataUseTime
+     * @param autoLoadTO
+     */
+    private void writeCacheAndSetLoadTime(Cache cache, CacheAopProxyChain pjp, CacheKeyTO cacheKey, CacheWrapper<Object> newCacheWrapper, long loadDataUseTime, AutoLoadTO autoLoadTO) {
+        try {
+            if (null != newCacheWrapper) {
+                cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
+                autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())
+                        .setExpire(newCacheWrapper.getExpire()).addUseTotalTime(loadDataUseTime);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     /**
@@ -252,7 +272,6 @@ public class AutoLoadHandler {
     }
 
     class AutoLoadRunnable implements Runnable {
-
         @Override
         public void run() {
             while (running) {
@@ -278,21 +297,22 @@ public class AutoLoadHandler {
             }
             Cache cache = autoLoadTO.getCache();
             long requestTimeout = cache.requestTimeout();
+            boolean alwaysCache = cache.alwaysCache();
             // 如果超过一定时间没有请求数据，则从队列中删除
-            if (requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * ONE_THOUSAND_MS) {
+            if (!alwaysCache && requestTimeout > 0 && (now - autoLoadTO.getLastRequestTime()) >= requestTimeout * ONE_THOUSAND_MS) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             // 如果效率比较高的请求，就没必要使用自动加载了。
-            if (autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < 10) {
+            if (!alwaysCache && autoLoadTO.getLoadCnt() > 100 && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad1()) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
             }
             // 对于使用频率很低的数据，也可以考虑不用自动加载
             long difFirstRequestTime = now - autoLoadTO.getFirstRequestTime();
             long oneHourSecs = 3600000L;
-            // 使用率比较低的数据，没有必要使用自动加载。
-            if (difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < ONE_THOUSAND_MS
+            // 如果是耗时不大，且使用率比较低的数据，没有必要使用自动加载。
+            if (!alwaysCache && difFirstRequestTime > oneHourSecs && autoLoadTO.getAverageUseTime() < config.getLoadUseTimeForAutoLoad2()
                     && (autoLoadTO.getRequestTimes() / (difFirstRequestTime / oneHourSecs)) < 60) {
                 autoLoadMap.remove(autoLoadTO.getCacheKey());
                 return;
@@ -302,7 +322,7 @@ public class AutoLoadHandler {
             }
             int expire = autoLoadTO.getExpire();
             // 如果过期时间太小了，就不允许自动加载，避免加载过于频繁，影响系统稳定性
-            if (expire < AUTO_LOAD_MIN_EXPIRE) {
+            if (!alwaysCache && expire < AUTO_LOAD_MIN_EXPIRE) {
                 return;
             }
             // 计算超时时间
@@ -369,20 +389,11 @@ public class AutoLoadHandler {
             if (isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租
                 if (null == newCacheWrapper && null != result) {
-                    int newExpire = AUTO_LOAD_MIN_EXPIRE + 60;
+                    int newExpire = !alwaysCache ? AUTO_LOAD_MIN_EXPIRE + 60 : cache.expire();
                     newCacheWrapper = new CacheWrapper<Object>(result.getCacheObject(), newExpire);
                 }
-                try {
-                    if (null != newCacheWrapper) {
-                        cacheHandler.writeCache(pjp, autoLoadTO.getArgs(), cache, cacheKey, newCacheWrapper);
-                        autoLoadTO.setLastLoadTime(newCacheWrapper.getLastLoadTime())
-                                .setExpire(newCacheWrapper.getExpire()).addUseTotalTime(loadDataUseTime);
-                    }
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+                writeCacheAndSetLoadTime(cache, pjp, cacheKey, newCacheWrapper, loadDataUseTime, autoLoadTO);
             }
         }
     }
-
 }
