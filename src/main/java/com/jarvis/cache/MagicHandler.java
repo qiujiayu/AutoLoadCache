@@ -11,17 +11,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * MagicHandler
@@ -162,7 +152,7 @@ public class MagicHandler {
         // 如果是无参函数，直接从数据源加载数据，并写入缓存
         if (parameterTypes.length == 0) {
             Object newValue = this.cacheHandler.getData(pjp, null);
-            writeMagicCache(newValue, null);
+            writeMagicCache(newValue);
             return newValue;
         }
         Map<CacheKeyTO, Object> keyArgMap = getCacheKeyForMagic();
@@ -182,7 +172,7 @@ public class MagicHandler {
         Object[] args = getUnmatchArg(keyArgMap, cacheValues, argSize);
         Object newValue = this.cacheHandler.getData(pjp, args);
         args[iterableArgIndex] = null;
-        Map<CacheKeyTO, MSetParam> unmatchCache = writeMagicCache(newValue, args);
+        Map<CacheKeyTO, MSetParam> unmatchCache = writeMagicCache(newValue, args, cacheValues, keyArgMap);
         return convertToReturnObject(cacheValues, newValue, unmatchCache);
     }
 
@@ -233,18 +223,18 @@ public class MagicHandler {
     }
 
     /**
-     * 写入缓存
+     * 没有参数的情况下，将所有从数据源加载的数据写入缓存
      *
-     * @param newValue
-     * @param args
+     * @param newValue 从数据源加载的数据
      * @return
      * @throws Exception
      */
-    private Map<CacheKeyTO, MSetParam> writeMagicCache(Object newValue, Object[] args) throws Exception {
+    private Map<CacheKeyTO, MSetParam> writeMagicCache(Object newValue) throws Exception {
         if (null == newValue) {
             return Collections.emptyMap();
         }
         Map<CacheKeyTO, MSetParam> unmatchCache;
+        Object[] args = null;
         if (newValue.getClass().isArray()) {
             Object[] newValues = (Object[]) newValue;
             unmatchCache = new HashMap<>(newValues.length);
@@ -268,10 +258,62 @@ public class MagicHandler {
         return unmatchCache;
     }
 
+    /**
+     * 参数的情况下，将所有从数据源加载的数据写入缓存
+     * @param newValue 从数据源加载的数据
+     * @param args 参数
+     * @param cacheValues 已经命中缓存数据
+     * @param keyArgMap 缓存Key与参数的映射
+     * @return 返回所有未命中缓存的数据
+     * @throws Exception
+     */
+    private Map<CacheKeyTO, MSetParam> writeMagicCache(Object newValue, Object[] args, Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Map<CacheKeyTO, Object> keyArgMap) throws Exception {
+        int cachedSize = null == cacheValues ? 0 : cacheValues.size();
+        Map<CacheKeyTO, MSetParam> unmatchCache = new HashMap<>(keyArgMap.size() - cachedSize);
+        if (null != newValue) {
+            if (newValue.getClass().isArray()) {
+                Object[] newValues = (Object[]) newValue;
+                for (Object value : newValues) {
+                    MSetParam mSetParam = genCacheWrapper(value, args);
+                    unmatchCache.put(mSetParam.getCacheKey(), mSetParam);
+                }
+            } else if (newValue instanceof Collection) {
+                Collection<Object> newValues = (Collection<Object>) newValue;
+                for (Object value : newValues) {
+                    MSetParam mSetParam = genCacheWrapper(value, args);
+                    unmatchCache.put(mSetParam.getCacheKey(), mSetParam);
+                }
+            } else {
+                throw new Exception("Magic模式返回值，只允许是数组或Collection类型的");
+            }
+        }
+        Set<CacheKeyTO> cacheKeySet = keyArgMap.keySet();
+        // 为了避免缓存穿透问题，将数据源和缓存中都不存数据的Key，设置为null
+        for (CacheKeyTO cacheKeyTO : cacheKeySet) {
+            if (unmatchCache.containsKey(cacheKeyTO)) {
+                continue;
+            }
+            if (null != cacheValues && cacheValues.containsKey(cacheKeyTO)) {
+                continue;
+            }
+            MSetParam mSetParam = genCacheWrapper(cacheKeyTO, null, args);
+            unmatchCache.put(mSetParam.getCacheKey(), mSetParam);
+        }
+        if (null != unmatchCache && unmatchCache.size() > 0) {
+            this.cacheHandler.mset(pjp.getMethod(), unmatchCache.values());
+        }
+        return unmatchCache;
+    }
+
     private MSetParam genCacheWrapper(Object value, Object[] args) throws Exception {
         String keyExpression = magic.key();
         String hfieldExpression = magic.hfield();
         CacheKeyTO cacheKeyTO = this.cacheHandler.getCacheKey(target, methodName, args, keyExpression, hfieldExpression, value, true);
+        int expire = this.cacheHandler.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), args, value);
+        return new MSetParam(cacheKeyTO, new CacheWrapper<>(value, expire));
+    }
+
+    private MSetParam genCacheWrapper(CacheKeyTO cacheKeyTO, Object value, Object[] args) throws Exception {
         int expire = this.cacheHandler.getScriptParser().getRealExpire(cache.expire(), cache.expireExpression(), args, value);
         return new MSetParam(cacheKeyTO, new CacheWrapper<>(value, expire));
     }
@@ -344,9 +386,12 @@ public class MagicHandler {
             String from = isCache ? "cache" : "datasource";
             String message = "the data for key:" + cacheKeyTO + " is from " + from;
             if (null != val) {
-                message += ", value is not null, expire :" + cacheWrapper.getExpire();
+                message += ", value is not null";
             } else {
                 message += ", value is null";
+            }
+            if (null != cacheWrapper) {
+                message += ", expire :" + cacheWrapper.getExpire();
             }
             log.debug(message);
         }
