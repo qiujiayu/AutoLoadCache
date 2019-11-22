@@ -259,17 +259,19 @@ public class MagicHandler {
     }
 
     /**
-     * 参数的情况下，将所有从数据源加载的数据写入缓存
-     * @param newValue 从数据源加载的数据
-     * @param args 参数
+     * 有参数的情况下，将所有从数据源加载的数据写入缓存
+     *
+     * @param newValue    从数据源加载的数据
+     * @param args        参数
      * @param cacheValues 已经命中缓存数据
-     * @param keyArgMap 缓存Key与参数的映射
+     * @param keyArgMap   缓存Key与参数的映射
      * @return 返回所有未命中缓存的数据
      * @throws Exception
      */
     private Map<CacheKeyTO, MSetParam> writeMagicCache(Object newValue, Object[] args, Map<CacheKeyTO, CacheWrapper<Object>> cacheValues, Map<CacheKeyTO, Object> keyArgMap) throws Exception {
         int cachedSize = null == cacheValues ? 0 : cacheValues.size();
-        Map<CacheKeyTO, MSetParam> unmatchCache = new HashMap<>(keyArgMap.size() - cachedSize);
+        int unmatchSize = keyArgMap.size() - cachedSize;
+        Map<CacheKeyTO, MSetParam> unmatchCache = new HashMap<>(unmatchSize);
         if (null != newValue) {
             if (newValue.getClass().isArray()) {
                 Object[] newValues = (Object[]) newValue;
@@ -287,17 +289,19 @@ public class MagicHandler {
                 throw new Exception("Magic模式返回值，只允许是数组或Collection类型的");
             }
         }
-        Set<CacheKeyTO> cacheKeySet = keyArgMap.keySet();
-        // 为了避免缓存穿透问题，将数据源和缓存中都不存数据的Key，设置为null
-        for (CacheKeyTO cacheKeyTO : cacheKeySet) {
-            if (unmatchCache.containsKey(cacheKeyTO)) {
-                continue;
+        if (unmatchCache.size() < unmatchSize) {
+            Set<CacheKeyTO> cacheKeySet = keyArgMap.keySet();
+            // 为了避免缓存穿透问题，将数据源和缓存中都不存数据的Key，设置为null
+            for (CacheKeyTO cacheKeyTO : cacheKeySet) {
+                if (unmatchCache.containsKey(cacheKeyTO)) {
+                    continue;
+                }
+                if (null != cacheValues && cacheValues.containsKey(cacheKeyTO)) {
+                    continue;
+                }
+                MSetParam mSetParam = genCacheWrapper(cacheKeyTO, null, args);
+                unmatchCache.put(mSetParam.getCacheKey(), mSetParam);
             }
-            if (null != cacheValues && cacheValues.containsKey(cacheKeyTO)) {
-                continue;
-            }
-            MSetParam mSetParam = genCacheWrapper(cacheKeyTO, null, args);
-            unmatchCache.put(mSetParam.getCacheKey(), mSetParam);
         }
         if (null != unmatchCache && unmatchCache.size() > 0) {
             this.cacheHandler.mset(pjp.getMethod(), unmatchCache.values());
