@@ -380,6 +380,7 @@ public class AutoLoadHandler {
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
             } finally {
+                // dataLoader 的数据必须在放回对象池之前获取
                 isFirst = dataLoader.isFirst();
                 if (config.isDataLoaderPooled()) {
                     DataLoaderFactory factory = DataLoaderFactory.getInstance();

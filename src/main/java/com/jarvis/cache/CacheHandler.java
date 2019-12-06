@@ -222,11 +222,12 @@ public class CacheHandler {
         boolean isFirst;
         try {
             newCacheWrapper = dataLoader.init(pjp, cacheKey, cache, this).loadData().getCacheWrapper();
-            isFirst = dataLoader.isFirst();
             loadDataUseTime = dataLoader.getLoadDataUseTime();
         } catch (Throwable e) {
             throw e;
         } finally {
+            // dataLoader 的数据必须在放回对象池之前获取
+            isFirst = dataLoader.isFirst();
             if (config.isDataLoaderPooled()) {
                 DataLoaderFactory factory = DataLoaderFactory.getInstance();
                 factory.returnObject(dataLoader);

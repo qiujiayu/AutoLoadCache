@@ -157,6 +157,7 @@ public class RefreshHandler {
             } catch (Throwable ex) {
                 log.error(ex.getMessage(), ex);
             } finally {
+                // dataLoader 的数据必须在放回对象池之前获取
                 isFirst = dataLoader.isFirst();
                 if(cacheHandler.getAutoLoadConfig().isDataLoaderPooled()) {
                     DataLoaderFactory factory = DataLoaderFactory.getInstance();
