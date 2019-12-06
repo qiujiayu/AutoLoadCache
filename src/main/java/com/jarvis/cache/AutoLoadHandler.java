@@ -376,11 +376,11 @@ public class AutoLoadHandler {
             try {
                 newCacheWrapper = dataLoader.init(pjp, autoLoadTO, cacheKey, cache, cacheHandler).loadData()
                         .getCacheWrapper();
-                isFirst = dataLoader.isFirst();
                 loadDataUseTime = dataLoader.getLoadDataUseTime();
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
             } finally {
+                isFirst = dataLoader.isFirst();
                 if (config.isDataLoaderPooled()) {
                     DataLoaderFactory factory = DataLoaderFactory.getInstance();
                     factory.returnObject(dataLoader);
