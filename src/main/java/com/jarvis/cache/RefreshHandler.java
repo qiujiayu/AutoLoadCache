@@ -142,8 +142,13 @@ public class RefreshHandler {
 
         @Override
         public void run() {
-            DataLoaderFactory factory = DataLoaderFactory.getInstance();
-            DataLoader dataLoader = factory.getDataLoader();
+            DataLoader dataLoader;
+            if(cacheHandler.getAutoLoadConfig().isDataLoaderPooled()) {
+                DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                dataLoader = factory.getDataLoader();
+            } else {
+                dataLoader = new DataLoader();
+            }
             CacheWrapper<Object> newCacheWrapper = null;
             boolean isFirst = false;
             try {
@@ -153,7 +158,10 @@ public class RefreshHandler {
             } catch (Throwable ex) {
                 log.error(ex.getMessage(), ex);
             } finally {
-                factory.returnObject(dataLoader);
+                if(cacheHandler.getAutoLoadConfig().isDataLoaderPooled()) {
+                    DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                    factory.returnObject(dataLoader);
+                }
             }
             if (isFirst) {
                 // 如果数据加载失败，则把旧数据进行续租

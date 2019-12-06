@@ -119,13 +119,9 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) {
         if (null == keys || keys.isEmpty()) {
             return null;
-        }
-        Type returnType = null;
-        if (null != method) {
-            returnType = method.getGenericReturnType();
         }
         try (IRedis redis = getRedis()) {
             return redis.mget(returnType, keys);
@@ -143,10 +139,10 @@ public abstract class AbstractRedisCacheManager implements ICacheManager {
         Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(keys.size());
         Iterator<CacheKeyTO> keysIt = keys.iterator();
         for (Object value : values) {
+            CacheKeyTO cacheKeyTO = keysIt.next();
             if (null == value) {
                 continue;
             }
-            CacheKeyTO cacheKeyTO = keysIt.next();
             if (!(value instanceof byte[])) {
                 log.warn("the data from redis is not byte[] but " + value.getClass().getName());
                 continue;

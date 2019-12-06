@@ -3,6 +3,7 @@ package com.jarvis.cache;
 import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.annotation.CacheDelete;
 import com.jarvis.cache.annotation.CacheDeleteKey;
+import com.jarvis.cache.annotation.CacheDeleteMagicKey;
 import com.jarvis.cache.annotation.CacheDeleteTransactional;
 import com.jarvis.cache.annotation.ExCache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
@@ -21,6 +22,7 @@ import com.jarvis.cache.type.CacheOpType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -86,15 +88,23 @@ public class CacheHandler {
      * @throws Throwable 异常
      */
     private Object writeOnly(CacheAopProxyChain pjp, Cache cache) throws Throwable {
-        DataLoaderFactory factory = DataLoaderFactory.getInstance();
-        DataLoader dataLoader = factory.getDataLoader();
+        DataLoader dataLoader;
+        if (config.isDataLoaderPooled()) {
+            DataLoaderFactory factory = DataLoaderFactory.getInstance();
+            dataLoader = factory.getDataLoader();
+        } else {
+            dataLoader = new DataLoader();
+        }
         CacheWrapper<Object> cacheWrapper;
         try {
             cacheWrapper = dataLoader.init(pjp, cache, this).getData().getCacheWrapper();
         } catch (Throwable e) {
             throw e;
         } finally {
-            factory.returnObject(dataLoader);
+            if (config.isDataLoaderPooled()) {
+                DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                factory.returnObject(dataLoader);
+            }
         }
         Object result = cacheWrapper.getCacheObject();
         Object[] arguments = pjp.getArgs();
@@ -200,8 +210,13 @@ public class CacheHandler {
             }
             return cacheWrapper.getCacheObject();
         }
-        DataLoaderFactory factory = DataLoaderFactory.getInstance();
-        DataLoader dataLoader = factory.getDataLoader();
+        DataLoader dataLoader;
+        if (config.isDataLoaderPooled()) {
+            DataLoaderFactory factory = DataLoaderFactory.getInstance();
+            dataLoader = factory.getDataLoader();
+        } else {
+            dataLoader = new DataLoader();
+        }
         CacheWrapper<Object> newCacheWrapper = null;
         long loadDataUseTime = 0L;
         boolean isFirst;
@@ -212,7 +227,10 @@ public class CacheHandler {
         } catch (Throwable e) {
             throw e;
         } finally {
-            factory.returnObject(dataLoader);
+            if (config.isDataLoaderPooled()) {
+                DataLoaderFactory factory = DataLoaderFactory.getInstance();
+                factory.returnObject(dataLoader);
+            }
         }
         if (isFirst) {
             AutoLoadTO autoLoadTO = autoLoadHandler.putIfAbsent(cacheKey, pjp, cache, newCacheWrapper);
@@ -241,9 +259,8 @@ public class CacheHandler {
     public void deleteCache(DeleteCacheAopProxyChain jp, CacheDelete cacheDelete, Object retVal) throws Throwable {
         Object[] arguments = jp.getArgs();
         CacheDeleteKey[] keys = cacheDelete.value();
-        if (null == keys || keys.length == 0) {
-            return;
-        }
+        CacheDeleteMagicKey[] magicKeys = cacheDelete.magic();
+
         Object target = jp.getTarget();
         String methodName = jp.getMethod().getName();
         try {
@@ -252,24 +269,47 @@ public class CacheHandler {
             if (!isOnTransactional) {
                 keySet = new HashSet<>(keys.length);
             }
-            for (int i = 0; i < keys.length; i++) {
-                CacheDeleteKey keyConfig = keys[i];
-                String[] tempKeys = keyConfig.value();
-                String tempHfield = keyConfig.hfield();
-                if (!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
-                    continue;
+            if (null != magicKeys && magicKeys.length > 0) {
+                DeleteCacheMagicHandler magicHandler = new DeleteCacheMagicHandler(this, jp, magicKeys, retVal);
+                List<List<CacheKeyTO>> lists = magicHandler.getCacheKeyForMagic();
+                if (null != lists && !lists.isEmpty()) {
+                    for (List<CacheKeyTO> list : lists) {
+                        for (CacheKeyTO key : list) {
+                            if (null == key) {
+                                continue;
+                            }
+                            if (isOnTransactional) {
+                                CacheHelper.addDeleteCacheKey(key);
+                            } else {
+                                keySet.add(key);
+                            }
+                            this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
+                        }
+                    }
                 }
-                for (String tempKey : tempKeys) {
-                    CacheKeyTO key = getCacheKey(target, methodName, arguments, tempKey, tempHfield, retVal, true);
-                    if (null == key) {
+            }
+            if (null != keys && keys.length > 0) {
+                for (int i = 0; i < keys.length; i++) {
+                    CacheDeleteKey keyConfig = keys[i];
+                    if (!scriptParser.isCanDelete(keyConfig, arguments, retVal)) {
                         continue;
                     }
-                    if (isOnTransactional) {
-                        CacheHelper.addDeleteCacheKey(key);
-                    } else {
-                        keySet.add(key);
+                    String[] tempKeys = keyConfig.value();
+                    String tempHfield = keyConfig.hfield();
+
+                    for (String tempKey : tempKeys) {
+                        CacheKeyTO key = getCacheKey(target, methodName, arguments, tempKey, tempHfield, retVal, true);
+                        if (null == key) {
+                            continue;
+                        }
+                        if (isOnTransactional) {
+                            CacheHelper.addDeleteCacheKey(key);
+                        } else {
+                            keySet.add(key);
+                        }
+                        this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
                     }
-                    this.getAutoLoadHandler().resetAutoLoadLastLoadTime(key);
+
                 }
             }
             this.delete(keySet);
@@ -354,7 +394,9 @@ public class CacheHandler {
             long useTime = System.currentTimeMillis() - startTime;
             if (config.isPrintSlowLog() && useTime >= config.getSlowLoadTime()) {
                 String className = pjp.getTarget().getClass().getName();
-                log.error("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
+                if (log.isWarnEnabled()) {
+                    log.warn("{}.{}, use time:{}ms", className, pjp.getMethod().getName(), useTime);
+                }
             }
             return result;
         } catch (Throwable e) {
@@ -433,6 +475,7 @@ public class CacheHandler {
      * @param keyExpression    key表达式
      * @param hfieldExpression hfield表达式
      * @param result           执行实际方法的返回值
+     * @param hasRetVal        是否有返回值
      * @return CacheKeyTO
      */
     public CacheKeyTO getCacheKey(Object target, String methodName, Object[] arguments, String keyExpression,
@@ -555,8 +598,8 @@ public class CacheHandler {
         }
     }
 
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(Method method, Set<CacheKeyTO> keySet) throws CacheCenterConnectionException {
-        return cacheManager.mget(method, keySet);
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(Method method, final Type returnType, Set<CacheKeyTO> keySet) throws CacheCenterConnectionException {
+        return cacheManager.mget(method, returnType, keySet);
     }
 
     public void mset(final Method method, final Collection<MSetParam> params) throws CacheCenterConnectionException {
@@ -568,6 +611,9 @@ public class CacheHandler {
     }
 
     public void delete(Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        if (null == keys || keys.isEmpty()) {
+            return;
+        }
         cacheManager.delete(keys);
         if (null != changeListener) {
             changeListener.delete(keys);

@@ -9,6 +9,7 @@ import com.jarvis.cache.to.LocalCacheWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -125,8 +126,8 @@ public class ComboCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
-        return remoteCache.mget(method, keys);
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+        return remoteCache.mget(method, returnType, keys);
     }
 
     @Override

@@ -28,26 +28,10 @@ public class JavaScriptParser extends AbstractScriptParser {
 
     private static int versionCode;
 
-    /**
-     * 如果使用的是JDK大于1.8版本的，则用 nashorn，否则用javascript
-     */
     private final ScriptEngine engine;
 
-    static {
-        String javaVersion = System.getProperty("java.version");
-        int ind = 0;
-        int cnt = 2;
-        for (int i = 0; i < cnt; i++) {
-            ind = javaVersion.indexOf(".", ind);
-            ind++;
-        }
-        javaVersion = javaVersion.substring(0, ind);
-        javaVersion = javaVersion.replaceAll("\\.", "");
-        versionCode = Integer.parseInt(javaVersion);
-    }
-
     public JavaScriptParser() {
-        engine = manager.getEngineByName(versionCode >= 18 ? "nashorn" : "javascript");
+        engine = manager.getEngineByName("javascript");
         try {
             addFunction(HASH, CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class}));
             addFunction(EMPTY, CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class}));

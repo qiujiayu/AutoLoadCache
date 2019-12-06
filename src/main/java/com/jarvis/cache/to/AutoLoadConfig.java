@@ -1,6 +1,8 @@
 package com.jarvis.cache.to;
 
+import com.jarvis.cache.DataLoaderFactory;
 import com.jarvis.cache.type.AutoLoadQueueSortType;
+import lombok.Data;
 import lombok.ToString;
 
 import java.util.Map;
@@ -10,7 +12,7 @@ import java.util.Map;
  *
  * @author jiayu.qiu
  */
-@ToString
+@Data
 public class AutoLoadConfig {
 
     /**
@@ -55,6 +57,16 @@ public class AutoLoadConfig {
     private int autoLoadPeriod = 50;
 
     /**
+     *
+     */
+    private int loadUseTimeForAutoLoad1 = 10;
+
+    /**
+     *
+     */
+    private int loadUseTimeForAutoLoad2 = 200;
+
+    /**
      * 异步刷新缓存线程池的 corePoolSize
      */
     private int refreshThreadPoolSize = 2;
@@ -67,7 +79,7 @@ public class AutoLoadConfig {
     /**
      * 异步刷新缓存线程池的 keepAliveTime
      */
-    private int refreshThreadPoolkeepAliveTime = 20;// 单位：分钟
+    private int refreshThreadPoolkeepAliveTime = 20;
 
     /**
      * 异步刷新缓存队列容量
@@ -85,6 +97,11 @@ public class AutoLoadConfig {
      * Processing Map的初始大小
      */
     private int processingMapSize = 512;
+
+    /**
+     * 是否启用DataLoader对象池
+     */
+    private boolean dataLoaderPooled = true;
 
     public String getNamespace() {
         return namespace;

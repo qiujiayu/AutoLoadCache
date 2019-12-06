@@ -2,6 +2,7 @@ package com.jarvis.cache.serializer;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.jarvis.cache.MagicHandler;
 import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
@@ -58,7 +59,6 @@ public class FastjsonSerializer implements ISerializer<Object> {
             type = ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null);
             TYPE_CACHE.put(returnType, type);
         }
-
         String json = new String(bytes, charset);
         return JSON.parseObject(json, type);
     }

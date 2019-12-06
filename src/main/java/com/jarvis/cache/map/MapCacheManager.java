@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -218,7 +219,7 @@ public class MapCacheManager implements ICacheManager {
     }
 
     @Override
-    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
+    public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
         if (null == keys || keys.isEmpty()) {
             return null;
         }

@@ -21,7 +21,8 @@ public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
         config.setMaxTotal(1024);
         config.setMaxIdle(50);
         config.setMinIdle(8);
-        config.setBlockWhenExhausted(false);// 当Pool中没有对象时不等待，而是直接new个新的
+        // 当Pool中没有对象时不等待，而是直接new个新的
+        config.setBlockWhenExhausted(false);
 
         AbandonedConfig abandonConfig = new AbandonedConfig();
         abandonConfig.setRemoveAbandonedTimeout(300);
