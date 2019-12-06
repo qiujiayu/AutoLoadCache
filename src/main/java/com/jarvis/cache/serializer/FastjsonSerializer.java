@@ -81,7 +81,8 @@ public class FastjsonSerializer implements ISerializer<Object> {
             cal.setTimeInMillis(((Calendar) obj).getTime().getTime());
             return cal;
         }
-        if (null != type) {
+        // List/Map在编译时类型会被擦除，导致List<Object>反序列化后变为List<JSONObject>
+        if (null != type && !(obj instanceof Collection) && !(obj instanceof Map)) {
             String json = JSON.toJSONString(obj, FEATURES);
             return JSON.parseObject(json, type);
         }
