@@ -70,7 +70,7 @@ public class DeepCloneTest {
             System.out.println("type2 is not ParameterizedType");
         }
         // test1();
-        // fastJsonTest();
+         fastJsonTest();
         deepClone(new JdkSerializer());
         deepClone(new HessianSerializer());
         deepClone(new FastjsonSerializer());
@@ -141,6 +141,19 @@ public class DeepCloneTest {
                 Object val=enty.getValue();
                 System.out.println(key.getClass().getName() + "--->" + key);
                 System.out.println(val.getClass().getName() + "--->" + val);
+            }
+        } catch(Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        System.out.println("--------------List------------------");
+        try {
+            List<User> userList = (List<User>) s.deepClone(list, List.class);
+            Iterator<User> it=userList.iterator();
+            System.out.println(userList.getClass().getName() + "--->" + userList);
+            while(it.hasNext()) {
+                User userObject=it.next();
+                System.out.println(userObject.getClass().getName() + "--->" + userObject);
             }
         } catch(Exception e) {
             // TODO Auto-generated catch block

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.qiujiayu</groupId>
   <artifactId>autoload-cache</artifactId>
-  <version>7.0.5</version>
+  <version>7.0.7</version>
   <packaging>jar</packaging>
   <name>AutoLoadCache</name>
   <description>Use AOP and Annotation manage cache.</description>
@@ -40,7 +40,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.18</version>
+      <version>1.19</version>
       <optional>true</optional>
     </dependency>
     <dependency>

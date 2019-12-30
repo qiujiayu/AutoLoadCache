@@ -154,10 +154,11 @@ public class RefreshHandler {
             try {
                 newCacheWrapper = dataLoader.init(pjp, cacheKey, cache, cacheHandler, arguments).loadData()
                         .getCacheWrapper();
-                isFirst = dataLoader.isFirst();
             } catch (Throwable ex) {
                 log.error(ex.getMessage(), ex);
             } finally {
+                // dataLoader 的数据必须在放回对象池之前获取
+                isFirst = dataLoader.isFirst();
                 if(cacheHandler.getAutoLoadConfig().isDataLoaderPooled()) {
                     DataLoaderFactory factory = DataLoaderFactory.getInstance();
                     factory.returnObject(dataLoader);
