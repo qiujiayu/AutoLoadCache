@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -32,7 +33,7 @@ public class FastjsonSerializer implements ISerializer<Object> {
     private static final Map<Type, ParameterizedTypeImpl> TYPE_CACHE = new ConcurrentHashMap<>(1024);
 
     public FastjsonSerializer() {
-        this(Charset.forName("UTF8"));
+        this(StandardCharsets.UTF_8);
     }
 
     public FastjsonSerializer(Charset charset) {

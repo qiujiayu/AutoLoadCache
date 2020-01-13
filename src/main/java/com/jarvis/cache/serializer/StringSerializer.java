@@ -3,6 +3,7 @@ package com.jarvis.cache.serializer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Simple String to byte[] (and back) serializer. Converts Strings into bytes
@@ -22,7 +23,7 @@ public class StringSerializer implements ISerializer<String> {
     private final Charset charset;
 
     public StringSerializer() {
-        this(Charset.forName("UTF8"));
+        this(StandardCharsets.UTF_8);
     }
 
     public StringSerializer(Charset charset) {
