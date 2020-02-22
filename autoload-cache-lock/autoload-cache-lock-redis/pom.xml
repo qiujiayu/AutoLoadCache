@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>autoload-cache-lock</artifactId>
+        <groupId>com.github.qiujiayu</groupId>
+        <version>7.0.8</version>
+    </parent>
+    <groupId>com.github.qiujiayu</groupId>
+    <artifactId>autoload-cache-lock-redis</artifactId>
+    <name>${project.artifactId}</name>
+    <packaging>jar</packaging>
+    <version>7.0.8</version>
+    <modelVersion>4.0.0</modelVersion>
+    <dependencies>
+        <dependency>
+            <groupId>com.github.qiujiayu</groupId>
+            <artifactId>autoload-cache-lock-api</artifactId>
+            <version>7.0.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+    </dependencies>
+</project>

@@ -1,0 +1,24 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.qiujiayu</groupId>
+        <artifactId>autoload-cache-parent</artifactId>
+        <version>7.0.8</version>
+    </parent>
+    <groupId>com.github.qiujiayu</groupId>
+    <artifactId>autoload-cache-manager</artifactId>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <description>The cache manager module of autoload-cache project</description>
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
+    <modules>
+        <module>autoload-cache-manager-api</module>
+        <module>autoload-cache-manager-redis</module>
+        <module>autoload-cache-manager-jedis</module>
+        <module>autoload-cache-manager-lettuce</module>
+        <module>autoload-cache-manager-map</module>
+        <module>autoload-cache-manager-memcache</module>
+    </modules>
+</project>
