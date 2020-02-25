@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.github.qiujiayu</groupId>
         <artifactId>autoload-cache-parent</artifactId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-aop</artifactId>
@@ -14,7 +14,6 @@
         <skip_maven_deploy>false</skip_maven_deploy>
     </properties>
     <modules>
-        <module>autoload-cache-aop-api</module>
         <module>autoload-cache-aop-aspectj</module>
     </modules>
 </project>

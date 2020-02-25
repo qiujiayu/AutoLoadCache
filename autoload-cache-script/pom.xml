@@ -3,13 +3,13 @@
     <parent>
         <groupId>com.github.qiujiayu</groupId>
         <artifactId>autoload-cache-parent</artifactId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-script</artifactId>
     <packaging>pom</packaging>
     <name>${project.artifactId}</name>
-    <description>The lock module of autoload-cache project</description>
+    <description>The script module of autoload-cache project</description>
     <properties>
         <skip_maven_deploy>false</skip_maven_deploy>
     </properties>

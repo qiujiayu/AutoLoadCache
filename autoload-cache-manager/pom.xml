@@ -3,7 +3,7 @@
     <parent>
         <groupId>com.github.qiujiayu</groupId>
         <artifactId>autoload-cache-parent</artifactId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-manager</artifactId>

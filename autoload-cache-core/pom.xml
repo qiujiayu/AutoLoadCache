@@ -5,38 +5,41 @@
     <parent>
         <groupId>com.github.qiujiayu</groupId>
         <artifactId>autoload-cache-parent</artifactId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-core</artifactId>
     <name>${project.artifactId}</name>
     <packaging>jar</packaging>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-common</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-lock-api</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-manager-api</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-script-api</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-serializer-api</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

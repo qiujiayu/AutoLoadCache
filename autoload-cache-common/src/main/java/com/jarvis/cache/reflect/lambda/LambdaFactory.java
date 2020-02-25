@@ -50,7 +50,7 @@ public class LambdaFactory {
 	 * @param method A Method object which defines what to invoke.
 	 * @return A dynamically generated class that implements the Lambda interface and the a method that corresponds to the Method. 
 	 * The implementation offers invocation speed similar to that of a direct method invocation.
-	 * @throws Throwable
+	 * @throws Throwable Throwable
 	 */
 	public static Lambda create(Method method) throws Throwable {
 	 return privateCreate(method, false);
@@ -62,6 +62,7 @@ public class LambdaFactory {
 	  * <br>Let class A implement a method called 'someMethod'. And let class B extend A and override 'someMethod'.
 	  * <br>Then, calling {@link #createSpecial(Method)} with a Method object referring to A.someMethod, will return a Lambda 
 	  * that calls A.someMethod, even when invoked with B as the instance.
+	  * @throws Throwable Throwable
 	  */
 	public static Lambda createSpecial(Method method) throws Throwable {
 		return privateCreate(method, true);
@@ -85,7 +86,7 @@ public class LambdaFactory {
 	 * @param lookup A Lookup describing the access rights of the generated Lambda. Create a Lookup like this: MethodHandles.lookup().
 	 * @return A dynamically generated class that implements the Lambda interface and the a method that corresponds to the Method. 
 	 * The implementation offers invocation speed similar to that of a direct method invocation.
-	 * @throws Throwable
+	 * @throws Throwable Throwable
 	 */
 	public static Lambda create(Method method, MethodHandles.Lookup lookup) throws Throwable {
 		return create(method, lookup, false);
@@ -94,6 +95,9 @@ public class LambdaFactory {
 	/**
 	 * Same as {@link #create(Method, MethodHandles.Lookup)} except that this method returns a Lambda that will <em>not</em> be subject to dynamic method dispatch.
 	 * See {@link #createSpecial(Method)}
+	 * @param method
+	 * @param lookup
+	 * @throws Throwable Throwable
 	 */
 	public static Lambda createSpecial(Method method, MethodHandles.Lookup lookup) throws Throwable {
 		return create(method, lookup, true);
@@ -119,7 +123,7 @@ public class LambdaFactory {
 	 * @param interfaceClass The interface, which the dynamically generated class shall implement.
 	 * @param signatatureName The name of an abstract method from the interface, which the dynamically create class shall implement.
 	 * @return A dynamically generated implementation of the argument provided interface. The implementation offers invocation speed similar to that of a direct method invocation.
-	 * @throws Throwable
+	 * @throws Throwable Throwable
 	 */
 	public static <T> T create(Method method, Class<T> interfaceClass, String signatatureName) throws Throwable {
 		return create(method, interfaceClass, signatatureName, false);

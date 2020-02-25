@@ -5,19 +5,21 @@
     <parent>
         <artifactId>autoload-cache-serializer</artifactId>
         <groupId>com.github.qiujiayu</groupId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-serializer-fastjson</artifactId>
     <name>${project.artifactId}</name>
     <packaging>jar</packaging>
-    <version>7.0.8</version>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.github.qiujiayu</groupId>
             <artifactId>autoload-cache-serializer-api</artifactId>
-            <version>7.0.8</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>

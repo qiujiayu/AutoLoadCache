@@ -5,14 +5,16 @@
     <parent>
         <artifactId>autoload-cache-lock</artifactId>
         <groupId>com.github.qiujiayu</groupId>
-        <version>7.0.8</version>
+        <version>${revision}</version>
     </parent>
     <groupId>com.github.qiujiayu</groupId>
     <artifactId>autoload-cache-lock-api</artifactId>
     <name>${project.artifactId}</name>
     <packaging>jar</packaging>
-    <version>7.0.8</version>
     <modelVersion>4.0.0</modelVersion>
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
     <dependencies>
     </dependencies>
 </project>
