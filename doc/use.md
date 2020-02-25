@@ -49,7 +49,7 @@
 * [Redis 配置](JRedis.md)
 * [Memcache 配置](Memcache.md)
 * [ConcurrentHashMap 配置](ConcurrentHashMap.md)
-* [二级缓存请参考ComboCacheManager.java](../src/main/java/com/jarvis/cache/ComboCacheManager.java)
+* [二级缓存请参考ComboCacheManager.java](../autoload-cache-core/src/main/java/com/jarvis/cache/ComboCacheManager.java)
 
 ### 6.缓存处理器
 

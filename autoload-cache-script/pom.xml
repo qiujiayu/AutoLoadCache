@@ -1,0 +1,22 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.qiujiayu</groupId>
+        <artifactId>autoload-cache-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <groupId>com.github.qiujiayu</groupId>
+    <artifactId>autoload-cache-script</artifactId>
+    <packaging>pom</packaging>
+    <name>${project.artifactId}</name>
+    <description>The script module of autoload-cache project</description>
+    <properties>
+        <skip_maven_deploy>false</skip_maven_deploy>
+    </properties>
+    <modules>
+        <module>autoload-cache-script-api</module>
+        <module>autoload-cache-script-js</module>
+        <module>autoload-cache-script-ognl</module>
+        <module>autoload-cache-script-springel</module>
+    </modules>
+</project>
