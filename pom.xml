@@ -13,7 +13,7 @@
   <description>Use AOP and Annotation manage cache.</description>
   <url>https://github.com/qiujiayu/AutoLoadCache</url>
   <properties>
-    <revision>7.1.0</revision>
+    <revision>7.1.1</revision>
     <java_source_version>1.8</java_source_version>
     <java_target_version>1.8</java_target_version>
     <file_encoding>UTF-8</file_encoding>
@@ -31,6 +31,7 @@
     <module>autoload-cache-manager</module>
     <module>autoload-cache-script</module>
     <module>autoload-cache-serializer</module>
+    <module>autoload-cache-spring-boot-starter</module>
   </modules>
 
   <licenses>
@@ -118,7 +119,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.10.2</version>
+        <version>2.9.7</version>
       </dependency>
       <dependency>
         <groupId>cglib</groupId>
