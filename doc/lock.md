@@ -10,12 +10,6 @@
 2. 需要往 [CacheHandler](../autoload-cache-core/src/main/java/com/jarvis/cache/CacheHandler.java "CacheHandler") 中的lock 属性注入ILock实例。 框架中已经内部已经基于Redis实现了一些分布式锁：
 
   * ILock 
-<<<<<<< HEAD
-      * |-----[AbstractRedisLock](../src/main/java/com/jarvis/cache/lock/AbstractRedisLock.java "AbstractRedisLock")
-          * |-----[JedisClusterLock](../src/main/java/com/jarvis/cache/lock/JedisClusterLock.java "JedisClusterLock")
-          * |-----[ShardedJedisLock](../src/main/java/com/jarvis/cache/lock/ShardedJedisLock.java "ShardedJedisLock")
-=======
       * |-----[AbstractRedisLock](../autoload-cache-lock/autoload-cache-lock-redis/src/main/java/com/jarvis/cache/lock/AbstractRedisLock.java "AbstractRedisLock")
           * |-----[JedisClusterLock](../autoload-cache-lock/autoload-cache-lock-jedis/src/main/java/com/jarvis/cache/lock/JedisClusterLock.java "JedisClusterLock")
           * |-----[ShardedJedisLock](../autoload-cache-lock/autoload-cache-lock-jedis/src/main/java/com/jarvis/cache/lock/ShardedJedisLock.java "ShardedJedisLock")
->>>>>>> modules

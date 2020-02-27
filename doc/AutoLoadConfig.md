@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-## [AutoLoadConfig](../src/main/java/com/jarvis/cache/to/AutoLoadConfig.java "AutoLoadConfig") 配置
-=======
 ## [AutoLoadConfig](../autoload-cache-common/src/main/java/com/jarvis/cache/to/AutoLoadConfig.java "AutoLoadConfig") 配置
->>>>>>> modules
+
 
 ```xml
 <bean id="autoLoadConfig" class="com.jarvis.cache.to.AutoLoadConfig">
