@@ -1,0 +1,22 @@
+/target
+.settings
+.classpath
+.project
+.idea
+*.iml
+*.class
+.factorypath
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+/.apt_generated/
+.springBeans
+*.DS_Store

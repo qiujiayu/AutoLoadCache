@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jarvis.cache.demo.mapper.UserMapper">
+
+  <resultMap id="UserResultMap" type="com.jarvis.cache.demo.entity.UserDO">
+    <id column="id" property="id" />
+    <result column="name" property="name" />
+    <result column="password" property="password" />
+    <result column="status" property="status" />
+  </resultMap>
+  
+  <sql id="columns">
+    id, name, password, status
+  </sql>
+  
+  <select id="getUserById" parameterType="java.lang.Long" resultMap="UserResultMap">
+    select
+    <include refid="columns" />
+    from user
+    where id = #{id}
+  </select>
+  
+  <select id="allUsers" resultMap="UserResultMap">
+     select
+     <include refid="columns" />
+     from user
+  </select>
+  
+  <select id="listByCondition" parameterType="com.jarvis.cache.demo.condition.UserCondition" resultMap="UserResultMap">
+    select
+    <include refid="columns" />
+    from user
+    <where>
+      <if test="id != null"> and id = #{id}</if>
+      <if test="name != null and name != ''"> and name like concat('%', #{name}, '%') </if>
+      <if test="password != null and password != ''"> and password = #{password} </if>
+      <if test="status != null"> and status = #{status}</if>
+    </where>
+    order by id desc
+    limit #{pageable.pageSize} offset #{pageable.offset}
+  </select>
+  
+  <select id="getUserIdByName" parameterType="java.lang.String" resultType="java.lang.Long">
+    select id from user
+    where name = #{name}
+  </select>
+  
+  <select id="listIdsByCondition" parameterType="com.jarvis.cache.demo.condition.UserCondition" resultType="java.lang.Long">
+    select id  from user
+    <where>
+      <if test="id != null"> and id = #{id}</if>
+      <if test="name != null and name != ''"> and name like concat('%', #{name}, '%') </if>
+      <if test="password != null and password != ''"> and password = #{password} </if>
+      <if test="status != null"> and status = #{status}</if>
+    </where>
+    order by id desc
+    limit #{pageable.pageSize} offset #{pageable.offset}
+  </select>
+
+  <select id="listByIds" resultMap="UserResultMap">
+    select
+    <include refid="columns" />
+    from user
+    where
+    <foreach collection="ids"  item="id" separator=" or ">
+      id = #{id}
+    </foreach>
+  </select>
+
+  <select id="listByIds2" resultMap="UserResultMap">
+    select
+    <include refid="columns" />
+    from user
+    where
+    <foreach collection="ids"  item="id" separator=" or ">
+      id = #{id}
+    </foreach>
+  </select>
+
+  <insert id="addUser" parameterType="com.jarvis.cache.demo.entity.UserDO" useGeneratedKeys="true" keyProperty="id">
+    insert into user(name, password, status) 
+    values(#{name}, #{password}, 1)
+  </insert>
+  
+  <update id="updateUser" parameterType="com.jarvis.cache.demo.entity.UserDO">
+    update user 
+    <set>
+      <if test="password != null and password != ''"> password = #{password}, </if>
+      <if test="status != null"> status = #{status},</if>
+    </set>
+    where id = #{id}
+  </update>
+  
+  <update id="deleteUserById" parameterType="java.lang.Long">
+    update user set status = 0 where id = #{id}
+  </update>
+
+  <update id="deleteUserByIds">
+    update user set status = 0 where
+    <foreach collection="ids"  item="id" separator=" or ">
+      id = #{id}
+    </foreach>
+  </update>
+</mapper>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/base.xml" />
+  <logger name="org.springframework.web" level="ERROR" />
+  <logger name="org.springboot.sample" level="ERROR" />
+  <logger name="com.jarvis" level="TRACE" />
+</configuration>
