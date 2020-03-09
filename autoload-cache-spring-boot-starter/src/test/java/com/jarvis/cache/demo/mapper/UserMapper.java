@@ -16,7 +16,7 @@ import org.apache.ibatis.annotations.Param;
  * 在接口中使用注解的例子 业务背景：用户表中有id, name, password,
  * status字段，name字段是登录名。并且注册成功后，用户名不允许被修改。
  * 
- * @author jiayu.qiu
+ *
  */
 public interface UserMapper {// extends BaseMapper<UserDO, Long>
     String CACHE_NAME = "user2";

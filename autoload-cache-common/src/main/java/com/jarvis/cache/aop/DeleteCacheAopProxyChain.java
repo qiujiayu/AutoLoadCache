@@ -3,7 +3,7 @@ package com.jarvis.cache.aop;
 import java.lang.reflect.Method;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public interface DeleteCacheAopProxyChain {
 

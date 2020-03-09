@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * 比如：User id 为1的数据，缓存key为：user_1；<br>
  * 分隔参数后，批量去缓存中数据，没有命中的再批量到数据源获取数据;<br>
  *
- * @author jiayu.qiu
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

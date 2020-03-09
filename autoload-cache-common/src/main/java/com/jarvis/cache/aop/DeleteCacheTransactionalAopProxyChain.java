@@ -1,7 +1,7 @@
 package com.jarvis.cache.aop;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public interface DeleteCacheTransactionalAopProxyChain {
 

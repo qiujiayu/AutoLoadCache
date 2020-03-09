@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class WeakReferenceDeserializer extends AbstractMapDeserializer {
 

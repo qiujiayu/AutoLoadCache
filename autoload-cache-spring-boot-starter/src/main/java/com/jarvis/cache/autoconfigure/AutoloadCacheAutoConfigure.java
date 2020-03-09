@@ -42,7 +42,7 @@ import com.jarvis.cache.serializer.ISerializer;
  * AutoloadCacheManageConfiguration}的配置<br>
  * 然后执行此类中的AOP相关的配置<br>
  * 
- * @author jiayu.qiu
+ *
  */
 @Configuration
 @ConditionalOnClass(name = "com.jarvis.cache.CacheHandler")

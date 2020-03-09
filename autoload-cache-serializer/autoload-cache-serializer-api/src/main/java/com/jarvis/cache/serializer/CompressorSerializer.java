@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 /**
  * memcache缓存管理
  *
- * @author: jiayu.qiu
+ *
  */
 public class CompressorSerializer implements ISerializer<Object> {
 

@@ -4,7 +4,7 @@ import com.jarvis.cache.aop.DeleteCacheTransactionalAopProxyChain;
 import org.aspectj.lang.ProceedingJoinPoint;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class AspectjDeleteCacheTransactionalAopProxyChain implements DeleteCacheTransactionalAopProxyChain {
 

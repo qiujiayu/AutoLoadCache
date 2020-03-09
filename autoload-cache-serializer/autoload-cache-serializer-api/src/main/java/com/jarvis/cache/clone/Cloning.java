@@ -10,7 +10,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class Cloning implements ICloner {
 

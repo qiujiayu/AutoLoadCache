@@ -8,7 +8,7 @@ import com.caucho.hessian.io.Serializer;
 import java.lang.ref.WeakReference;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class WeakReferenceSerializerFactory extends AbstractSerializerFactory {
 

@@ -26,7 +26,7 @@ import java.util.Queue;
  * 该类非线程安全
  * <p>
  *
- * @author jiayu.qiu
+ *
  */
 @Getter
 @Slf4j

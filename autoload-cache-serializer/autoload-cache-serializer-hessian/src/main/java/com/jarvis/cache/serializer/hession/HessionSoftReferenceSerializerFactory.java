@@ -8,7 +8,7 @@ import com.caucho.hessian.io.Serializer;
 import java.lang.ref.SoftReference;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class HessionSoftReferenceSerializerFactory extends AbstractSerializerFactory {
 

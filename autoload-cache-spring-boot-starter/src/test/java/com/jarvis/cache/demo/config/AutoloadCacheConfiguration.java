@@ -14,7 +14,7 @@ import com.jarvis.cache.map.MapCacheManager;
 /**
  * 为了方便测试，使用Map缓存
  * 
- * @author: jiayu.qiu
+ *
  */
 @Configuration
 public class AutoloadCacheConfiguration {

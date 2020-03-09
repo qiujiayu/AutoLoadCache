@@ -15,7 +15,7 @@ import java.util.concurrent.*;
 /**
  * 用于处理自动加载缓存，sortThread 从autoLoadMap中取出数据，然后通知threads进行处理。
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public class AutoLoadHandler {

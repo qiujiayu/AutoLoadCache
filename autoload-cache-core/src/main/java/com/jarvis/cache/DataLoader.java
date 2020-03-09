@@ -16,7 +16,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 /**
  * 数据加载器
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public class DataLoader {

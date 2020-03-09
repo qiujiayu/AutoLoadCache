@@ -5,7 +5,7 @@ import com.jarvis.cache.to.CacheWrapper;
 import lombok.Data;
 
 /**
- * @author jiayu.qiu
+ *
  */
 @Data
 public class MSetParam {

@@ -16,7 +16,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
  * 对分布式锁进行一些默认配置<br>
  * 如果需要自定义，需要自行覆盖即可
  *
- * @author: jiayu.qiu
+ *
  */
 @Configuration
 @AutoConfigureAfter({AutoloadCacheManageConfiguration.class})

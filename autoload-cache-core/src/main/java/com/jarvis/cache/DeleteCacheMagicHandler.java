@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * Magic模式
  *
- * @author jiayu.qiu
+ *
  */
 public class DeleteCacheMagicHandler {
     private final CacheHandler cacheHandler;

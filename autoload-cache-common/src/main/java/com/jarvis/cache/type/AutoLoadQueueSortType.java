@@ -7,7 +7,7 @@ import com.jarvis.cache.to.AutoLoadTO;
 import java.util.Comparator;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public enum AutoLoadQueueSortType {
     /**

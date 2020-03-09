@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 /**
  * 表达式处理
  *
- * @author jiayu.qiu
+ *
  */
 public abstract class AbstractScriptParser {
 

@@ -40,7 +40,7 @@ import java.lang.reflect.Field;
  * 对autoload-cache进行一些默认配置<br>
  * 如果需要自定义，需要自行覆盖即可
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 @Configuration

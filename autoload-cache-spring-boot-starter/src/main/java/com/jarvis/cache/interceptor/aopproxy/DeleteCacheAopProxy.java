@@ -7,7 +7,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import com.jarvis.cache.aop.DeleteCacheAopProxyChain;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class DeleteCacheAopProxy implements DeleteCacheAopProxyChain {
 

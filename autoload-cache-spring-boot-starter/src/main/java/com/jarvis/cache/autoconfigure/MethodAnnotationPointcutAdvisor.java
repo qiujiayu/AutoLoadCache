@@ -10,7 +10,7 @@ import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
 /**
  * PointcutAdvisor
  * 
- * @author jiayu.qiu
+ *
  */
 public class MethodAnnotationPointcutAdvisor extends AbstractPointcutAdvisor {
 

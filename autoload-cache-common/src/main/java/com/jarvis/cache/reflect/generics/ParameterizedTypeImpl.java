@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 代码拷贝来自：sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl
  *
- * @author jiayu.qiu
+ *
  */
 public class ParameterizedTypeImpl implements ParameterizedType {
 

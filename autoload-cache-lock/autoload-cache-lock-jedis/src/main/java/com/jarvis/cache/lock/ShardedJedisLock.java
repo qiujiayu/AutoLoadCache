@@ -5,7 +5,7 @@ import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class ShardedJedisLock extends AbstractRedisLock {
 

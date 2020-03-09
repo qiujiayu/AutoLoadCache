@@ -8,7 +8,7 @@ import org.aspectj.lang.reflect.MethodSignature;
 import java.lang.reflect.Method;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class AspectjCacheAopProxyChain implements CacheAopProxyChain {
 

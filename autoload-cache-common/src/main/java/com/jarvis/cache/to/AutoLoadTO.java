@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * 用于处理自动加载数据到缓存
  *
- * @author jiayu.qiu
+ *
  */
 public class AutoLoadTO implements Serializable {
 

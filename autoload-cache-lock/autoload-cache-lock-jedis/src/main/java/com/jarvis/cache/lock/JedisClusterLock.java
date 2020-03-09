@@ -3,7 +3,7 @@ package com.jarvis.cache.lock;
 import redis.clients.jedis.JedisCluster;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class JedisClusterLock extends AbstractRedisLock {
 

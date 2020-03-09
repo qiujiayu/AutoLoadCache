@@ -6,7 +6,7 @@ import java.lang.reflect.Type;
 /**
  * 深度复制
  *
- * @author jiayu.qiu
+ *
  */
 public interface ICloner {
 

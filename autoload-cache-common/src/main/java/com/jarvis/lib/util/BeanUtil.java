@@ -15,7 +15,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class BeanUtil {
 

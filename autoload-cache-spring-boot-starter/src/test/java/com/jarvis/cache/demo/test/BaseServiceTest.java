@@ -17,7 +17,7 @@ import org.springframework.web.context.WebApplicationContext;
 import com.jarvis.cache.demo.CacheDemoApplication;
 
 /**
- * @author jiayu.qiu
+ *
  */
 @WebAppConfiguration
 @RunWith(SpringJUnit4ClassRunner.class)

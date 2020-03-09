@@ -9,7 +9,7 @@ import java.util.Comparator;
  * autoLoadTO.getLastLoadTime()-autoLoadTO.getExpire()*1000 值越大，排在越前
  * autoLoadTO.getAverageUseTime() 值越大，排在越前
  *
- * @author jiayu.qiu
+ *
  */
 public class AutoLoadOldestComparator implements Comparator<AutoLoadTO> {
 

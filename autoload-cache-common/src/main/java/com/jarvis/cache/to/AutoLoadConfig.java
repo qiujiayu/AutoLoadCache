@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * 缓存处理的相关 配置
  *
- * @author jiayu.qiu
+ *
  */
 @Data
 public class AutoLoadConfig {

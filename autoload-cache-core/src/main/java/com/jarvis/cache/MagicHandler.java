@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * MagicHandler
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public class MagicHandler {

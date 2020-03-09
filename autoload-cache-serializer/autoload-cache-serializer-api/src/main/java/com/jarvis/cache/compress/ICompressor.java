@@ -3,7 +3,7 @@ package com.jarvis.cache.compress;
 import java.io.ByteArrayInputStream;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public interface ICompressor {
 

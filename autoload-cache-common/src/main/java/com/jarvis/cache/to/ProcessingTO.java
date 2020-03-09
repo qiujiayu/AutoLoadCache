@@ -3,7 +3,7 @@ package com.jarvis.cache.to;
 import lombok.Data;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 @Data
 public class ProcessingTO {

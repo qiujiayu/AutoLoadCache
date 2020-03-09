@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import com.jarvis.cache.autoconfigure.AutoloadCacheProperties;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class HTTPBasicAuthorizeAttribute implements Filter {
 

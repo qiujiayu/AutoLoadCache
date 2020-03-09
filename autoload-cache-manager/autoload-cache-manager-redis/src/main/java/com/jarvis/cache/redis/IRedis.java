@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Redis缓存操作
  *
- * @author: jiayu.qiu
+ *
  */
 public interface IRedis extends Closeable {
 

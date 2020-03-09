@@ -5,7 +5,7 @@ import com.jarvis.cache.clone.ICloner;
 import java.lang.reflect.Type;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public interface ISerializer<T> extends ICloner {
 

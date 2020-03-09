@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * 缓存Key
  *
- * @author jiayu.qiu
+ *
  */
 @Data
 public final class CacheKeyTO implements Serializable {

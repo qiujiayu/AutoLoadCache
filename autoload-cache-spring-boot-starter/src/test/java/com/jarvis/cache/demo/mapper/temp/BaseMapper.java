@@ -5,7 +5,7 @@ import com.jarvis.cache.annotation.Cache;
 /**
  * 
  * 通用Mapper加缓存的例子
- * @author: jiayu.qiu
+ *
  */
 public interface BaseMapper<T, PK> {
 

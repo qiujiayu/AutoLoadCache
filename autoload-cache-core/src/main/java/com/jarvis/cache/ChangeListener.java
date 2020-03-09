@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * 缓存更新
  *
- * @author jiayu.qiu
+ *
  */
 public interface ChangeListener {
 

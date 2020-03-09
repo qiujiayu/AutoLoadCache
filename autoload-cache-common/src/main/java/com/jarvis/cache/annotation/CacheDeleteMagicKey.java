@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * 通过分割参数或返回值生成批量删除缓存Key注解
  *
- * @author jiayu.qiu
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

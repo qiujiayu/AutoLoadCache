@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 /**
  * 缓存注解
  *
- * @author jiayu.qiu
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

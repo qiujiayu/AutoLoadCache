@@ -8,7 +8,7 @@ import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class DataLoaderFactory extends BasePooledObjectFactory<DataLoader> {
 

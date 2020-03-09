@@ -11,7 +11,7 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import lombok.Data;
 
 /**
- * @author jiayu.qiu
+ *
  */
 @Data
 @ConfigurationProperties(prefix = AutoloadCacheProperties.PREFIX)
@@ -78,7 +78,7 @@ public class AutoloadCacheProperties {
     /**
      * 对JedisClusterCacheManager 进行配置
      * 
-     * @author jiayu.qiu
+     *
      */
     @Data
     static class JedisCacheManagerConfig {

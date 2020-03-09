@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * memcache缓存管理
  *
- * @author: jiayu.qiu
+ *
  */
 @Slf4j
 public class MemcachedCacheManager implements ICacheManager {

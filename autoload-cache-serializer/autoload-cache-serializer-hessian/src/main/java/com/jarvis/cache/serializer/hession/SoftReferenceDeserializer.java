@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class SoftReferenceDeserializer extends AbstractMapDeserializer {
 

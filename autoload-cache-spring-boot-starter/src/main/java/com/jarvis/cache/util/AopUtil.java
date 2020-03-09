@@ -3,7 +3,7 @@ package com.jarvis.cache.util;
 import org.springframework.aop.framework.AopProxyUtils;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class AopUtil {
 

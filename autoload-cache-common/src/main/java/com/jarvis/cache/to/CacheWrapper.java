@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * 对缓存数据进行封装
  *
- * @author jiayu.qiu
+ *
  */
 @Data
 public class CacheWrapper<T> implements Serializable, Cloneable {

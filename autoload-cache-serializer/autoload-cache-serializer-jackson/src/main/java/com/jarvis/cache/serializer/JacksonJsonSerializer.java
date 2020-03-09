@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class JacksonJsonSerializer implements ISerializer<Object> {
 

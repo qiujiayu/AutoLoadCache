@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 /**
  * 基于msgpack 和 Jackson进行处理
  *
- * @author jiayu.qiu
+ *
  */
 public class JacksonMsgpackSerializer implements ISerializer<Object> {
 

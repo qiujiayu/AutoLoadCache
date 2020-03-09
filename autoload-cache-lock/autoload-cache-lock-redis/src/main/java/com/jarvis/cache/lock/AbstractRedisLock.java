@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * 基于Redis实现分布式锁
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public abstract class AbstractRedisLock implements ILock {

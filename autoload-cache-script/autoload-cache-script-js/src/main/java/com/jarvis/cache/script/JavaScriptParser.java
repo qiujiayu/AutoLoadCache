@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 解析JavaScript表达式
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public class JavaScriptParser extends AbstractScriptParser {

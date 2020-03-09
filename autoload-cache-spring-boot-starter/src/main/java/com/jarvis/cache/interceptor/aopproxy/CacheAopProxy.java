@@ -7,7 +7,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 
 /**
- * @author jiayu.qiu
+ *
  */
 public class CacheAopProxy implements CacheAopProxyChain {
 

@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * 缓存管理
  *
- * @author jiayu.qiu
+ *
  */
 public interface ICacheManager {
 

@@ -17,7 +17,7 @@ import com.jarvis.cache.util.AopUtil;
 /**
  * 对@CacheDelete 拦截注解
  * 
- * @author jiayu.qiu
+ *
  */
 public class CacheDeleteInterceptor implements MethodInterceptor {
 

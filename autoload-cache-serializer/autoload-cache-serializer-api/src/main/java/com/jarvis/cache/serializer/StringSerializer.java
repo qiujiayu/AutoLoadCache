@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
  * keys/values.
  * </p>
  *
- * @author: jiayu.qiu
+ *
  */
 public class StringSerializer implements ISerializer<String> {
 

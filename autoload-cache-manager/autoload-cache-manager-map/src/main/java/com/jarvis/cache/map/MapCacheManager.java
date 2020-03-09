@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 使用ConcurrentHashMap管理缓存
  *
- * @author jiayu.qiu
+ *
  */
 public class MapCacheManager implements ICacheManager {
 

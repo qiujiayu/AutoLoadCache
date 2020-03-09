@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Redis缓存管理
  *
- * @author jiayu.qiu
+ *
  */
 @Slf4j
 public class JedisClusterCacheManager extends AbstractRedisCacheManager {

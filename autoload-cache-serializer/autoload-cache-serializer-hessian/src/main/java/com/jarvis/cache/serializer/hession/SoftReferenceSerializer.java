@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class SoftReferenceSerializer extends AbstractSerializer implements ObjectSerializer {
 

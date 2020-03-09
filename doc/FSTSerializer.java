@@ -4,7 +4,7 @@ import org.nustaq.serialization.FSTConfiguration;
 
 /**
  * 使用 https://github.com/RuedigerMoeller/fast-serialization 进行序列化和反序列化
- * @author jiayu.qiu
+ *
  */
 public class FSTSerializer implements ISerializer<Object> {
 

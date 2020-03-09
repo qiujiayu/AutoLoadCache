@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 /**
  * 查询条件
  * 
- * @author jiayu.qiu
+ *
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

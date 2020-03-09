@@ -1,7 +1,7 @@
 package com.jarvis.lib.util;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class OsUtil {
 

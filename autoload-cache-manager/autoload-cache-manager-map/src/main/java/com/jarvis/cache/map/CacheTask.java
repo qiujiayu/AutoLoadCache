@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class CacheTask implements Runnable, CacheChangeListener {
 

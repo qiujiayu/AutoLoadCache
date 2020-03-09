@@ -10,7 +10,7 @@ import com.caucho.hessian.io.StringValueSerializer;
 import java.math.BigDecimal;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class HessionBigDecimalSerializerFactory extends AbstractSerializerFactory {
 

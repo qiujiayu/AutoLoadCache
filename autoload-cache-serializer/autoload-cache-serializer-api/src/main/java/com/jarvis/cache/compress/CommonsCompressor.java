@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 /**
- * @author: jiayu.qiu
+ *
  */
 public class CommonsCompressor implements ICompressor {
 

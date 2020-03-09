@@ -3,7 +3,7 @@ package com.jarvis.cache.lock;
 /**
  * 分布式锁接口
  *
- * @author jiayu.qiu
+ *
  */
 public interface ILock {
 
