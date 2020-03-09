@@ -1,9 +1,16 @@
-sudo: required
+sudo: false
 language: java
 
 jdk:
   - openjdk8
+  - openjdk11
 
-install:
+cache:
+  directories:
+    - $HOME/.m2
+
+install: true
+
+script:
   - mvn clean install -DskipTests=true
 
