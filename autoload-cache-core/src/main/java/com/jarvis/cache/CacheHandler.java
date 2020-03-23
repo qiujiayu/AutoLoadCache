@@ -68,7 +68,16 @@ public class CacheHandler {
     private ChangeListener changeListener;
 
     public CacheHandler(ICacheManager cacheManager, AbstractScriptParser scriptParser, AutoLoadConfig config,
-                        ICloner cloner) {
+                        ICloner cloner) throws IllegalArgumentException{
+        if(null == cacheManager) {
+            throw new IllegalArgumentException("cacheManager is null");
+        }
+        if(null == cloner) {
+            throw new IllegalArgumentException("cloner is null");
+        }
+        if(null == scriptParser) {
+            throw new IllegalArgumentException("scriptParser is null");
+        }
         this.processing = new ConcurrentHashMap<>(config.getProcessingMapSize());
         this.cacheManager = cacheManager;
         this.config = config;
