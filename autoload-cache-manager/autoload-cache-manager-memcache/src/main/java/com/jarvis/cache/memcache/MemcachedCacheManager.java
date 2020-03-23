@@ -10,11 +10,7 @@ import net.spy.memcached.MemcachedClient;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * memcache缓存管理
@@ -80,7 +76,7 @@ public class MemcachedCacheManager implements ICacheManager {
     @Override
     public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
         if (null == keys || keys.isEmpty()) {
-            return null;
+            return Collections.emptyMap();
         }
         Map<String, CacheKeyTO> keyMap = new HashMap<>(keys.size());
         for (CacheKeyTO key : keys) {

@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -221,7 +218,7 @@ public class MapCacheManager implements ICacheManager {
     @Override
     public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
         if (null == keys || keys.isEmpty()) {
-            return null;
+            return Collections.emptyMap();
         }
         int len = keys.size();
         Map<CacheKeyTO, CacheWrapper<Object>> res = new HashMap<>(len);
