@@ -10,9 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 组合多种缓存管理方案，本地保存短期缓存，远程保存长期缓存
@@ -63,7 +61,7 @@ public class ComboCacheManager implements ICacheManager {
         if (method.isAnnotationPresent(LocalCache.class)) {
             LocalCache lCache = method.getAnnotation(LocalCache.class);
             for (MSetParam param : params) {
-                if(param == null){
+                if (param == null) {
                     continue;
                 }
                 setLocalCache(lCache, param.getCacheKey(), param.getResult(), method);
@@ -95,23 +93,18 @@ public class ComboCacheManager implements ICacheManager {
 
     @Override
     public CacheWrapper<Object> get(CacheKeyTO key, Method method) throws CacheCenterConnectionException {
-        String threadName = Thread.currentThread().getName();
-        // 如果是自动加载线程，则只从远程缓存获取。
-        if (threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {
-            return remoteCache.get(key, method);
-        }
         LocalCache lCache = null;
         if (method.isAnnotationPresent(LocalCache.class)) {
-            CacheWrapper<Object> result = localCache.get(key, method);
             lCache = method.getAnnotation(LocalCache.class);
+        }
+        String threadName = Thread.currentThread().getName();
+        // 如果是自动加载线程，则只从远程缓存获取。
+        if (null != lCache && !threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {
+            CacheWrapper<Object> result = localCache.get(key, method);
             if (null != result) {
                 if (result instanceof LocalCacheWrapper) {
                     LocalCacheWrapper<Object> localResult = (LocalCacheWrapper<Object>) result;
-                    CacheWrapper<Object> result2 = new CacheWrapper<Object>();
-                    result2.setCacheObject(localResult.getCacheObject());
-                    result2.setExpire(localResult.getRemoteExpire());
-                    result2.setLastLoadTime(localResult.getRemoteLastLoadTime());
-                    return result2;
+                    return new CacheWrapper<Object>(localResult.getCacheObject(), localResult.getRemoteExpire(), localResult.getRemoteLastLoadTime());
                 } else {
                     return result;
                 }
@@ -127,7 +120,58 @@ public class ComboCacheManager implements ICacheManager {
 
     @Override
     public Map<CacheKeyTO, CacheWrapper<Object>> mget(final Method method, final Type returnType, final Set<CacheKeyTO> keys) throws CacheCenterConnectionException {
-        return remoteCache.mget(method, returnType, keys);
+        LocalCache lCache = null;
+        if (method.isAnnotationPresent(LocalCache.class)) {
+            lCache = method.getAnnotation(LocalCache.class);
+        } else {
+            return remoteCache.mget(method, returnType, keys);
+        }
+        String threadName = Thread.currentThread().getName();
+        Map<CacheKeyTO, CacheWrapper<Object>> all;
+        Map<CacheKeyTO, CacheWrapper<Object>> remoteResults = null;
+        if (!threadName.startsWith(AutoLoadHandler.THREAD_NAME_PREFIX)) {
+            all = new HashMap<>(keys.size());
+            Map<CacheKeyTO, CacheWrapper<Object>> localResults = localCache.mget(method, returnType, keys);
+            if (null != localResults && !localResults.isEmpty()) {
+                Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> iterator = localResults.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = iterator.next();
+                    CacheWrapper<Object> result = item.getValue();
+                    if (result instanceof LocalCacheWrapper) {
+                        LocalCacheWrapper<Object> localResult = (LocalCacheWrapper<Object>) result;
+                        CacheWrapper<Object> result2 = new CacheWrapper<Object>(localResult.getCacheObject(), localResult.getRemoteExpire(), localResult.getRemoteLastLoadTime());
+                        all.put(item.getKey(), result2);
+                    } else {
+                        all.put(item.getKey(), result);
+                    }
+                }
+            }
+            if(all.size() < keys.size()) {
+                Set<CacheKeyTO> unCachekeys = new HashSet<>(keys.size() - all.size());
+                for(CacheKeyTO key : keys) {
+                    if(!all.containsKey(key)) {
+                        unCachekeys.add(key);
+                    }
+                }
+                remoteResults = remoteCache.mget(method, returnType, keys);
+                if(null != remoteResults && !remoteResults.isEmpty()) {
+                    all.putAll(remoteResults);
+                }
+            }
+        } else {
+            remoteResults = remoteCache.mget(method, returnType, keys);
+            all = remoteResults;
+        }
+
+        if(null != remoteResults && !remoteResults.isEmpty()) {
+            // 放到本地缓存里
+            Iterator<Map.Entry<CacheKeyTO, CacheWrapper<Object>>> iterator = remoteResults.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<CacheKeyTO, CacheWrapper<Object>> item = iterator.next();
+                setLocalCache(lCache, item.getKey(), item.getValue(), method);
+            }
+        }
+        return all;
     }
 
     @Override
