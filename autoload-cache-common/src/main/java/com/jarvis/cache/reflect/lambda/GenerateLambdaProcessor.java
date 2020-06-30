@@ -1,8 +1,14 @@
 package com.jarvis.cache.reflect.lambda;
 
-import org.paukov.combinatorics.Factory;
-import org.paukov.combinatorics.Generator;
-import org.paukov.combinatorics.ICombinatoricsVector;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -12,11 +18,10 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+
+import org.paukov.combinatorics.CombinatoricsFactory;
+import org.paukov.combinatorics.Generator;
+import org.paukov.combinatorics.ICombinatoricsVector;
 
 /**
  * Copyright 2016 Anders Granau Høfft
@@ -141,14 +146,14 @@ public class GenerateLambdaProcessor extends AbstractProcessor {
 	private void generateAbstractMethods(StringBuilder javaFile, MethodParameter[] types, int maxNumberOfParams) {
 		List<String> returnTypes = Arrays.asList(types).stream().map(type -> type.getTypeAsSourceCodeString()).collect(Collectors.toList());
 		returnTypes.add("void");
-		ICombinatoricsVector<MethodParameter> originalVector = Factory.createVector(types);
+		ICombinatoricsVector<MethodParameter> originalVector = CombinatoricsFactory.createVector(types);
 		generateInterfaceMethodsForStaticCallsWithMaxNumOfArgs(javaFile, originalVector, returnTypes, maxNumberOfParams + 1);
 		generateInterfaceMethodCombinationsRecursively(javaFile, originalVector, returnTypes, maxNumberOfParams);
 	}
 
 	private void generateInterfaceMethodsForStaticCallsWithMaxNumOfArgs(StringBuilder javaFile,
 			ICombinatoricsVector<MethodParameter> originalVector, List<String> returnTypes, int numberOfParams) {
-		Generator<MethodParameter> gen = Factory.createPermutationWithRepetitionGenerator(originalVector, numberOfParams);
+		Generator<MethodParameter> gen = CombinatoricsFactory.createPermutationWithRepetitionGenerator(originalVector, numberOfParams);
 		for (String returnTypeAsString : returnTypes) {
 			for (ICombinatoricsVector<MethodParameter> paramType : gen) {
 				if (paramType.getVector().get(0) == MethodParameter.OBJECT) {
@@ -163,7 +168,7 @@ public class GenerateLambdaProcessor extends AbstractProcessor {
 			ICombinatoricsVector<MethodParameter> originalVector, List<String> returnTypes, int numberOfParams) {
 		if (numberOfParams >= 0) {
 			javaFile.append(NEWLINE);
-			Generator<MethodParameter> gen = Factory.createPermutationWithRepetitionGenerator(originalVector, numberOfParams);
+			Generator<MethodParameter> gen = CombinatoricsFactory.createPermutationWithRepetitionGenerator(originalVector, numberOfParams);
 			for (String returnTypeAsString : returnTypes) {
 				generateInterfaceMethods(gen, returnTypeAsString, javaFile);
 			}

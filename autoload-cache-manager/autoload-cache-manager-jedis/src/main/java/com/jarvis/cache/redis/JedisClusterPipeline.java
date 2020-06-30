@@ -1,5 +1,13 @@
 package com.jarvis.cache.redis;
 
+import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Client;
@@ -9,16 +17,8 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.PipelineBase;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
-import redis.clients.util.JedisClusterCRC16;
-import redis.clients.util.SafeEncoder;
-
-import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import redis.clients.jedis.util.JedisClusterCRC16;
+import redis.clients.jedis.util.SafeEncoder;
 
 /**
  * 在集群模式下提供批量操作的功能。由于集群模式存在节点的动态添加删除，且client不能实时感知，所以需要有重试功能
@@ -98,7 +98,9 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
 
     private void flushCachedData(Jedis jedis) {
         try {
-            jedis.getClient().getAll();
+            //FIXME 这个count怎么取值? 执行命令的个数??
+            jedis.getClient().getMany(jedisMap.size());
+            //jedis.getClient().getAll();
         } catch (RuntimeException ex) {
             // 其中一个client出问题，后面出问题的几率较大
         }
