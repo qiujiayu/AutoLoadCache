@@ -3,6 +3,7 @@ package com.jarvis.cache.lock;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
+import redis.clients.jedis.params.SetParams;
 
 /**
  *
@@ -25,7 +26,7 @@ public class ShardedJedisLock extends AbstractRedisLock {
         try {
             shardedJedis = shardedJedisPool.getResource();
             Jedis jedis = shardedJedis.getShard(key);
-            return OK.equalsIgnoreCase(jedis.set(key, val, NX, EX, expire));
+            return OK.equalsIgnoreCase(jedis.set(key, val, SetParams.setParams().nx().ex(expire)));
         } finally {
             returnResource(shardedJedis);
         }
