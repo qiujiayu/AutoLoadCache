@@ -8,6 +8,11 @@ import org.nustaq.serialization.FSTConfiguration;
 
 import com.test.hessian.MyTO;
 
+/**
+ * 
+ * TODO
+ *
+ */
 public class FST {
 
     private static final FSTConfiguration conf=FSTConfiguration.getDefaultConfiguration();

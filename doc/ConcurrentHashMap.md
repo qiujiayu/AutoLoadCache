@@ -1,9 +1,11 @@
 ### ConcurrentHashMap配置
 
-    <bean id="cacheManager" class="com.jarvis.cache.map.MapCacheManager" init-method="start" destroy-method="destroy">
-      <constructor-arg ref="autoLoadConfig" />
-      <constructor-arg ref="hessianSerializer" />
-    </bean>
+```xml
+<bean id="cacheManager" class="com.jarvis.cache.map.MapCacheManager" init-method="start" destroy-method="destroy">
+  <constructor-arg ref="autoLoadConfig" />
+  <constructor-arg ref="hessianSerializer" />
+</bean>
+```
 
 MapCacheManager 中可以配置参数说明：
 

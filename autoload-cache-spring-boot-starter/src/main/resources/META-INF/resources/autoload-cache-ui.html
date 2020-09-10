@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>AutoloadCache</title>
+    <link type="text/css" rel="stylesheet" href="webjars/autoload-cache-ui/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="webjars/autoload-cache-ui/css/bootstrap-vue.css"/>
+</head>
+<body>
+<div id="app">
+    <b-navbar-brand href="#">AutoloadCache</b-navbar-brand>
+    <!-- b-table 获取数据和数据名称 :items  :fields -->
+    <b-table striped hover :items="items" :fields="fields">
+        <!-- slot的值关联 table当中 Field 的key值 ，以此进行绑定。 slot-scope的值为 每行的对象（内置） -->
+        <template slot="opt" slot-scope="row">
+            <b-button @click.stop="showModal(row.item, 'removeCache', event)">
+                删除缓存
+            </b-button>
+            <b-button @click.stop="showModal(row.item, 'removeAutoloadTO', event)">
+                移除 AutoloadTO
+            </b-button>
+            <b-button @click.stop="showModal(row.item, 'resetLastLoadTime', event)">
+                重置加载时间
+            </b-button>
+            <b-button @click.stop="showArgs(row.item, event)">
+                查询参数
+            </b-button>
+        </template>
+    </b-table>
+    <!--模态b-model 中自带的两个时间 ok cancel可以用 @ok="方法名" 和 @cancel="" 来进行自定义 -->
+    <b-modal id="confirmModal" title="Warning" @ok="handleOk()">
+        <p class="my-4">确定要继续？</p>
+    </b-modal>
+    <b-modal id="argsModal" title="参数" ok-only>
+        <pre>{{ args }}</pre>
+    </b-modal>
+</div>
+</body>
+
+<script src="webjars/autoload-cache-ui/js/vue.min.js"></script>
+<script src="webjars/autoload-cache-ui/js/axios.min.js"></script>
+<script src="webjars/autoload-cache-ui/js/polyfill.min.js"></script>
+<script src="webjars/autoload-cache-ui/js/bootstrap-vue.js"></script>
+<script src="webjars/autoload-cache-ui/js/list.js"></script>
+</html>
