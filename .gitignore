@@ -11,3 +11,4 @@ memo.txt
 *.pptx
 .DS_Store
 *.key
+.flattened-pom.xml
