@@ -13,7 +13,7 @@
   <description>Use AOP and Annotation manage cache.</description>
   <url>https://github.com/qiujiayu/AutoLoadCache</url>
   <properties>
-    <revision>7.1.2</revision>
+    <revision>7.1.3</revision>
     <java_source_version>1.8</java_source_version>
     <java_target_version>1.8</java_target_version>
     <file_encoding>UTF-8</file_encoding>
