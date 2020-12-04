@@ -4,14 +4,8 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.exception.LoadDataTimeOutException;
 import com.jarvis.cache.lock.ILock;
-import com.jarvis.cache.to.AutoLoadConfig;
-import com.jarvis.cache.to.AutoLoadTO;
-import com.jarvis.cache.to.CacheKeyTO;
-import com.jarvis.cache.to.CacheWrapper;
-import com.jarvis.cache.to.ProcessingTO;
+import com.jarvis.cache.to.*;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * 数据加载器
@@ -138,24 +132,41 @@ public class DataLoader {
         return this;
     }
 
+    private int tryLock(ILock distributedLock, String lockKey) {
+        try {
+            return distributedLock.tryLock(lockKey, cache.lockExpire()) ? 1 : 0;
+        } catch (Throwable e) {
+            if (cache.openLockDown()) {
+                // 关闭分布式锁
+                cacheHandler.setLock(null);
+                log.error("分布式锁异常，强制停止使用分布式锁!", e);
+            } else {
+                log.error("分布式锁异常!", e);
+            }
+        }
+        return 2;
+    }
+
     private void doFirstRequest(ProcessingTO processingTO) throws Throwable {
         ILock distributedLock = cacheHandler.getLock();
-        // 开启分布式锁
-        Throwable throwable = null;
-        try {
-            if (null != distributedLock && cache.lockExpire() > 0) {
-                String lockKey = cacheKey.getLockKey();
-                long startWait = processingTO.getStartTime();
-                do {
-                    // 获得分布式锁
-                    if (distributedLock.tryLock(lockKey, cache.lockExpire())) {
-                        try {
-                            getData();
-                        } finally {
-                            distributedLock.unlock(lockKey);
-                        }
-                        break;
+        if (null != distributedLock && cache.lockExpire() > 0) {
+            // 开启分布式锁
+            String lockKey = cacheKey.getLockKey();
+            long startWait = processingTO.getStartTime();
+            // 获得分布式锁
+            int lockState = tryLock(distributedLock, lockKey);
+            if (lockState == 1) {
+                try {
+                    getData();
+                } finally {
+                    try {
+                        distributedLock.unlock(lockKey);
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
                     }
+                }
+            } else if (lockState == 0) {
+                do {
                     int tryCnt = 20;
                     // 没有获得锁时，定时缓存尝试获取数据
                     for (int i = 0; i < tryCnt; i++) {
@@ -169,23 +180,9 @@ public class DataLoader {
                         break;
                     }
                 } while (System.currentTimeMillis() - startWait < cache.waitTimeOut());
-                if (null == cacheWrapper) {
-                    throw new LoadDataTimeOutException("load data for key \"" + cacheKey.getCacheKey() + "\" timeout(" + cache.waitTimeOut() + " ms).");
-                }
-            }
-        } catch (Throwable e) {
-            if (cache.openLockDown()) {
-                throwable = e;
-                // 关闭分布式锁
-                cacheHandler.setLock(null);
-                log.error("分布式锁异常，强制停止使用分布式锁!", throwable);
-            } else {
-                // 否则抛异常
-                log.error("分布式锁异常!", e);
-                throw e;
             }
         }
-        if (throwable != null) {
+        if (null == cacheWrapper) {
             getData();
         }
         // 本地缓存
