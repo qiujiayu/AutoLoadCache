@@ -1,4 +1,6 @@
-/target
+target/
+out/
+bin/
 .settings
 .classpath
 .project
@@ -9,3 +11,4 @@ memo.txt
 *.pptx
 .DS_Store
 *.key
+.flattened-pom.xml

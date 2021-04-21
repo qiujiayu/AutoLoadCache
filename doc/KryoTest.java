@@ -13,7 +13,7 @@ import com.test.hessian.MyTO;
 /**
  * 
  * TODO
- * @author: jiayu.qiu
+ *
  */
 public class KryoTest {
 

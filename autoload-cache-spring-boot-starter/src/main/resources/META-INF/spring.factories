@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.jarvis.cache.autoconfigure.AutoloadCacheManageConfiguration,\
+com.jarvis.cache.autoconfigure.DistributedLockConfiguration,\
+com.jarvis.cache.autoconfigure.AutoloadCacheAutoConfigure

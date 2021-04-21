@@ -11,7 +11,7 @@ import com.test.hessian.MyTO;
 /**
  * 
  * TODO
- * @author: jiayu.qiu
+ *
  */
 public class FST {
 
