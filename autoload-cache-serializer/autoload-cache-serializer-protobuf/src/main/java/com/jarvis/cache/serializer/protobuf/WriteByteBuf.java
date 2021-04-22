@@ -2,123 +2,95 @@ package com.jarvis.cache.serializer.protobuf;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
 
 /**
  * @author zhengenshen@gmail.com
  */
 @Slf4j
-public class WriteByteBuf {
+public class WriteByteBuf extends OutputStream {
 
-    private static final int DEFAULT_ARRAY_LENGTH = 1024 * 100;
+    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    private byte[] array;
+    private byte[] buf;
 
-    /**
-     * 索引下标
-     */
-    private int readerIndex;
-
-    private int writerIndex;
-
-    /**
-     * 已写入数据尾标
-     */
-    private int limit;
-
-    /**
-     * array 长度
-     */
-    private int arrayLength;
+    private int count;
 
     public WriteByteBuf() {
-        this(DEFAULT_ARRAY_LENGTH);
+        this(32);
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        writeByte((byte) b);
     }
 
     public WriteByteBuf(int arrayLength) {
-        array = new byte[arrayLength];
-        this.readerIndex = this.writerIndex = 0;
-        this.arrayLength = arrayLength;
+        buf = new byte[arrayLength];
     }
-
 
     public void writeByte(byte value) {
         int length = 1;
-        hasLength(length);
-        HeapByteBufUtil.setByte(array, writerIndex, value);
-        writerIndex += length;
-        limit = writerIndex;
+        ensureCapacity(length);
+        HeapByteBufUtil.setByte(buf, count, value);
+        count += length;
     }
 
     public void writeInt(int value) {
         int length = 4;
-        hasLength(length);
-        HeapByteBufUtil.setInt(array, writerIndex, value);
-        writerIndex += length;
-        limit = writerIndex;
+        ensureCapacity(length);
+        HeapByteBufUtil.setInt(buf, count, value);
+        count += length;
     }
 
-    /**
-     *
-     * @param value
-     */
     public void writeLong(long value) {
         int length = 8;
-        hasLength(length);
-        HeapByteBufUtil.setLong(array, writerIndex, value);
-        writerIndex += length;
-        limit = writerIndex;
-    }
-
-
-    /**
-     * 可读字节
-     * @return
-     */
-    public byte[] readableBytes() {
-        byte[] newArray = new byte[limit - readerIndex];
-        System.arraycopy(array, readerIndex, newArray, 0, newArray.length);
-        return newArray;
-    }
-
-    public void resetIndex() {
-        writerIndex = readerIndex = limit = 0;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    private void hasLength(int length) {
-        if (limit + length < arrayLength) {
-            return;
-        }
-        //TODO 扩容
-        log.error("current byte stream length {} write length {}", limit, length);
-        throw new ArrayIndexOutOfBoundsException();
+        ensureCapacity(length);
+        HeapByteBufUtil.setLong(buf, count, value);
+        count += length;
     }
 
     public void writeBytes(byte[] bytes) {
-        hasLength(bytes.length);
-        System.arraycopy(bytes, 0, array, writerIndex, bytes.length);
-        this.limit += bytes.length;
+        int length = bytes.length;
+        ensureCapacity(bytes.length);
+        System.arraycopy(bytes, 0, buf, count, length);
+        count += bytes.length;
     }
 
-    public void writeObject(Object obj) {
-        if (obj == null) {
-            return;
-        }
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            ObjectOutputStream output = new ObjectOutputStream(outputStream);
-            output.writeObject(obj);
-            output.flush();
-            writeBytes(outputStream.toByteArray());
-        } catch (IOException e) {
-            log.warn("byteBuf writeObject error");
-        }
 
+    public byte[] toByteArray() {
+        byte[] newArray = new byte[count];
+        System.arraycopy(buf, 0, newArray, 0, count);
+        return newArray;
     }
+
+
+    private void ensureCapacity(int minCapacity) {
+        // overflow-conscious code
+        if (minCapacity - buf.length > 0)
+            grow(minCapacity);
+    }
+
+
+    private void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = buf.length;
+        int newCapacity = oldCapacity << 1;
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        buf = Arrays.copyOf(buf, newCapacity);
+    }
+
+    private static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+                Integer.MAX_VALUE :
+                MAX_ARRAY_SIZE;
+    }
+
 }
