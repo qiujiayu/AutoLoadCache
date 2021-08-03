@@ -1,5 +1,4 @@
 package com.jarvis.cache.serializer.protobuf;
-
 /**
  * @author zhengenshen@gmail.com
  */
