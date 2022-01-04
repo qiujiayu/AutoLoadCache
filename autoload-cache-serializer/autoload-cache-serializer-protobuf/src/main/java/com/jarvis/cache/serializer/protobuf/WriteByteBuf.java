@@ -33,28 +33,28 @@ public class WriteByteBuf extends OutputStream {
 
     public void writeByte(byte value) {
         int length = 1;
-        ensureCapacity(length);
+        ensureCapacity(length + count);
         HeapByteBufUtil.setByte(buf, count, value);
         count += length;
     }
 
     public void writeInt(int value) {
         int length = 4;
-        ensureCapacity(length);
+        ensureCapacity(length + count);
         HeapByteBufUtil.setInt(buf, count, value);
         count += length;
     }
 
     public void writeLong(long value) {
         int length = 8;
-        ensureCapacity(length);
+        ensureCapacity(length + count);
         HeapByteBufUtil.setLong(buf, count, value);
         count += length;
     }
 
     public void writeBytes(byte[] bytes) {
         int length = bytes.length;
-        ensureCapacity(bytes.length);
+        ensureCapacity(bytes.length + count);
         System.arraycopy(bytes, 0, buf, count, length);
         count += bytes.length;
     }
