@@ -1,5 +1,4 @@
 package com.jarvis.cache.serializer.protobuf;
-
 /**
  * @author zhengenshen@gmail.com
  */
@@ -8,11 +7,9 @@ public class ReadByteBuf {
     private byte[] array;
     private int readerIndex;
 
-
-    public ReadByteBuf setBytes(byte[] bytes) {
-        this.array = bytes;
+    public ReadByteBuf(byte[] array) {
+        this.array = array;
         this.readerIndex = 0;
-        return this;
     }
 
     public byte readByte() {

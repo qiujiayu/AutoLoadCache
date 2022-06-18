@@ -1,29 +1,33 @@
 package com.jarvis.cache.serializer.protobuf;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.protobuf.Message;
+import com.google.protobuf.NullValue;
+import com.jarvis.cache.reflect.generics.ParameterizedTypeImpl;
 import com.jarvis.cache.reflect.lambda.Lambda;
 import com.jarvis.cache.reflect.lambda.LambdaFactory;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.lib.util.BeanUtil;
+import com.jarvis.lib.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,76 +36,57 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
 
+    private ConcurrentHashMap<Class, Lambda> lambdaMap = new ConcurrentHashMap<>();
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private ConcurrentHashMap<Class, Lambda> lambdaMap = new ConcurrentHashMap<>(64);
-
-    private ObjectPool<WriteByteBuf> writePool;
-    private ObjectPool<ReadByteBuf> readPool;
-
     public ProtoBufSerializer() {
-        init();
-    }
-
-    private void init() {
-        writePool = new GenericObjectPool<>(CacheObjectFactory.createWriteByteBuf());
-        readPool = new GenericObjectPool<>(CacheObjectFactory.createReadByteBuf());
+        MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        MAPPER.registerModule(new SimpleModule().addSerializer(new NullValueSerializer(null)));
+        MAPPER.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
     }
 
     @Override
     public byte[] serialize(CacheWrapper<Object> obj) throws Exception {
-        val byteBuf = writePool.borrowObject();
-        byteBuf.resetIndex();
+        WriteByteBuf byteBuf = new WriteByteBuf();
         byteBuf.writeInt(obj.getExpire());
         byteBuf.writeLong(obj.getLastLoadTime());
         Object cacheObj = obj.getCacheObject();
-        if (cacheObj instanceof Message) {
-            Message message = (Message) cacheObj;
-            message.writeTo(new ByteBufOutputStream(byteBuf));
-        } else if (cacheObj != null) {
-            byteBuf.writeBytes(MAPPER.writeValueAsBytes(cacheObj));
+        if (cacheObj != null) {
+            if (cacheObj instanceof Message) {
+                byteBuf.writeBytes(((Message) cacheObj).toByteArray());
+            } else {
+                MAPPER.writeValue(byteBuf, cacheObj);
+            }
         }
-        val bytes = byteBuf.readableBytes();
-        writePool.returnObject(byteBuf);
-        return bytes;
+        return byteBuf.toByteArray();
     }
 
 
     @Override
-    public CacheWrapper<Object> deserialize(byte[] bytes, Type returnType) throws Exception {
+    public CacheWrapper<Object> deserialize(final byte[] bytes, Type returnType) throws Exception {
         if (bytes == null || bytes.length == 0) {
             return null;
         }
         CacheWrapper<Object> cacheWrapper = new CacheWrapper<>();
-        val byteBuf = readPool.borrowObject();
-        byteBuf.setBytes(bytes);
+        val byteBuf = new ReadByteBuf(bytes);
         cacheWrapper.setExpire(byteBuf.readInt());
         cacheWrapper.setLastLoadTime(byteBuf.readLong());
-        bytes = byteBuf.readableBytes();
-        readPool.returnObject(byteBuf);
-        if (bytes == null || bytes.length == 0) {
+        val body = byteBuf.readableBytes();
+        if (body == null || body.length == 0) {
             return cacheWrapper;
         }
-        String typeName = null;
-        if (!(returnType instanceof ParameterizedType)) {
-            typeName = returnType.getTypeName();
-        }
-        Class clazz = getMessageClass(typeName);
-        if (null != clazz && Message.class.isAssignableFrom(clazz)) {
+        Class<?> clazz = TypeFactory.rawClass(returnType);
+        if (Message.class.isAssignableFrom(clazz)) {
             Lambda lambda = getLambda(clazz);
-            Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(bytes));
+            Object obj = lambda.invoke_for_Object(new ByteArrayInputStream(body));
             cacheWrapper.setCacheObject(obj);
         } else {
-            cacheWrapper.setCacheObject(MAPPER.readValue(bytes, MAPPER.constructType(returnType)));
+            Type[] agsType = new Type[]{returnType};
+            JavaType javaType = MAPPER.getTypeFactory().constructType(ParameterizedTypeImpl.make(CacheWrapper.class, agsType, null));
+            cacheWrapper.setCacheObject(MAPPER.readValue(body, clazz));
         }
         return cacheWrapper;
-    }
-
-    private Class getMessageClass(String typeName) throws ClassNotFoundException {
-        if (null == typeName) {
-            return null;
-        }
-        return Class.forName(typeName);
     }
 
 
@@ -112,7 +97,8 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
             return null;
         }
         Class<?> clazz = obj.getClass();
-        if (BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation() || clazz.isSynthetic()) {
+        if (BeanUtil.isPrimitive(obj) || clazz.isEnum() || obj instanceof Class || clazz.isAnnotation()
+                || clazz.isSynthetic()) {// 常见不会被修改的数据类型
             return obj;
         }
         if (obj instanceof Date) {
@@ -121,39 +107,6 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(((Calendar) obj).getTime().getTime());
             return cal;
-        }
-        if (clazz.isArray()) {
-            Object[] arr = (Object[]) obj;
-
-            Object[] res = (clazz == Object[].class) ? new Object[arr.length]
-                    : (Object[]) Array.newInstance(clazz.getComponentType(), arr.length);
-            for (int i = 0; i < arr.length; i++) {
-                res[i] = deepClone(arr[i], null);
-            }
-            return res;
-        }
-        if (obj instanceof Collection) {
-            Collection<?> tempCol = (Collection<?>) obj;
-            Collection res = tempCol.getClass().newInstance();
-
-            Iterator<?> it = tempCol.iterator();
-            while (it.hasNext()) {
-                Object val = deepClone(it.next(), null);
-                res.add(val);
-            }
-            return res;
-        }
-        if (obj instanceof Map) {
-            Map tempMap = (Map) obj;
-            Map res = tempMap.getClass().newInstance();
-            Iterator it = tempMap.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                Object key = entry.getKey();
-                Object val = entry.getValue();
-                res.put(deepClone(key, null), deepClone(val, null));
-            }
-            return res;
         }
         if (obj instanceof CacheWrapper) {
             CacheWrapper<Object> wrapper = (CacheWrapper<Object>) obj;
@@ -166,8 +119,7 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
         if (obj instanceof Message) {
             return ((Message) obj).toBuilder().build();
         }
-
-        return ObjectUtils.clone(obj);
+        return MAPPER.readValue(MAPPER.writeValueAsBytes(obj), clazz);
     }
 
 
@@ -201,5 +153,37 @@ public class ProtoBufSerializer implements ISerializer<CacheWrapper<Object>> {
             }
         }
         return lambda;
+    }
+
+    private class NullValueSerializer extends StdSerializer<NullValue> {
+
+        private static final long serialVersionUID = 1999052150548658808L;
+
+        private final String classIdentifier;
+
+        /**
+         * @param classIdentifier can be {@literal null} and will be defaulted
+         *                        to {@code @class}.
+         */
+        NullValueSerializer(String classIdentifier) {
+
+            super(NullValue.class);
+            this.classIdentifier = StringUtil.hasText(classIdentifier) ? classIdentifier : "@class";
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see
+         * com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.
+         * lang.Object, com.fasterxml.jackson.core.JsonGenerator,
+         * com.fasterxml.jackson.databind.SerializerProvider)
+         */
+        @Override
+        public void serialize(NullValue value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
+
+            jgen.writeStartObject();
+            jgen.writeStringField(classIdentifier, NullValue.class.getName());
+            jgen.writeEndObject();
+        }
     }
 }

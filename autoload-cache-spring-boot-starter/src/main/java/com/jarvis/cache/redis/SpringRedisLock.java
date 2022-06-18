@@ -34,7 +34,9 @@ public class SpringRedisLock extends AbstractRedisLock {
         RedisConnection redisConnection = getConnection();
         try {
             Expiration expiration = Expiration.from(expire, TimeUnit.SECONDS);
-            return redisConnection.stringCommands().set(STRING_SERIALIZER.serialize(key), STRING_SERIALIZER.serialize(val), expiration, RedisStringCommands.SetOption.SET_IF_ABSENT);
+            // 采用redisson做客户端时，set key value [EX | PX] [NX | XX] 会因为条件不满足无法设值成功而返回null导致拆箱空指针
+            Boolean locked = redisConnection.stringCommands().set(STRING_SERIALIZER.serialize(key), STRING_SERIALIZER.serialize(val), expiration, RedisStringCommands.SetOption.SET_IF_ABSENT);
+            return locked == null ? false : locked;
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
         } finally {

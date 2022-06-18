@@ -12,6 +12,9 @@
   <packaging>jar</packaging>
   <name>${project.artifactId}</name>
   <description>autoload-cache spring boot starter.</description>
+  <properties>
+    <skip_maven_deploy>false</skip_maven_deploy>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
