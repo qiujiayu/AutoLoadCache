@@ -35,8 +35,4 @@ public class CacheWrapperSerializer extends Serializer<CacheWrapper> {
         return cacheWrapper;
     }
 
-    public void ttt(){
-        ArrayList<? extends String,Integer> aa;
-    }
-
 }
