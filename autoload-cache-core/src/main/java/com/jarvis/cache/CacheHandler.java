@@ -253,6 +253,10 @@ public class CacheHandler {
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
             }
+        } else {
+            //本地并发时，wait线程会先于first线程返回数据，所以如果后续方法中有直接操作返回的CacheObject对象的场景，会导致缓存的CacheObject对象被wait线程修改。
+            //所以对非first线程返回的对象进行deepClone，防止对象被修改。
+            return cloner.deepClone(newCacheWrapper.getCacheObject(), null);
         }
 
         return newCacheWrapper.getCacheObject();
