@@ -1,8 +1,7 @@
 package com.jarvis.cache.script;
 
 import com.jarvis.cache.CacheUtil;
-import ognl.Ognl;
-import ognl.OgnlContext;
+import ognl.*;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -60,7 +59,9 @@ public class OgnlParser extends AbstractScriptParser {
         if (hasRetVal) {
             values.put(RET_VAL, retVal);
         }
-        OgnlContext context = new OgnlContext(values);
+
+        //OgnlContext context = new OgnlContext(values);
+        OgnlContext context = new OgnlContext(null,null,new DefaultMemberAccess(true));
         context.setRoot(arguments);
         Object res = Ognl.getValue(object, context, context.getRoot(), valueType);
         return (T) res;

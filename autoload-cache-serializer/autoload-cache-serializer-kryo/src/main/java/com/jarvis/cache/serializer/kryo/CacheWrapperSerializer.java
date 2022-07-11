@@ -6,6 +6,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.jarvis.cache.to.CacheWrapper;
 
+import java.util.ArrayList;
+
 /**
  * autoload-cache CacheWrapper Serializer
  *
@@ -22,8 +24,7 @@ public class CacheWrapperSerializer extends Serializer<CacheWrapper> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public CacheWrapper read(Kryo kryo, Input input, Class<CacheWrapper> type) {
+    public CacheWrapper read(Kryo kryo, Input input, Class<? extends CacheWrapper> type) {
         int expire = input.readInt(true);
         long lastLoadTime = input.readLong(true);
         Object o = kryo.readClassAndObject(input);
@@ -32,6 +33,10 @@ public class CacheWrapperSerializer extends Serializer<CacheWrapper> {
         cacheWrapper.setExpire(expire);
         cacheWrapper.setLastLoadTime(lastLoadTime);
         return cacheWrapper;
+    }
+
+    public void ttt(){
+        ArrayList<? extends String,Integer> aa;
     }
 
 }
