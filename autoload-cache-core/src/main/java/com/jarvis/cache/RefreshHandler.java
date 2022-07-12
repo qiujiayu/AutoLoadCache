@@ -131,7 +131,7 @@ public class RefreshHandler {
             this.cache = cache;
             this.cacheKey = cacheKey;
             this.cacheWrapper = cacheWrapper;
-            if (cache.argumentsDeepcloneEnable()) {
+            if (cache.argumentsDeepCloneEnable()) {
                 // 进行深度复制(因为是异步执行，防止外部修改参数值)
                 this.arguments = (Object[]) cacheHandler.getCloner().deepCloneMethodArgs(pjp.getMethod(),
                         pjp.getArgs());

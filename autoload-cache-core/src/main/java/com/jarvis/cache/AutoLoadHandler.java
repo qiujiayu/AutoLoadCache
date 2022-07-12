@@ -161,7 +161,7 @@ public class AutoLoadHandler {
         int expire = cacheWrapper.getExpire();
         if (expire >= AUTO_LOAD_MIN_EXPIRE && autoLoadMap.size() <= this.config.getMaxElement()) {
             Object[] arguments;
-            if (cache.argumentsDeepcloneEnable()) {
+            if (cache.argumentsDeepCloneEnable()) {
                 try {
                     // 进行深度复制
                     arguments = (Object[]) cacheHandler.getCloner().deepCloneMethodArgs(joinPoint.getMethod(),

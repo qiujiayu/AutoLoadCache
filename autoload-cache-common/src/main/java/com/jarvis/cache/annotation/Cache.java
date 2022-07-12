@@ -142,5 +142,11 @@ public @interface Cache {
      *
      * @return 是否打开对参数进行深度复制
      */
-    boolean argumentsDeepcloneEnable() default true;
+    boolean argumentsDeepCloneEnable() default true;
+
+    /**
+     * 拿来主义是通过本地缓存实现的，如果要修改数据，需要对返回值进行深度复制
+     * @return
+     */
+    boolean resultDeepCloneEnable() default true;
 }

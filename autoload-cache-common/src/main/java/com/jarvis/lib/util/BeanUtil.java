@@ -1,5 +1,7 @@
 package com.jarvis.lib.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -17,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  */
+@Slf4j
 public class BeanUtil {
 
     @SuppressWarnings("rawtypes")
