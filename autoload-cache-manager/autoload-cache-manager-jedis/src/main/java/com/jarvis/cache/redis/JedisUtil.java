@@ -4,7 +4,7 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.PipelineBase;
+import redis.clients.jedis.Pipeline;
 
 import java.util.Collection;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.Set;
 @Slf4j
 public class JedisUtil {
 
-    public static void executeMSet(PipelineBase pipeline, AbstractRedisCacheManager manager, Collection<MSetParam> params) throws Exception {
+    public static void executeMSet(Pipeline pipeline, AbstractRedisCacheManager manager, Collection<MSetParam> params) throws Exception {
         CacheKeyTO cacheKeyTO;
         String cacheKey;
         String hfield;
@@ -49,7 +49,7 @@ public class JedisUtil {
         }
     }
 
-    public static void executeMGet(PipelineBase pipeline, Set<CacheKeyTO> keys) {
+    public static void executeMGet(Pipeline pipeline, Set<CacheKeyTO> keys) {
         String hfield;
         String cacheKey;
         byte[] key;
@@ -68,7 +68,7 @@ public class JedisUtil {
         }
     }
 
-    public static void executeDelete(PipelineBase pipeline, Set<CacheKeyTO> keys) {
+    public static void executeDelete(Pipeline pipeline, Set<CacheKeyTO> keys) {
         String hfield;
         String cacheKey;
         byte[] key;

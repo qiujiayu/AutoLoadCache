@@ -1,12 +1,11 @@
 package com.jarvis.cache.redis;
 
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.BinaryJedisCluster;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisClusterConnectionHandler;
 import redis.clients.jedis.JedisClusterInfoCache;
-import redis.clients.jedis.JedisSlotBasedConnectionHandler;
 import redis.clients.jedis.exceptions.JedisMovedDataException;
+import redis.clients.jedis.providers.ClusterConnectionProvider;
+import redis.clients.jedis.providers.ConnectionProvider;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -22,19 +21,19 @@ public abstract class RetryableJedisClusterPipeline {
     private static final Field FIELD_CACHE;
 
     static {
-        FIELD_CONNECTION_HANDLER = getField(BinaryJedisCluster.class, "connectionHandler");
-        FIELD_CACHE = getField(JedisClusterConnectionHandler.class, "cache");
+        FIELD_CONNECTION_HANDLER = getField(JedisCluster.class, "provider");
+        FIELD_CACHE = getField(ConnectionProvider.class, "cache");
     }
 
-    private final JedisSlotBasedConnectionHandler connectionHandler;
+    private final ClusterConnectionProvider connectionProvider;
 
     private final JedisClusterInfoCache clusterInfoCache;
 
     private int maxAttempts = 1;
 
     public RetryableJedisClusterPipeline(JedisCluster jedisCluster) {
-        connectionHandler = getValue(jedisCluster, FIELD_CONNECTION_HANDLER);
-        clusterInfoCache = getValue(connectionHandler, FIELD_CACHE);
+        connectionProvider = getValue(jedisCluster, FIELD_CONNECTION_HANDLER);
+        clusterInfoCache = getValue(connectionProvider, FIELD_CACHE);
     }
 
     public abstract void execute(JedisClusterPipeline pipeline) throws Exception;
@@ -51,7 +50,7 @@ public abstract class RetryableJedisClusterPipeline {
         } catch (JedisMovedDataException jre) {
             // if MOVED redirection occurred, rebuilds cluster's slot cache,
             // recommended by Redis cluster specification
-            connectionHandler.renewSlotCache();
+            connectionProvider.renewSlotCache();
             if (maxAttempts > 0) {
                 maxAttempts--;
                 sync();
@@ -77,7 +76,7 @@ public abstract class RetryableJedisClusterPipeline {
         } catch (JedisMovedDataException jre) {
             // if MOVED redirection occurred, rebuilds cluster's slot cache,
             // recommended by Redis cluster specification
-            connectionHandler.renewSlotCache();
+            connectionProvider.renewSlotCache();
             if (maxAttempts > 0) {
                 maxAttempts--;
                 return syncAndReturnAll();
