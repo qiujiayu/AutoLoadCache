@@ -1,7 +1,6 @@
 package com.jarvis.cache.script;
 
 import com.jarvis.cache.CacheUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -17,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *
  */
-@Slf4j
 public class SpringELParser extends AbstractScriptParser {
 
     /**
@@ -43,7 +41,7 @@ public class SpringELParser extends AbstractScriptParser {
             hash = CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class});
             empty = CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class});
         } catch (NoSuchMethodException e) {
-            log
+            e.printStackTrace();
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (Exception e) {

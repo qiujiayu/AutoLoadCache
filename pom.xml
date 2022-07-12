@@ -18,9 +18,9 @@
     <java_target_version>1.8</java_target_version>
     <file_encoding>UTF-8</file_encoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spring.version>5.2.21.RELEASE</spring.version>
+    <spring.version>5.3.21</spring.version>
     <maven_deploy_version>2.8.2</maven_deploy_version>
-    <maven_compiler_version>3.8.1</maven_compiler_version>
+    <maven_compiler_version>3.10.1</maven_compiler_version>
     <skip_maven_deploy>false</skip_maven_deploy>
   </properties>
   <modules>
@@ -59,7 +59,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.23</version>
+        <version>1.7.36</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -69,17 +69,17 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-pool2</artifactId>
-        <version>2.4.2</version>
+        <version>2.11.1</version>
       </dependency>
       <dependency>
         <groupId>com.alibaba</groupId>
         <artifactId>fastjson</artifactId>
-        <version>[1.2.58,)</version>
+        <version>1.2.83_noneautotype</version>
       </dependency>
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjrt</artifactId>
-        <version>1.8.10</version>
+        <version>1.9.9.1</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -89,12 +89,12 @@
       <dependency>
         <groupId>io.lettuce</groupId>
         <artifactId>lettuce-core</artifactId>
-        <version>5.3.1.RELEASE</version>
+        <version>6.1.8.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>redis.clients</groupId>
         <artifactId>jedis</artifactId>
-        <version>3.3.0</version>
+        <version>4.2.3</version>
       </dependency>
       <dependency>
         <groupId>net.spy</groupId>
@@ -104,12 +104,12 @@
       <dependency>
         <groupId>com.caucho</groupId>
         <artifactId>hessian</artifactId>
-        <version>[4.0.38,)</version>
+        <version>[4.0.66,)</version>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware</groupId>
         <artifactId>kryo</artifactId>
-        <version>4.0.2</version>
+        <version>5.3.0</version>
       </dependency>
       <dependency>
         <groupId>uk.com.robust-it</groupId>
@@ -119,12 +119,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.12.6.1</version>
+        <version>2.13.3</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.10.4</version>
+        <version>2.13.3</version>
       </dependency>
       <dependency>
         <groupId>cglib</groupId>
@@ -134,42 +134,42 @@
       <dependency>
         <groupId>org.ow2.asm</groupId>
         <artifactId>asm</artifactId>
-        <version>8.0.1</version>
+        <version>9.3</version>
       </dependency>
       <dependency>
         <groupId>org.msgpack</groupId>
         <artifactId>msgpack-core</artifactId>
-        <version>0.8.20</version>
+        <version>0.9.1</version>
       </dependency>
       <dependency>
         <groupId>org.msgpack</groupId>
         <artifactId>jackson-dataformat-msgpack</artifactId>
-        <version>0.8.20</version>
+        <version>0.9.1</version>
       </dependency>
       <dependency>
         <groupId>ognl</groupId>
         <artifactId>ognl</artifactId>
-        <version>3.1.18</version>
+        <version>3.3.2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.10</version>
+        <version>3.12.0</version>
       </dependency>
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.16.1</version>
+        <version>3.21.1</version>
       </dependency>
       <dependency>
         <groupId>com.googlecode.combinatoricslib</groupId>
         <artifactId>combinatoricslib</artifactId>
-        <version>2.2</version>
+        <version>2.3</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.13.1</version>
+        <version>4.13.2</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -178,7 +178,7 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.10</version>
+      <version>1.18.24</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -206,7 +206,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -220,7 +220,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -236,7 +236,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.2.5</version>
+        <version>1.2.7</version>
         <configuration>
           <updatePomFile>true</updatePomFile>
           <flattenMode>oss</flattenMode>
@@ -282,7 +282,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
+            <version>3.0.1</version>
             <executions>
               <execution>
                 <phase>verify</phase>
@@ -295,7 +295,7 @@
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
             <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.8</version>
+            <version>1.6.13</version>
             <extensions>true</extensions>
             <configuration>
               <serverId>oss</serverId>

@@ -10,12 +10,7 @@ import java.util.Queue;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.Client;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisClusterInfoCache;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.PipelineBase;
-import redis.clients.jedis.Response;
+import redis.clients.jedis.*;
 import redis.clients.jedis.exceptions.JedisRedirectionException;
 import redis.clients.jedis.util.JedisClusterCRC16;
 import redis.clients.jedis.util.SafeEncoder;
@@ -30,20 +25,21 @@ import redis.clients.jedis.util.SafeEncoder;
  */
 @Getter
 @Slf4j
-public class JedisClusterPipeline extends PipelineBase implements Closeable {
+public class JedisClusterPipeline extends Pipeline implements Closeable {
 
     private final JedisClusterInfoCache clusterInfoCache;
 
     /**
      * 根据顺序存储每个命令对应的Client
      */
-    private final Queue<Client> clients;
+    private final Queue<Connection> clients;
     /**
      * 用于缓存连接
      */
-    private final Map<JedisPool, Jedis> jedisMap;
+    private final Map<ConnectionPool, Connection> jedisMap;
 
     public JedisClusterPipeline(JedisClusterInfoCache clusterInfoCache) {
+        super((Connection) null);
         this.clusterInfoCache = clusterInfoCache;
         this.clients = new LinkedList<>();
         this.jedisMap = new HashMap<>(3);
@@ -52,7 +48,8 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
     /**
      * 同步读取所有数据. 与syncAndReturnAll()相比，sync()只是没有对数据做反序列化
      */
-    protected void sync() {
+    @Override
+    public void sync() {
         innerSync(null);
     }
 
@@ -61,7 +58,8 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
      *
      * @return 按照命令的顺序返回所有的数据
      */
-    protected List<Object> syncAndReturnAll() {
+    @Override
+    public List<Object> syncAndReturnAll() {
         List<Object> responseList = new ArrayList<>(clients.size());
         innerSync(responseList);
         return responseList;
@@ -71,8 +69,8 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
         try {
             Response<?> response;
             Object data;
-            for (Client client : clients) {
-                response = generateResponse(client.getOne());
+            for (Connection connection : clients) {
+                response = generateResponse(connection.getOne());
                 if (null != formatted) {
                     data = response.get();
                     formatted.add(data);
@@ -89,44 +87,40 @@ public class JedisClusterPipeline extends PipelineBase implements Closeable {
     public void close() {
         clean();
         clients.clear();
-        for (Jedis jedis : jedisMap.values()) {
-            flushCachedData(jedis);
-            jedis.close();
+        for (Connection connection : jedisMap.values()) {
+            flushCachedData(connection);
+            connection.close();
         }
         jedisMap.clear();
     }
 
-    private void flushCachedData(Jedis jedis) {
+    private void flushCachedData(Connection connection) {
         try {
-            //FIXME 这个count怎么取值? 执行命令的个数??
-            jedis.getClient().getMany(jedisMap.size());
+            connection.getMany(jedisMap.size());
             //jedis.getClient().getAll();
         } catch (RuntimeException ex) {
             // 其中一个client出问题，后面出问题的几率较大
         }
     }
 
-    @Override
-    protected Client getClient(String key) {
+    protected Connection getClient(String key) {
         byte[] bKey = SafeEncoder.encode(key);
         return getClient(bKey);
     }
 
-    @Override
-    protected Client getClient(byte[] key) {
-        Client client = getClient(JedisClusterCRC16.getSlot(key));
-        clients.add(client);
-        return client;
+    protected Connection getClient(byte[] key) {
+        Connection connection = getClient(JedisClusterCRC16.getSlot(key));
+        clients.add(connection);
+        return connection;
     }
 
-    private Client getClient(int slot) {
-        JedisPool pool = clusterInfoCache.getSlotPool(slot);
+    private Connection getClient(int slot) {
+        ConnectionPool pool = clusterInfoCache.getSlotPool(slot);
         // 根据pool从缓存中获取Jedis
-        Jedis jedis = jedisMap.get(pool);
-        if (null == jedis) {
-            jedis = pool.getResource();
-            jedisMap.put(pool, jedis);
+        Connection connection = jedisMap.get(pool);
+        if (null == connection) {
+            jedisMap.put(pool, pool.getResource());
         }
-        return jedis.getClient();
+        return connection;
     }
 }
