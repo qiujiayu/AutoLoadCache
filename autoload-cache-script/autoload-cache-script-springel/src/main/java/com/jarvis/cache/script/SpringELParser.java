@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *
  */
-@Slf4j
 public class SpringELParser extends AbstractScriptParser {
 
     /**
@@ -43,7 +42,7 @@ public class SpringELParser extends AbstractScriptParser {
             hash = CacheUtil.class.getDeclaredMethod("getUniqueHashStr", new Class[]{Object.class});
             empty = CacheUtil.class.getDeclaredMethod("isEmpty", new Class[]{Object.class});
         } catch (NoSuchMethodException e) {
-            log
+            e.printStackTrace();
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (Exception e) {

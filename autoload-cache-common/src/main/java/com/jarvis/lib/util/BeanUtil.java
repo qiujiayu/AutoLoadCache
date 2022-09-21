@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  */
-@Slf4j
 public class BeanUtil {
 
     @SuppressWarnings("rawtypes")
