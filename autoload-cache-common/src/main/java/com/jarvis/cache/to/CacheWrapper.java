@@ -56,6 +56,18 @@ public class CacheWrapper<T> implements Serializable, Cloneable {
         return false;
     }
 
+    public int getExpire() {
+        return expire;
+    }
+
+    private void setCacheObject(T cacheObject) {
+        this.cacheObject = cacheObject;
+    }
+
+    public long getLastLoadTime() {
+        return lastLoadTime;
+    }
+
     @Override
     public Object clone() throws CloneNotSupportedException {
         @SuppressWarnings("unchecked")
