@@ -258,5 +258,28 @@ public class AutoLoadConfig {
             this.processingMapSize = processingMapSize;
         }
     }
+    
+    public void setDataLoaderPooled(boolean dataLoaderPooled) {
+        this.dataLoaderPooled = dataLoaderPooled;
+    }
 
+    public boolean isDataLoaderPooled() {
+        return this.dataLoaderPooled;
+    }
+
+    public int getLoadUseTimeForAutoLoad1() {
+        return loadUseTimeForAutoLoad1;
+    }
+
+    public void setLoadUseTimeForAutoLoad1(int loadUseTimeForAutoLoad1) {
+        this.loadUseTimeForAutoLoad1 = loadUseTimeForAutoLoad1;
+    }
+
+    public int getLoadUseTimeForAutoLoad2() {
+        return loadUseTimeForAutoLoad2;
+    }
+
+    public void setLoadUseTimeForAutoLoad2(int loadUseTimeForAutoLoad2) {
+        this.loadUseTimeForAutoLoad2 = loadUseTimeForAutoLoad2;
+    }
 }
