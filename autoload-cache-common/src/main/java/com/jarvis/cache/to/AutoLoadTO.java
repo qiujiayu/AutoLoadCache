@@ -92,6 +92,13 @@ public class AutoLoadTO implements Serializable {
         return this;
     }
 
+    /**
+     * @param firstRequestTime System.currentTimeMillis()
+     */
+    public void setFirstRequestTime(long firstRequestTime) {
+        this.firstRequestTime = firstRequestTime;
+    }
+    
     public long getFirstRequestTime() {
         return firstRequestTime;
     }
