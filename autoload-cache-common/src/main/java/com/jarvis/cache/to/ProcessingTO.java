@@ -19,4 +19,20 @@ public class ProcessingTO {
     public ProcessingTO() {
         startTime = System.currentTimeMillis();
     }
+    
+    public CacheWrapper<Object> getCache() {
+        return cache;
+    }
+
+    public void setCache(CacheWrapper<Object> cache) {
+        this.cache = cache;
+    }
+
+    public void setFirstFinished(boolean firstFinished) {
+        this.firstFinished = firstFinished;
+    }
+
+    public boolean isFirstFinished() {
+        return this.firstFinished;
+    }
 }
