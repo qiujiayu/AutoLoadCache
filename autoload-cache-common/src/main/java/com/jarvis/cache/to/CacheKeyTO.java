@@ -42,4 +42,11 @@ public final class CacheKeyTO implements Serializable {
         return key.toString();
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getHfield() {
+        return hfield;
+    }
 }
