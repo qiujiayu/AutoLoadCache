@@ -1,9 +1,9 @@
 package com.jarvis.cache.to;
 
 import com.jarvis.cache.type.AutoLoadQueueSortType;
-import lombok.Data;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 缓存处理的相关 配置
@@ -281,5 +281,59 @@ public class AutoLoadConfig {
 
     public void setLoadUseTimeForAutoLoad2(int loadUseTimeForAutoLoad2) {
         this.loadUseTimeForAutoLoad2 = loadUseTimeForAutoLoad2;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AutoLoadConfig that = (AutoLoadConfig) o;
+        return maxElement == that.maxElement &&
+                printSlowLog == that.printSlowLog &&
+                slowLoadTime == that.slowLoadTime &&
+                checkFromCacheBeforeLoad == that.checkFromCacheBeforeLoad &&
+                autoLoadPeriod == that.autoLoadPeriod &&
+                loadUseTimeForAutoLoad1 == that.loadUseTimeForAutoLoad1 &&
+                loadUseTimeForAutoLoad2 == that.loadUseTimeForAutoLoad2 &&
+                refreshThreadPoolSize == that.refreshThreadPoolSize &&
+                refreshThreadPoolMaxSize == that.refreshThreadPoolMaxSize &&
+                refreshThreadPoolkeepAliveTime == that.refreshThreadPoolkeepAliveTime &&
+                refreshQueueCapacity == that.refreshQueueCapacity &&
+                loadDataTryCnt == that.loadDataTryCnt &&
+                processingMapSize == that.processingMapSize &&
+                dataLoaderPooled == that.dataLoaderPooled &&
+                Objects.equals(namespace, that.namespace) &&
+                Objects.equals(threadCnt, that.threadCnt) &&
+                sortType == that.sortType &&
+                Objects.equals(functions, that.functions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(namespace, threadCnt, maxElement, printSlowLog, slowLoadTime, sortType, checkFromCacheBeforeLoad, autoLoadPeriod, loadUseTimeForAutoLoad1, loadUseTimeForAutoLoad2, refreshThreadPoolSize, refreshThreadPoolMaxSize, refreshThreadPoolkeepAliveTime, refreshQueueCapacity, functions, loadDataTryCnt, processingMapSize, dataLoaderPooled);
+    }
+
+    @Override
+    public String toString() {
+        return "AutoLoadConfig{" +
+                "namespace='" + namespace + '\'' +
+                ", threadCnt=" + threadCnt +
+                ", maxElement=" + maxElement +
+                ", printSlowLog=" + printSlowLog +
+                ", slowLoadTime=" + slowLoadTime +
+                ", sortType=" + sortType +
+                ", checkFromCacheBeforeLoad=" + checkFromCacheBeforeLoad +
+                ", autoLoadPeriod=" + autoLoadPeriod +
+                ", loadUseTimeForAutoLoad1=" + loadUseTimeForAutoLoad1 +
+                ", loadUseTimeForAutoLoad2=" + loadUseTimeForAutoLoad2 +
+                ", refreshThreadPoolSize=" + refreshThreadPoolSize +
+                ", refreshThreadPoolMaxSize=" + refreshThreadPoolMaxSize +
+                ", refreshThreadPoolkeepAliveTime=" + refreshThreadPoolkeepAliveTime +
+                ", refreshQueueCapacity=" + refreshQueueCapacity +
+                ", functions=" + functions +
+                ", loadDataTryCnt=" + loadDataTryCnt +
+                ", processingMapSize=" + processingMapSize +
+                ", dataLoaderPooled=" + dataLoaderPooled +
+                '}';
     }
 }
