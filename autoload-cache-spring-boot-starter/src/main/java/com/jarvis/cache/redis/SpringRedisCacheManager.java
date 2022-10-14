@@ -4,7 +4,8 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisConnectionUtils;
@@ -19,9 +20,10 @@ import java.util.Set;
  *
  *
  */
-@Slf4j
 public class SpringRedisCacheManager extends AbstractRedisCacheManager {
 
+    private static final Logger log = LoggerFactory.getLogger(SpringRedisCacheManager.class);
+    
     private final RedisConnectionFactory redisConnectionFactory;
 
     public SpringRedisCacheManager(RedisConnectionFactory redisConnectionFactory, ISerializer<Object> serializer) {
