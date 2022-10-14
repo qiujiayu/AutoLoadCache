@@ -4,7 +4,6 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.ShardedJedis;
@@ -22,7 +21,6 @@ import java.util.Set;
  *
  *
  */
-@Slf4j
 public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
 
     private final ShardedJedisPool shardedJedisPool;
