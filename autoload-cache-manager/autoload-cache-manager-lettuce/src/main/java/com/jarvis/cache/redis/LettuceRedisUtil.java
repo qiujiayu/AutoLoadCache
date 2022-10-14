@@ -6,7 +6,6 @@ import com.jarvis.cache.to.CacheWrapper;
 import io.lettuce.core.AbstractRedisAsyncCommands;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
-import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -17,7 +16,6 @@ import java.util.Set;
 /**
  *
  */
-@Slf4j
 public class LettuceRedisUtil {
 
     public static void executeMSet(AbstractRedisAsyncCommands<byte[], byte[]> pipeline, AbstractRedisCacheManager manager, Collection<MSetParam> params) throws Exception {
@@ -97,7 +95,7 @@ public class LettuceRedisUtil {
                     res.put(cacheKeyTO, value);
                 }
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                e.printStackTrace();
             }
             i++;
         }
