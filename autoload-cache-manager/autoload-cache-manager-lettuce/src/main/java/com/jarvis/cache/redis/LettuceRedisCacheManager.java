@@ -9,7 +9,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -17,11 +18,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-@Slf4j
 public class LettuceRedisCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClient redisClient;
 
+    private static final Logger log = LoggerFactory.getLogger(LettuceRedisCacheManager.class);
+    
     public LettuceRedisCacheManager(RedisClient redisClient, ISerializer<Object> serializer) {
         super(serializer);
         this.redisClient = redisClient;
