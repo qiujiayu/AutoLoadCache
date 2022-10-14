@@ -4,7 +4,8 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
@@ -18,9 +19,10 @@ import java.util.Set;
  *
  *
  */
-@Slf4j
 public class JedisClusterCacheManager extends AbstractRedisCacheManager {
 
+    private static final Logger log = LoggerFactory.getLogger(JedisClusterCacheManager.class);
+    
     private final JedisClusterClient redis;
 
     public JedisClusterCacheManager(JedisCluster jedisCluster, ISerializer<Object> serializer) {
