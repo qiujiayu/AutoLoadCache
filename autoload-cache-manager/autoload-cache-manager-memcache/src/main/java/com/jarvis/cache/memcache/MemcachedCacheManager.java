@@ -5,7 +5,6 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.exception.CacheCenterConnectionException;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
 import net.spy.memcached.MemcachedClient;
 
 import java.lang.reflect.Method;
@@ -17,7 +16,6 @@ import java.util.*;
  *
  *
  */
-@Slf4j
 public class MemcachedCacheManager implements ICacheManager {
 
     private MemcachedClient memcachedClient;
@@ -125,7 +123,7 @@ public class MemcachedCacheManager implements ICacheManager {
                     memcachedClient.delete(cacheKey);
                 }
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                e.printStackTrace();
             }
         }
     }
