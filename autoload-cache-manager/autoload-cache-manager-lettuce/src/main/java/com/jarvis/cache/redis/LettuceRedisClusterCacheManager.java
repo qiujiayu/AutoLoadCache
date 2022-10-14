@@ -9,7 +9,8 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -17,11 +18,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-@Slf4j
 public class LettuceRedisClusterCacheManager extends AbstractRedisCacheManager {
 
     private final RedisClusterClient redisClusterClient;
 
+    private static final Logger log = LoggerFactory.getLogger(LettuceRedisClusterCacheManager.class);
+    
     public LettuceRedisClusterCacheManager(RedisClusterClient redisClusterClient, ISerializer<Object> serializer) {
         super(serializer);
         this.redisClusterClient = redisClusterClient;
