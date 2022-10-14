@@ -5,7 +5,8 @@ import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,9 +21,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  *
  */
-@Slf4j
 public class RefreshHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(RefreshHandler.class);
+    
     private static final int REFRESH_MIN_EXPIRE = 120;
 
     private static final int ONE_THOUSAND_MS = 1000;
