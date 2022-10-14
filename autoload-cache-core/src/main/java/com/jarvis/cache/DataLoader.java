@@ -5,16 +5,18 @@ import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.exception.LoadDataTimeOutException;
 import com.jarvis.cache.lock.ILock;
 import com.jarvis.cache.to.*;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 数据加载器
  *
  *
  */
-@Slf4j
 public class DataLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(DataLoader.class);
+    
     private CacheHandler cacheHandler;
 
     private CacheAopProxyChain pjp;
