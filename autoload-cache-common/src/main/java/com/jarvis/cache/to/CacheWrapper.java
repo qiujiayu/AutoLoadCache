@@ -1,7 +1,5 @@
 package com.jarvis.cache.to;
 
-import lombok.Data;
-
 import java.io.Serializable;
 
 /**
@@ -9,7 +7,6 @@ import java.io.Serializable;
  *
  *
  */
-@Data
 public class CacheWrapper<T> implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;
