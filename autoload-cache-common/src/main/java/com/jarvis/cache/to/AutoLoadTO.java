@@ -4,6 +4,8 @@ import com.jarvis.cache.annotation.Cache;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * 用于处理自动加载数据到缓存
@@ -200,5 +202,48 @@ public class AutoLoadTO implements Serializable {
                 // 同步过期时间
                 .setExpire(cacheWrapper.getExpire());
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AutoLoadTO that = (AutoLoadTO) o;
+        return expire == that.expire &&
+                lastLoadTime == that.lastLoadTime &&
+                lastRequestTime == that.lastRequestTime &&
+                firstRequestTime == that.firstRequestTime &&
+                requestTimes == that.requestTimes &&
+                loading == that.loading &&
+                loadCnt == that.loadCnt &&
+                useTotalTime == that.useTotalTime &&
+                Objects.equals(joinPoint, that.joinPoint) &&
+                Arrays.equals(args, that.args) &&
+                Objects.equals(cache, that.cache) &&
+                Objects.equals(cacheKey, that.cacheKey);
+    }
 
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(joinPoint, cache, expire, cacheKey, lastLoadTime, lastRequestTime, firstRequestTime, requestTimes, loading, loadCnt, useTotalTime);
+        result = 31 * result + Arrays.hashCode(args);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "AutoLoadTO{" +
+                "joinPoint=" + joinPoint +
+                ", args=" + Arrays.toString(args) +
+                ", cache=" + cache +
+                ", expire=" + expire +
+                ", cacheKey=" + cacheKey +
+                ", lastLoadTime=" + lastLoadTime +
+                ", lastRequestTime=" + lastRequestTime +
+                ", firstRequestTime=" + firstRequestTime +
+                ", requestTimes=" + requestTimes +
+                ", loading=" + loading +
+                ", loadCnt=" + loadCnt +
+                ", useTotalTime=" + useTotalTime +
+                '}';
+    }
 }
