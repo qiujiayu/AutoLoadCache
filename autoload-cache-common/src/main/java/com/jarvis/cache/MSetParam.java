@@ -2,12 +2,10 @@ package com.jarvis.cache;
 
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.Data;
 
 /**
  *
  */
-@Data
 public class MSetParam {
 
     private CacheKeyTO cacheKey;
@@ -17,5 +15,13 @@ public class MSetParam {
     public MSetParam(CacheKeyTO cacheKey, CacheWrapper<Object> result) {
         this.cacheKey = cacheKey;
         this.result = result;
+    }
+    
+    public CacheKeyTO getCacheKey() {
+        return cacheKey;
+    }
+
+    public CacheWrapper<Object> getResult() {
+        return result;
     }
 }
