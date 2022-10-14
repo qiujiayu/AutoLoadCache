@@ -3,15 +3,17 @@ package com.jarvis.cache.redis;
 import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.PipelineBase;
 
 import java.util.Collection;
 import java.util.Set;
 
-@Slf4j
 public class JedisUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(JedisUtil.class);
+    
     public static void executeMSet(PipelineBase pipeline, AbstractRedisCacheManager manager, Collection<MSetParam> params) throws Exception {
         CacheKeyTO cacheKeyTO;
         String cacheKey;
