@@ -48,6 +48,10 @@ public final class CacheKeyTO implements Serializable {
         return hfield;
     }
     
+    public String getKey() {
+        return key;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
