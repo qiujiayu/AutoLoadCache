@@ -172,13 +172,6 @@
         <version>4.13.1</version>
         <scope>test</scope>
       </dependency>
-      <!-- 有的模块需要slf4j, 故按需引入 -->
-      <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>1.18.10</version>
-        <scope>compile</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -189,6 +182,7 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+  
   <build>
     <plugins>
       <plugin>
