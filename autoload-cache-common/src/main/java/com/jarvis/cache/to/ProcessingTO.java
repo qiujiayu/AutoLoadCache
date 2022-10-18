@@ -35,6 +35,18 @@ public class ProcessingTO {
         return this.firstFinished;
     }
     
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setError(Throwable error) {
+        this.error = error;
+    }
+
+    public Throwable getError() {
+        return this.error;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
