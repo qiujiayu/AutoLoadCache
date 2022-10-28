@@ -5,7 +5,8 @@ import com.jarvis.cache.annotation.Magic;
 import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -18,9 +19,10 @@ import java.util.*;
  *
  *
  */
-@Slf4j
 public class MagicHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(MagicHandler.class);
+    
     private final CacheHandler cacheHandler;
 
     private final CacheAopProxyChain pjp;

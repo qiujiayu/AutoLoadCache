@@ -8,12 +8,9 @@ import org.springframework.core.env.Environment;
 
 import com.jarvis.cache.to.AutoLoadConfig;
 
-import lombok.Data;
-
 /**
  *
  */
-@Data
 @ConfigurationProperties(prefix = AutoloadCacheProperties.PREFIX)
 public class AutoloadCacheProperties {
 
@@ -59,6 +56,110 @@ public class AutoloadCacheProperties {
     private String adminUserName = "admin";
 
     private String adminPassword = "admin";
+
+    public AutoLoadConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(AutoLoadConfig config) {
+        this.config = config;
+    }
+
+    public JedisCacheManagerConfig getJedis() {
+        return jedis;
+    }
+
+    public void setJedis(JedisCacheManagerConfig jedis) {
+        this.jedis = jedis;
+    }
+
+    public Environment getEnv() {
+        return env;
+    }
+
+    public void setEnv(Environment env) {
+        this.env = env;
+    }
+
+    public boolean isNamespaceEnable() {
+        return namespaceEnable;
+    }
+
+    public void setNamespaceEnable(boolean namespaceEnable) {
+        this.namespaceEnable = namespaceEnable;
+    }
+
+    public boolean isProxyTargetClass() {
+        return proxyTargetClass;
+    }
+
+    public void setProxyTargetClass(boolean proxyTargetClass) {
+        this.proxyTargetClass = proxyTargetClass;
+    }
+
+    public boolean isEnable() {
+        return enable;
+    }
+
+    public void setEnable(boolean enable) {
+        this.enable = enable;
+    }
+
+    public boolean isEnableReadAndWrite() {
+        return enableReadAndWrite;
+    }
+
+    public void setEnableReadAndWrite(boolean enableReadAndWrite) {
+        this.enableReadAndWrite = enableReadAndWrite;
+    }
+
+    public boolean isEnableDelete() {
+        return enableDelete;
+    }
+
+    public void setEnableDelete(boolean enableDelete) {
+        this.enableDelete = enableDelete;
+    }
+
+    public int getCacheOrder() {
+        return cacheOrder;
+    }
+
+    public void setCacheOrder(int cacheOrder) {
+        this.cacheOrder = cacheOrder;
+    }
+
+    public int getDeleteCacheOrder() {
+        return deleteCacheOrder;
+    }
+
+    public void setDeleteCacheOrder(int deleteCacheOrder) {
+        this.deleteCacheOrder = deleteCacheOrder;
+    }
+
+    public int getDeleteCacheTransactionalOrder() {
+        return deleteCacheTransactionalOrder;
+    }
+
+    public void setDeleteCacheTransactionalOrder(int deleteCacheTransactionalOrder) {
+        this.deleteCacheTransactionalOrder = deleteCacheTransactionalOrder;
+    }
+
+    public String getAdminUserName() {
+        return adminUserName;
+    }
+
+    public void setAdminUserName(String adminUserName) {
+        this.adminUserName = adminUserName;
+    }
+
+    public String getAdminPassword() {
+        return adminPassword;
+    }
+
+    public void setAdminPassword(String adminPassword) {
+        this.adminPassword = adminPassword;
+    }
 
     @PostConstruct
     public void init() {

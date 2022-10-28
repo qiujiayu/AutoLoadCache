@@ -1,6 +1,7 @@
 package com.jarvis.cache.redis;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.BinaryJedisCluster;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisClusterConnectionHandler;
@@ -11,7 +12,6 @@ import redis.clients.jedis.exceptions.JedisMovedDataException;
 import java.lang.reflect.Field;
 import java.util.List;
 
-@Slf4j
 public abstract class RetryableJedisClusterPipeline {
 
     /**
@@ -20,6 +20,7 @@ public abstract class RetryableJedisClusterPipeline {
      **/
     private static final Field FIELD_CONNECTION_HANDLER;
     private static final Field FIELD_CACHE;
+    private static final Logger log = LoggerFactory.getLogger(JedisUtil.class);
 
     static {
         FIELD_CONNECTION_HANDLER = getField(BinaryJedisCluster.class, "connectionHandler");

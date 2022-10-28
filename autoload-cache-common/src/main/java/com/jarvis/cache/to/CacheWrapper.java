@@ -1,7 +1,5 @@
 package com.jarvis.cache.to;
 
-import lombok.Data;
-
 import java.io.Serializable;
 
 /**
@@ -9,7 +7,6 @@ import java.io.Serializable;
  *
  *
  */
-@Data
 public class CacheWrapper<T> implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;
@@ -54,6 +51,30 @@ public class CacheWrapper<T> implements Serializable, Cloneable {
             return (System.currentTimeMillis() - lastLoadTime) > expire * 1000;
         }
         return false;
+    }
+
+    public int getExpire() {
+        return expire;
+    }
+
+    private void setCacheObject(T cacheObject) {
+        this.cacheObject = cacheObject;
+    }
+
+    public long getLastLoadTime() {
+        return lastLoadTime;
+    }
+    
+    public T getCacheObject() {
+        return cacheObject;
+    }
+    
+    public void setLastLoadTime(long lastLoadTime) {
+        this.lastLoadTime = lastLoadTime;
+    }
+
+    public void setExpire(int expire) {
+        this.expire = expire;
     }
 
     @Override

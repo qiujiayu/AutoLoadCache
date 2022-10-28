@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,13 +18,12 @@ import com.jarvis.cache.aop.CacheAopProxyChain;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @RestController
 @RequestMapping("/autoload-cache")
 public class AutoloadCacheController {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoloadCacheController.class);
+    
     private final CacheHandler autoloadCacheHandler;
 
     public AutoloadCacheController(CacheHandler autoloadCacheHandler) {

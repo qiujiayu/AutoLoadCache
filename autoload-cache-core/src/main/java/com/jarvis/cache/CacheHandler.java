@@ -19,7 +19,8 @@ import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
 import com.jarvis.cache.to.ProcessingTO;
 import com.jarvis.cache.type.CacheOpType;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -37,7 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  *
  */
-@Slf4j
 public class CacheHandler {
 
     /**
@@ -52,6 +52,8 @@ public class CacheHandler {
     private final ICloner cloner;
 
     private final AutoLoadHandler autoLoadHandler;
+    
+    private static final Logger log = LoggerFactory.getLogger(CacheHandler.class);
 
     /**
      * 表达式解析器

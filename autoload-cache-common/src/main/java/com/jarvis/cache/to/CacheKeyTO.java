@@ -1,15 +1,13 @@
 package com.jarvis.cache.to;
 
-import lombok.Data;
-
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 缓存Key
  *
  *
  */
-@Data
 public final class CacheKeyTO implements Serializable {
 
     private static final long serialVersionUID = 7229320497442357252L;
@@ -42,4 +40,39 @@ public final class CacheKeyTO implements Serializable {
         return key.toString();
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public String getHfield() {
+        return hfield;
+    }
+    
+    public String getKey() {
+        return key;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CacheKeyTO that = (CacheKeyTO) o;
+        return Objects.equals(namespace, that.namespace) &&
+                Objects.equals(key, that.key) &&
+                Objects.equals(hfield, that.hfield);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(namespace, key, hfield);
+    }
+
+    @Override
+    public String toString() {
+        return "CacheKeyTO{" +
+                "namespace='" + namespace + '\'' +
+                ", key='" + key + '\'' +
+                ", hfield='" + hfield + '\'' +
+                '}';
+    }
 }

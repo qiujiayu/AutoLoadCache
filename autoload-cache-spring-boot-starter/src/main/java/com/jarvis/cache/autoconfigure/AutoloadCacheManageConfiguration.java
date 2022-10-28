@@ -14,7 +14,8 @@ import com.jarvis.cache.serializer.JdkSerializer;
 import com.jarvis.cache.serializer.KryoSerializer;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.cluster.RedisClusterClient;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -42,7 +43,6 @@ import java.lang.reflect.Field;
  *
  *
  */
-@Slf4j
 @Configuration
 @ConditionalOnClass(name = "com.jarvis.cache.ICacheManager")
 @EnableConfigurationProperties(AutoloadCacheProperties.class)
@@ -50,6 +50,8 @@ import java.lang.reflect.Field;
 @ConditionalOnProperty(value = "autoload.cache.enable", matchIfMissing = true)
 public class AutoloadCacheManageConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(AutoloadCacheManageConfiguration.class);
+    
     private static final boolean hessianPresent = ClassUtils.isPresent(
             "com.caucho.hessian.io.AbstractSerializerFactory", AutoloadCacheManageConfiguration.class.getClassLoader());
 

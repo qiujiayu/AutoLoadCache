@@ -6,7 +6,8 @@ import com.jarvis.cache.to.AutoLoadConfig;
 import com.jarvis.cache.to.AutoLoadTO;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -17,7 +18,6 @@ import java.util.concurrent.*;
  *
  *
  */
-@Slf4j
 public class AutoLoadHandler {
 
     /**
@@ -28,6 +28,8 @@ public class AutoLoadHandler {
     private static final int ONE_THOUSAND_MS = 1000;
 
     public static final String THREAD_NAME_PREFIX = "autoLoadThread-";
+    
+    private static final Logger log = LoggerFactory.getLogger(AutoLoadHandler.class);
 
     /**
      * 自动加载队列
