@@ -57,7 +57,7 @@ public class CacheWrapper<T> implements Serializable, Cloneable {
         return expire;
     }
 
-    private void setCacheObject(T cacheObject) {
+    public void setCacheObject(T cacheObject) {
         this.cacheObject = cacheObject;
     }
 

@@ -69,7 +69,7 @@ public abstract class AbstractRedisLock implements ILock {
         // 如果实际执行时长超过租约时间则不需要主到释放锁
         long useTime = System.currentTimeMillis() - info.getStartTime();
         if (null != info && useTime >= info.getLeaseTime()) {
-            log.warn("lock(" + key + ") run timeout, use time:" + useTime);
+            logger.warn("lock(" + key + ") run timeout, use time:" + useTime);
             return;
         }
         try {

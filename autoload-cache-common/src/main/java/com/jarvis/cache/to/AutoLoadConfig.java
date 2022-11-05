@@ -10,7 +10,6 @@ import java.util.Objects;
  *
  *
  */
-@Data
 public class AutoLoadConfig {
 
     /**

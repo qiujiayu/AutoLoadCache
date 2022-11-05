@@ -20,6 +20,8 @@ import java.util.Date;
  * @author stevie.wong
  */
 public class KryoSerializer implements ISerializer<Object> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KryoSerializer.class);
     
     private KryoContext kryoContext;
     
@@ -28,8 +30,8 @@ public class KryoSerializer implements ISerializer<Object> {
     public KryoSerializer() {
         this.kryoContext = DefaultKryoContext.newKryoContextFactory(kryo -> {
             kryo.register(CacheWrapper.class, new CacheWrapperSerializer());
-            if (log.isDebugEnabled()) {
-                log.debug("kryo register classes successfully.");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("kryo register classes successfully.");
             }
         });
     }

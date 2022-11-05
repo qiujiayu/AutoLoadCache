@@ -4,6 +4,8 @@ import com.jarvis.cache.MSetParam;
 import com.jarvis.cache.serializer.ISerializer;
 import com.jarvis.cache.to.CacheKeyTO;
 import com.jarvis.cache.to.CacheWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.ShardedJedis;
@@ -36,6 +38,8 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
     }
 
     public static class ShardedJedisClient implements IRedis {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(ShardedJedisClient.class);
 
         private final ShardedJedis shardedJedis;
 
@@ -87,7 +91,7 @@ public class ShardedJedisCacheManager extends AbstractRedisCacheManager {
             try {
                 JedisUtil.executeMSet(pipeline, this.cacheManager, params);
             } catch (Exception ex) {
-                log.error(ex.getMessage(), ex);
+                LOGGER.error(ex.getMessage(), ex);
             }
             pipeline.sync();
         }

@@ -181,7 +181,6 @@ public class AutoloadCacheProperties {
      * 
      *
      */
-    @Data
     static class JedisCacheManagerConfig {
 
         /**
@@ -189,5 +188,12 @@ public class AutoloadCacheProperties {
          */
         private int hashExpire = -1;
 
+        public int getHashExpire() {
+            return hashExpire;
+        }
+
+        public void setHashExpire(int hashExpire) {
+            this.hashExpire = hashExpire;
+        }
     }
 }
