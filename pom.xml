@@ -18,7 +18,7 @@
     <java_target_version>1.8</java_target_version>
     <file_encoding>UTF-8</file_encoding>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <spring.version>5.2.21.RELEASE</spring.version>
+    <spring.version>5.2.23.RELEASE</spring.version>
     <maven_deploy_version>2.8.2</maven_deploy_version>
     <maven_compiler_version>3.8.1</maven_compiler_version>
     <skip_maven_deploy>false</skip_maven_deploy>
